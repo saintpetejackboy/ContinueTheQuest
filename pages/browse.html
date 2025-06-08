@@ -1,0 +1,57 @@
+<!-- browse.html -->
+<section class="relative overflow-hidden">
+  <!-- Theme-aware banner graphics -->
+  <img
+    src="/img/banner.webp"
+    alt="ContinueThe.Quest Banner Dark"
+    class="w-full max-h-60 object-cover mb-8 rounded-lg dark:block hidden"
+  />
+  <img
+    src="/img/banner-light.webp"
+    alt="ContinueThe.Quest Banner Light"
+    class="w-full max-h-60 object-cover mb-8 rounded-lg dark:hidden block"
+  />
+
+  <div class="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 blur-3xl"></div>
+  <div class="relative max-w-6xl mx-auto py-24 px-4 text-center">
+    <h1 class="text-5xl md:text-7xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+      Browse Stories
+    </h1>
+    <p class="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+      Explore community-created continuations, alternate endings, and new branches across your favorite universes.
+    </p>
+  </div>
+</section>
+
+<div class="max-w-6xl mx-auto py-12 px-4">
+  <div class="flex justify-end items-center mb-8">
+    <div class="flex items-center gap-2">
+      <label for="sort" class="text-muted-foreground font-medium">Sort by:</label>
+      <select id="sort" class="w-full lg:w-auto px-4 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-primary focus:outline-none">
+        <option value="new">Newest</option>
+        <option value="popular">Popular</option>
+        <option value="hot">Hot</option>
+        <option value="rising">Rising</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Placeholder for coming soon stories -->
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="card border-border/20 opacity-50 animate-pulse">
+      <div class="h-32 bg-background rounded-lg mb-4"></div>
+      <div class="h-4 bg-background rounded w-3/4 mb-2"></div>
+      <div class="h-3 bg-background rounded w-1/2"></div>
+    </div>
+    <div class="card border-border/20 opacity-50 animate-pulse">
+      <div class="h-32 bg-background rounded-lg mb-4"></div>
+      <div class="h-4 bg-background rounded w-3/4 mb-2"></div>
+      <div class="h-3 bg-background rounded w-1/2"></div>
+    </div>
+    <div class="card border-border/20 opacity-50 animate-pulse">
+      <div class="h-32 bg-background rounded-lg mb-4"></div>
+      <div class="h-4 bg-background rounded w-3/4 mb-2"></div>
+      <div class="h-3 bg-background rounded w-1/2"></div>
+    </div>
+  </div>
+</div>

@@ -1,9 +1,6 @@
 # Node artifacts (if ever used locally)
 node_modules/
 package.json
-:contentReference[oaicite:4]{index=4}
-:contentReference[oaicite:5]{index=5}
-:contentReference[oaicite:6]{index=6}
 
 # Tailwind generated CSS
 output.css
@@ -17,3 +14,23 @@ output.css
 # Editor or OS files
 .DS_Store
 *.swp
+
+# Env
+.env
+.env.*
+
+# Test data (can be regenerated)
+test-data/
+
+# User uploads
+uploads/
+
+# Logs
+logs/
+
+# Favicons and manifest
+favicons/
+site.webmanifest
+
+# Genre test-data (if you prefer to regenerate)
+test-data/genres.json

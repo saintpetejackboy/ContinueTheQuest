@@ -140,3 +140,18 @@ CREATE TABLE Admin_Moderation (
     INDEX(action),
     INDEX(created_at)
 );
+
+
+CREATE TABLE Submissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    type ENUM('notify','contact') NOT NULL COMMENT 'notify = early-access form; contact = message form',
+    name VARCHAR(255) NULL,
+    email VARCHAR(255) NOT NULL,
+    subject VARCHAR(255) NULL,
+    message TEXT NULL,
+    consent TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = user consented',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX(type),
+    INDEX(email),
+    INDEX(created_at)
+);

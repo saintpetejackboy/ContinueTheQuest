@@ -1,3 +1,173 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  /* Light mode properties */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 262.1 83.3% 57.8%;
+    --secondary-foreground: 210 40% 98%;
+    --accent: 142.1 76.2% 36.3%;
+    --accent-foreground: 355.7 100% 97.3%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --radius: 0.5rem;
+  }
+
+  /* Dark mode overrides */
+  html.dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 262.1 83.3% 57.8%;
+    --secondary-foreground: 210 40% 98%;
+    --accent: 142.1 70.6% 45.3%;
+    --accent-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.0%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+  }
+
+  /* Autofill & native select fixes */
+  input:-webkit-autofill,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    box-shadow: 0 0 0px 1000px hsl(var(--background)) inset !important;
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+  }
+
+  select {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/50 rounded;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/70;
+  }
+}
+
+@layer components {
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:pointer-events-none ring-offset-background;
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:pointer-events-none ring-offset-background;
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 py-2 px-4;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:pointer-events-none ring-offset-background;
+    @apply border border-input hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:pointer-events-none ring-offset-background;
+    @apply hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4;
+  }
+
+  /* Forms */
+  .form-input,
+  .form-textarea,
+  .form-select {
+    @apply block w-full rounded-md border border-input bg-background px-3 py-2 text-sm
+           ring-offset-background placeholder:text-muted-foreground
+           focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .form-textarea {
+    @apply min-h-[80px] resize-none;
+  }
+
+  /* Card */
+  .card {
+    @apply rounded-lg border border-border bg-card text-card-foreground shadow-sm transition-all duration-200 p-6 hover:shadow-md;
+  }
+
+  /* Utility components */
+  .nav-link { @apply text-sm font-medium transition-colors hover:text-primary; }
+  .alert { @apply relative w-full rounded-lg border p-4; }
+  .alert-destructive { @apply border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive; }
+  .badge { @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2; }
+  .badge-default { @apply border-transparent bg-primary text-primary-foreground hover:bg-primary/80; }
+  .badge-secondary { @apply border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80; }
+  .badge-outline { @apply text-foreground; }
+  /* in your @layer components */
+.form-textarea {
+  @apply block w-full rounded-md border border-input
+         bg-background text-foreground px-3 py-2 text-sm
+         min-h-[150px] resize-none
+         placeholder:text-muted-foreground
+         focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+}
+
+}
+
+@layer utilities {
+  /* Animations */
+  .animate-float { animation: float 6s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);} }
+
+  .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+  .animate-slide-up { animation: slideUp 0.3s ease-out; }
+  @keyframes slideUp { from{transform:translateY(10px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+
+  .animate-scale-in { animation: scaleIn 0.2s ease-out; }
+  @keyframes scaleIn { from{transform:scale(0.95);opacity:0;} to{transform:scale(1);opacity:1;} }
+
+  /* Selection */
+  ::selection { @apply bg-primary/20 text-primary; }
+
+  /* Focus visible utility */
+  .focus-visible-ring { @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background; }
+}

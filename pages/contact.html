@@ -1,0 +1,147 @@
+<!-- contact.html -->
+<section class="relative overflow-hidden">
+  <img
+    src="/img/banner.webp"
+    alt="ContinueThe.Quest Banner Dark"
+    class="w-full max-h-60 object-cover mb-8 rounded-lg dark:block hidden"
+  />
+  <img
+    src="/img/banner-light.webp"
+    alt="ContinueThe.Quest Banner Light"
+    class="w-full max-h-60 object-cover mb-8 rounded-lg dark:hidden block"
+  />
+
+  <div class="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 blur-3xl"></div>
+  <div class="relative max-w-6xl mx-auto py-24 px-4 text-center">
+    <h1 class="text-5xl md:text-7xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+      Contact Us
+    </h1>
+    <p class="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+      Questions, feedback, or suggestions? Reach out and we'll respond within 24-48 business hours.
+    </p>
+  </div>
+</section>
+
+<div class="max-w-6xl mx-auto py-16 px-4 grid md:grid-cols-2 gap-8">
+  <!-- Contact Info -->
+  <div class="card p-8">
+    <h2 class="text-2xl font-semibold mb-4">Get in Touch</h2>
+    <p class="text-muted-foreground mb-6">
+      Fill out the form or use the channels below, and we'll get back to you as soon as possible.
+    </p>
+    <div class="space-y-4">
+      <div class="flex items-center gap-4">
+        <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+          <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-medium mb-1">Email</h3>
+          <a href="mailto:support@continuethe.quest" class="text-primary hover:underline">support@continuethe.quest</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Contact Form -->
+  <div class="card p-8">
+    <h2 class="text-2xl font-semibold mb-4">Send a Message</h2>
+    <form id="contact-form" class="space-y-4">
+      <div>
+        <label for="name" class="block text-muted-foreground mb-2">Name</label>
+        <input type="text" id="name" class="form-input w-full" required />
+      </div>
+      <div>
+        <label for="email" class="block text-muted-foreground mb-2">Email</label>
+        <input type="email" id="email" class="form-input w-full" required />
+      </div>
+      <div>
+      <label for="subject" class="block text-muted-foreground dark:text-gray-300 mb-2">Subject</label>
+        <select
+          id="subject"
+          class="form-select w-full
+         bg-background text-foreground
+         border border-input
+       focus:ring-ring focus:ring-offset-background"
+        >
+          <option value="general">General Inquiry</option>
+          <option value="support">Technical Support</option>
+          <option value="feedback">Feedback</option>
+          <option value="partnership">Partnership</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <!-- Message -->
+      <div>
+        <label for="message" class="block text-muted-foreground dark:text-gray-300 mb-2">Message</label>
+<textarea
+  id="message"
+  rows="6"
+  class="form-textarea w-full resize-none bg-background text-foreground"
+  placeholder="Your message…"
+  required
+></textarea>
+
+      </div>
+	  
+
+      <!-- Consent -->
+      <div class="flex items-center gap-2">
+        <input type="checkbox" id="consent" class="form-checkbox text-primary dark:text-secondary" required />
+        <label for="consent" class="text-sm text-muted-foreground dark:text-gray-300">
+          I consent to having this website store my submitted information. See our
+          <a href="?page=privacy" class="text-primary dark:text-secondary hover:underline">Privacy Policy</a>.
+        </label>
+      </div>
+	  
+      <button type="submit" class="btn-primary w-full">Send Message</button>
+    </form>
+    <div id="contact-success" class="hidden mt-4 p-4 bg-green-600/10 border border-green-600 rounded-lg">
+      <p class="text-green-600">Thank you! We will get back to you shortly.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // only initialize once
+    if (window.contactFormInitialized) return;
+    window.contactFormInitialized = true;
+
+    const contactForm = document.getElementById('contact-form');
+    const successEl   = document.getElementById('contact-success');
+
+    if (!contactForm) return; // in case this script runs on a page without the form
+
+    contactForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const payload = {
+        type: 'contact',
+        name:    this.name.value.trim(),
+        email:   this.email.value.trim(),
+        subject: this.subject.value,
+        message: this.message.value.trim(),
+        consent: this.consent.checked
+      };
+
+      try {
+        const res = await fetch('/api/index.php?endpoint=submit', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error||'Unknown');
+
+        contactForm.style.display = 'none';
+        successEl.classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+        alert('Sorry, could not send your message — please try again.');
+      }
+    });
+  })();
+</script>

@@ -13,3 +13,22 @@ yarn-error.log
 *.session
 .DS_Store
 *.swp
+# Env
+.env
+.env.*
+
+# Test data
+test-data/
+
+# User uploads  
+uploads/
+
+# Logs
+logs/
+
+# Favicons and manifest
+favicons/
+site.webmanifest
+
+# Genre test-data (if you prefer to regenerate)
+test-data/genres.json
