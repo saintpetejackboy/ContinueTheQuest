@@ -1,0 +1,15 @@
+# Exclude generated output
+output.css
+repomix-output.xml
+
+# Same ignores from .gitignore
+node_modules/
+package.json
+package-lock.json
+npm-debug.log
+yarn-error.log
+*.log
+*.cache
+*.session
+.DS_Store
+*.swp

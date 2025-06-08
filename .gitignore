@@ -1,0 +1,19 @@
+# Node artifacts (if ever used locally)
+node_modules/
+package.json
+:contentReference[oaicite:4]{index=4}
+:contentReference[oaicite:5]{index=5}
+:contentReference[oaicite:6]{index=6}
+
+# Tailwind generated CSS
+output.css
+*.min.css
+
+# Apache/PHP log or session files
+*.log
+*.cache
+*.session
+
+# Editor or OS files
+.DS_Store
+*.swp

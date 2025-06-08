@@ -1,0 +1,655 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+db/
+  schema/
+    schema.sql
+db.md
+index.php
+project.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="db/schema/schema.sql">
+-- 01_users.sql
+CREATE TABLE Users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    passkey_id VARCHAR(255),
+    passphrase_hash VARCHAR(255),
+    email VARCHAR(255),
+    is_admin TINYINT(1) DEFAULT 0,
+    is_banned TINYINT(1) DEFAULT 0,
+    credit_balance INT DEFAULT 0,
+    sort_preference ENUM('new', 'hot', 'rising', 'popular') DEFAULT 'new',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_active_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX(username),
+    INDEX(email)
+);
+
+-- 02_media.sql
+CREATE TABLE Media (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT,
+    cover_image VARCHAR(255),
+    created_by INT,
+    vote_score INT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX(created_at),
+    INDEX(vote_score),
+    INDEX(created_by)
+);
+
+-- 03_branches.sql
+CREATE TABLE Branches (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    media_id INT,
+    title VARCHAR(255),
+    summary TEXT,
+    branch_type ENUM('before', 'after', 'other'),
+    source_type ENUM('book', 'show', 'movie', 'other'),
+    cover_image VARCHAR(255),
+    created_by INT,
+    vote_score INT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX(media_id),
+    INDEX(created_by),
+    INDEX(created_at),
+    INDEX(vote_score)
+);
+
+-- 04_segments.sql
+CREATE TABLE Segments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    branch_id INT,
+    title VARCHAR(255),
+    markdown_body LONGTEXT,
+    image_path VARCHAR(255),
+    created_by INT,
+    vote_score INT DEFAULT 0,
+    order_index INT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX(branch_id),
+    INDEX(created_by),
+    INDEX(order_index),
+    INDEX(created_at),
+    INDEX(vote_score)
+);
+
+-- 05_tags.sql
+CREATE TABLE Tags (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) UNIQUE,
+    is_genre TINYINT(1) DEFAULT 0,
+    created_by INT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX(name),
+    INDEX(is_genre),
+    INDEX(created_by)
+);
+
+CREATE TABLE Tag_Links (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tag_id INT,
+    target_type ENUM('media', 'branch', 'segment'),
+    target_id INT,
+    tagged_by INT,
+    tagged_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE INDEX unique_tag_target (tag_id, target_type, target_id),
+    INDEX(tag_id),
+    INDEX(tagged_by)
+);
+
+-- 06_comments_votes.sql
+CREATE TABLE Comments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    segment_id INT,
+    user_id INT,
+    body TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_anonymous TINYINT(1) DEFAULT 0,
+    INDEX(segment_id),
+    INDEX(user_id),
+    INDEX(created_at)
+);
+
+CREATE TABLE Votes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    target_type ENUM('media', 'branch', 'segment'),
+    target_id INT,
+    vote_value TINYINT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX(user_id),
+    INDEX(target_type, target_id),
+    INDEX(created_at)
+);
+
+-- 07_credits_logs.sql
+CREATE TABLE Credits_Log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    change_amount INT,
+    reason VARCHAR(255),
+    related_id INT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX(user_id),
+    INDEX(created_at)
+);
+
+-- 08_admin_moderation.sql
+CREATE TABLE Admin_Moderation (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    ip_address VARCHAR(45),
+    device_hash VARCHAR(255),
+    action VARCHAR(255),
+    reason TEXT,
+    expires_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX(user_id),
+    INDEX(action),
+    INDEX(created_at)
+);
+</file>
+
+<file path="db.md">
+ContinueThe.Quest Database Schema Documentation
+
+This document outlines a comprehensive and scalable database schema for the ContinueThe.Quest platform. It clearly explains table structures, columns, interactions, sorting mechanisms, and optimization strategies for high-performance handling of large datasets.
+
+General Database Design Principles
+
+Scalability:
+
+Use integer-based primary keys.
+
+Index columns used frequently in WHERE clauses or JOINs.
+
+Partition data logically (by user directories for file storage).
+
+Performance:
+
+Optimize queries with appropriate indexing.
+
+Avoid redundant data; normalize where practical, but denormalize to optimize read-heavy operations.
+
+Flexibility:
+
+Use ENUM and flags judiciously for easily extendable features.
+
+Ensure tagging systems and sorting preferences are modular and easily extendable.
+
+Table Structure Overview
+
+1. Users
+
+Columns:
+
+id: INT, auto-increment (PK)
+
+username: VARCHAR, unique
+
+passkey_id: VARCHAR, nullable (WebAuthn)
+
+passphrase_hash: VARCHAR (fallback)
+
+email: VARCHAR, optional
+
+is_admin: TINYINT (0/1)
+
+is_banned: TINYINT (0/1)
+
+credit_balance: INT
+
+sort_preference: ENUM ('new', 'hot', 'rising', 'popular'), default 'new'
+
+created_at, last_active_at: DATETIME
+
+Interactions:
+
+Owns media, branches, segments, comments, tags.
+
+Credits are awarded/deducted for interactions.
+
+Sorting preferences are saved per user for consistent UX.
+
+2. Media
+
+Columns:
+
+id: INT (PK)
+
+title: VARCHAR, unique
+
+description: TEXT
+
+cover_image: VARCHAR
+
+created_by: INT (FK: Users)
+
+vote_score: INT (cached)
+
+created_at: DATETIME
+
+Interactions:
+
+Has many branches.
+
+Can be tagged extensively.
+
+Sortable by votes, created date, recent activity.
+
+3. Branches
+
+Columns:
+
+id: INT (PK)
+
+media_id: INT (FK: Media)
+
+title: VARCHAR
+
+summary: TEXT
+
+branch_type: ENUM ('before', 'after', 'other')
+
+source_type: ENUM ('book', 'show', 'movie', 'other')
+
+cover_image: VARCHAR
+
+created_by: INT (FK: Users)
+
+vote_score: INT (cached)
+
+created_at: DATETIME
+
+Interactions:
+
+Has multiple segments.
+
+Can be individually tagged.
+
+Sortable by votes, recency, activity.
+
+4. Segments
+
+Columns:
+
+id: INT (PK)
+
+branch_id: INT (FK: Branches)
+
+title: VARCHAR
+
+markdown_body: LONGTEXT (stored as file on disk)
+
+image_path: VARCHAR, optional
+
+created_by: INT
+
+vote_score: INT (cached)
+
+order_index: INT
+
+created_at: DATETIME
+
+Interactions:
+
+Each segment has markdown text stored separately to manage large content efficiently.
+
+Sortable by index order, creation date, and votes.
+
+5. Tags (Unified System)
+
+Columns:
+
+id: INT (PK)
+
+name: VARCHAR, unique
+
+is_genre: TINYINT
+
+created_by: INT (NULL for admin)
+
+created_at: DATETIME
+
+Interactions:
+
+Applied to media, branches, segments.
+
+Tags marked as is_genre dynamically populate navigation.
+
+Tags restricted per user to prevent spam; rewarded when creating novel tags.
+
+6. Tag Links
+
+Columns:
+
+id: INT (PK)
+
+tag_id: INT (FK: Tags)
+
+target_type: ENUM ('media', 'branch', 'segment')
+
+target_id: INT
+
+tagged_by: INT (FK: Users)
+
+tagged_at: DATETIME
+
+Interactions:
+
+Flexibly applies tags to various content types.
+
+Ensures uniqueness per content-tag relationship.
+
+7. Comments
+
+Columns:
+
+id: INT (PK)
+
+segment_id: INT (FK: Segments)
+
+user_id: INT (FK: Users)
+
+body: TEXT
+
+created_at: DATETIME
+
+is_anonymous: TINYINT
+
+Interactions:
+
+User engagement via commenting on segments.
+
+Sortable by recency, popularity (votes).
+
+8. Votes
+
+Columns:
+
+id: INT (PK)
+
+user_id: INT
+
+target_type: ENUM ('media', 'branch', 'segment')
+
+target_id: INT
+
+vote_value: TINYINT
+
+created_at: DATETIME
+
+Interactions:
+
+Drives visibility sorting (popular, hot).
+
+9. Credits Log
+
+Columns:
+
+id: INT (PK)
+
+user_id: INT
+
+change_amount: INT
+
+reason: VARCHAR
+
+related_id: INT, optional
+
+created_at: DATETIME
+
+Interactions:
+
+Tracks all credit changes per user.
+
+10. Admin Moderation
+
+Columns (Bans & Activity Logs):
+
+id: INT (PK)
+
+user_id: INT
+
+ip_address: VARCHAR
+
+device_hash: VARCHAR
+
+action: VARCHAR
+
+reason: TEXT
+
+expires_at: DATETIME (for bans)
+
+created_at: DATETIME
+
+Interactions:
+
+Ensures platform integrity, security, and moderation capability.
+
+Sorting & Scalability Techniques
+
+Sorting Options:
+
+All tables and queries support flexible sorting (votes, recent activity, creation date).
+
+Cache frequently updated counts (vote_score) to optimize sorting.
+
+Scalability Practices:
+
+Index frequently queried columns: foreign keys, dates, vote counts.
+
+Limit joins; prefer caching and denormalization where performance-critical.
+
+Use filesystem-based storage segmented per user to efficiently track quotas and optimize file retrieval.
+
+Additional Recommendations
+
+Partition large tables based on date (created_at) or other logical factors to enhance query performance.
+
+Implement automated archiving strategies for historical data.
+
+Consider read replicas for scaling read-heavy operations.
+</file>
+
+<file path="index.php">
+Testing.
+</file>
+
+<file path="project.md">
+ContinueThe.Quest Project Documentation
+
+Project Overview
+
+ContinueThe.Quest is a collaborative storytelling platform that allows users and AI to expand and continue unfinished stories or universes from various media sources such as TV shows, movies, books, and games. Users can add original media, create story branches, write or generate content segments, and interact through comments, votes, and tags. The goal is to foster a dynamic community-driven environment that scales efficiently and is highly performant.
+
+Tech Stack
+
+Backend: PHP (Fast, procedural programming style)
+
+Frontend: Vanilla JavaScript, Tailwind CSS
+
+Database: MariaDB
+
+Storage: File-system based for large textual content and user assets
+
+Authentication: WebAuthn (Passkey-first), with fallback passphrase
+
+Project Goals
+
+Facilitate easy collaboration on unfinished or alternate story universes.
+
+Maintain high-performance and scalability to accommodate large-scale user-generated content.
+
+Provide flexible and intuitive tagging, sorting, and navigation systems.
+
+Foster a strong community with incentivized interactions and clear credit systems.
+
+Ensure robust moderation tools for platform security and integrity.
+
+Core Functionality
+
+User Authentication
+
+Passkey-first authentication (WebAuthn)
+
+Optional fallback passphrase login
+
+Robust account recovery and moderation capabilities
+
+Media Creation
+
+Users create media entries, providing a title, description, and cover image.
+
+Media entries act as containers for story branches.
+
+Tags are applied for categorization and enhanced discoverability.
+
+Story Branches
+
+Within media entries, users can create multiple narrative branches.
+
+Branches can specify if they are before, after, or alternate to existing stories.
+
+Each branch holds segments, representing chapters or narrative sections.
+
+Content Segments
+
+Individual segments are Markdown-based textual content stored on disk for efficient retrieval.
+
+Each segment can include an optional cover image.
+
+Supports both user-generated and AI-assisted content creation.
+
+Tagging System
+
+Unified tagging system used across media, branches, and segments.
+
+Special tags flagged by admins (is_genre) automatically populate navigation and site content.
+
+Users can add new tags with limitations to prevent spam, incentivizing valuable tagging.
+
+Community Interaction
+
+Users can comment, vote, and engage with media, branches, and segments.
+
+User interactions generate credit awards, incentivizing participation.
+
+Flexible sorting options (new, hot, popular, rising) applied throughout the site, with user preference saving.
+
+Credit System
+
+Credits tracked and logged for all user actions.
+
+Credit spending required for certain actions (e.g., AI-assisted content).
+
+Moderation and Admin Tools
+
+Comprehensive moderation including banning, throttling, and activity monitoring.
+
+Admin dashboard for content and user management.
+
+Project Structure
+
+/
+├── assets
+│   ├── js
+│   └── css
+├── admin
+│   ├── assets
+│   │   ├── js
+│   │   └── css
+│   ├── dashboard.php
+│   └── moderation.php
+├── uploads
+│   └── users
+│       └── <user_id>
+│           ├── avatars
+│           ├── images
+│           └── texts
+├── includes
+│   ├── auth.php
+│   ├── database.php
+│   └── utils.php
+├── db
+│   └── schema
+│       ├── 01_users.sql
+│       ├── 02_media.sql
+│       ├── 03_branches.sql
+│       ├── 04_segments.sql
+│       ├── 05_tags.sql
+│       ├── 06_comments_votes.sql
+│       ├── 07_credits_logs.sql
+│       └── 08_admin_moderation.sql
+├── index.php
+├── login.php
+└── project.md (this document)
+
+Scalability and Performance
+
+Filesystem-based user-specific directories ensure efficient disk quota tracking and rapid file retrieval.
+
+Indexing strategies for MariaDB to optimize queries (votes, tags, timestamps).
+
+Caching strategies employed for frequently accessed data (e.g., vote scores).
+
+Partitioning of large tables recommended for scaling (date-based or logical segmentation).
+
+Future Enhancements
+
+Payment integration for premium features
+
+Advanced AI generation capabilities
+
+Rich analytics for user engagement and content performance
+
+Expanded social and interactive features to further foster community growth
+</file>
+
+</files>
