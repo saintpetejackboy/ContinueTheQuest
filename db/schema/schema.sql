@@ -2,8 +2,6 @@
 CREATE TABLE Users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
-    passkey_id VARCHAR(255),
-    passphrase_hash VARCHAR(255),
     email VARCHAR(255),
     is_admin TINYINT(1) DEFAULT 0,
     is_banned TINYINT(1) DEFAULT 0,
@@ -14,6 +12,35 @@ CREATE TABLE Users (
     INDEX(username),
     INDEX(email)
 );
+
+-- Add missing columns to Users table
+ALTER TABLE Users 
+ADD COLUMN quota BIGINT DEFAULT 104857600, -- Default 100MB (100 * 1024 * 1024)
+ADD COLUMN bio TEXT DEFAULT NULL,
+ADD COLUMN avatar VARCHAR(255) DEFAULT NULL,
+ADD COLUMN passphrase_hash VARCHAR(255) DEFAULT NULL;
+
+-- Rename credit_balance to credits for consistency with your code
+ALTER TABLE Users 
+CHANGE COLUMN credit_balance credits INT DEFAULT 0;
+
+
+CREATE TABLE User_Passkeys (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    credential_id VARBINARY(255) NOT NULL, -- Keep VARBINARY for efficiency, or change to BLOB if needed
+    public_key BLOB NOT NULL,              -- CHANGE THIS TO BLOB
+    sign_count INT UNSIGNED NOT NULL,
+    transports VARCHAR(255),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_used_at DATETIME,
+    UNIQUE KEY (credential_id), -- No need for length specifier if BLOB/VARBINARY directly, or if using a sufficiently large VARBINARY
+    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+
+ALTER TABLE User_Passkeys
+ADD COLUMN attestation_type VARCHAR(255) NOT NULL DEFAULT 'none' AFTER transports,
+ADD COLUMN aaguid CHAR(36) AFTER attestation_type;
 
 -- 02_media.sql
 CREATE TABLE Media (
@@ -155,3 +182,5 @@ CREATE TABLE Submissions (
     INDEX(email),
     INDEX(created_at)
 );
+
+

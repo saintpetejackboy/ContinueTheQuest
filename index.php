@@ -1,5 +1,7 @@
 <?php
 require __DIR__ . '/bootstrap.php';
+
+$currentUser = getCurrentUser();
 ?>
 <!DOCTYPE html>
 <html lang="en" class="">
@@ -24,22 +26,19 @@ require __DIR__ . '/bootstrap.php';
 </head>
 <body class="bg-background text-foreground antialiased">
 
-<!-- Header -->
 <header class="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
     <div class="container mx-auto px-4 h-16 flex items-center justify-between">
-        <!-- Logo/Brand -->
         <div class="flex items-center gap-4">
             <button id="menu-toggle" class="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
             </button>
-            <a href="/" class="text-xl font-semibold text-primary hover:text-primary/80 transition-colors">
+            <a href="?page=home" class="text-xl font-semibold text-primary hover:text-primary/80 transition-colors">
                 ContinueThe<span class="text-muted-foreground">.</span>Quest
             </a>
         </div>
         
-        <!-- Desktop Nav -->
         <nav class="hidden lg:flex items-center gap-6">
             <a href="?page=home" class="nav-link text-muted-foreground hover:text-foreground transition-colors">Home</a>
             <div class="relative group">
@@ -51,31 +50,23 @@ require __DIR__ . '/bootstrap.php';
                 </button>
                 <div class="absolute top-full left-0 mt-2 w-48 bg-card rounded-lg shadow-xl border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                     <div id="genre-menu" class="py-2">
-                        <!-- Populated by JS from DB -->
-                    </div>
+                        </div>
                 </div>
             </div>
             <a href="?page=browse" class="nav-link text-muted-foreground hover:text-foreground transition-colors">Browse</a>
             <a href="?page=about" class="nav-link text-muted-foreground hover:text-foreground transition-colors">About</a>
-            <a href="?page=faq" class="nav-link text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
-            <a href="?page=contact" class="nav-link text-muted-foreground hover:text-foreground transition-colors">Contact</a>
         </nav>
         
-        <!-- Right Actions -->
         <div class="flex items-center gap-4">
-            <button class="p-2 hover:bg-muted rounded-lg transition-colors" title="Search">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-            </button>
-            <button id="theme-toggle" class="p-2 hover:bg-muted rounded-lg transition-colors" title="Toggle theme">
-                <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-                </svg>
-                <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                </svg>
-            </button>
+            <?php if ($currentUser): ?>
+                <a href="?page=profile" class="text-sm font-medium hover:text-primary transition-colors">
+                    <?php echo htmlspecialchars($currentUser['username']); ?>
+                </a>
+                <a href="/api/auth/logout.php" class="text-sm text-muted-foreground hover:text-foreground transition-colors">Logout</a>
+            <?php else: ?>
+                <a href="?page=login" class="nav-link text-muted-foreground hover:text-foreground transition-colors">Login</a>
+                <a href="?page=register" class="btn-primary-sm">Register</a>
+            <?php endif; ?>
         </div>
     </div>
 </header>
@@ -153,7 +144,8 @@ require __DIR__ . '/bootstrap.php';
 </footer>
     
 <!-- Core Scripts -->
-<script src="assets/js/core.js"></script>
+<script src="/assets/js/core.js" defer></script>
 <script src="assets/js/router.js"></script>
+<?php include('includes/coin.php'); ?>
 </body>
 </html>

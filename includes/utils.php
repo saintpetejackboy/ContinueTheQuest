@@ -1,6 +1,6 @@
 <?php
 // Common utility functions for ContinueThe.Quest
-
+// includes/utils.php
 /**
  * Sanitize output for HTML
  */
@@ -11,7 +11,7 @@ function h($str) {
 /**
  * Get database connection
  */
-// includes/utils.php
+
 function getDB() {
     static $pdo = null;
     if ($pdo !== null) {
@@ -54,6 +54,29 @@ function getDB() {
     return $pdo;
 }
 
+function base64url_decode(string $data): string {
+    $remainder = strlen($data) % 4;
+    if ($remainder) {
+        $padlen = 4 - $remainder;
+        $data .= str_repeat('=', $padlen);
+    }
+    return base64_decode(strtr($data, '-_', '+/'));
+}
+
+
+/**
+ * Get directory size in bytes
+ */
+function getDirSize($dir) {
+    $size = 0;
+    if (!is_dir($dir)) return $size;
+    
+    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $file) {
+        $size += $file->getSize();
+    }
+    return $size;
+}
+
 
 /**
  * Generate CSRF token
@@ -94,13 +117,39 @@ function jsonResponse($data, $code = 200) {
  * Get user upload directory
  */
 function getUserUploadDir($userId) {
+    // Create base directory path
     $baseDir = __DIR__ . '/../uploads/users/' . intval($userId);
-    if (!is_dir($baseDir)) {
-        mkdir($baseDir, 0755, true);
-        mkdir($baseDir . '/avatars', 0755);
-        mkdir($baseDir . '/images', 0755);
-        mkdir($baseDir . '/texts', 0755);
+    
+    // Check if parent directories exist
+    $parentDir = dirname($baseDir);
+    if (!is_dir($parentDir)) {
+        // Create parent directories recursively
+        if (!mkdir($parentDir, 0755, true)) {
+            error_log("Failed to create parent directory: $parentDir");
+            return false;
+        }
     }
+    
+    // Create user directory if it doesn't exist
+    if (!is_dir($baseDir)) {
+        if (!mkdir($baseDir, 0755, true)) {
+            error_log("Failed to create user directory: $baseDir");
+            return false;
+        }
+        
+        // Create subdirectories
+        $subdirs = ['avatars', 'images', 'texts'];
+        foreach ($subdirs as $dir) {
+          $path = __DIR__ . '/../uploads/users/' . $userId;
+if (!is_dir($path)) {
+    if (!mkdir($path, 0755, true)) {
+        error_log("Failed to create user directory: $path");
+    }
+}
+
+        }
+    }
+    
     return $baseDir;
 }
 
@@ -142,13 +191,7 @@ function generateSlug($str) {
     return trim($str, '-');
 }
 
-/**
- * Get current user (placeholder for auth system)
- */
-function getCurrentUser() {
-    // TODO: Implement actual auth
-    return null;
-}
+
 
 /**
  * Check if user is admin

@@ -1,4 +1,5 @@
 # Node artifacts (if ever used locally)
+# .gitignore
 node_modules/
 package.json
 
@@ -18,6 +19,11 @@ output.css
 # Env
 .env
 .env.*
+# Composer vendor dir
+/vendor/
+
+# Session files if stored locally
+/sessions/
 
 # Test data (can be regenerated)
 test-data/
@@ -34,3 +40,15 @@ site.webmanifest
 
 # Genre test-data (if you prefer to regenerate)
 test-data/genres.json
+
+*.cache
+
+# OS/editor junk
+.DS_Store
+*.swp
+*.bak
+
+# Node artifacts (if any)
+node_modules/
+package-lock.json
+yarn.lock

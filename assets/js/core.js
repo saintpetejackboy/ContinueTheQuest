@@ -1,5 +1,5 @@
 // Core JavaScript functionality for ContinueThe.Quest
-
+// assets/js/core.js
 // ============================================================================
 // THEME MANAGEMENT SYSTEM
 // ============================================================================
@@ -33,12 +33,16 @@ class ThemeManager {
     }
 
     setupThemeToggle() {
-        const themeToggle = document.getElementById('theme-toggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => {
-                this.toggleTheme();
-            });
-        }
+		
+     // in ThemeManager.setupThemeToggle()
+// in ThemeManager.init(), *instead* of getElementById(…) 
+document.body.addEventListener('click', e => {
+  if (e.target.closest('#theme-toggle')) {
+    this.toggleTheme();
+  }
+});
+
+
     }
 
     setupSystemThemeListener() {

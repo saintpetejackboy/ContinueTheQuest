@@ -1,0 +1,508 @@
+<div class="w-full max-w-4xl mx-auto mt-8 space-y-8">
+    <!-- Theme Toggle Button (positioned in top-right) -->
+    <div class="flex justify-end mb-4">
+        <button id="theme-toggle" class="p-2 rounded-lg bg-card border border-border hover:bg-muted transition-colors" title="Toggle theme">
+            <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Loading indicator -->
+    <div id="loading" class="text-center py-8">
+        <div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+        <p class="mt-2 text-muted-foreground">Loading your profile...</p>
+    </div>
+
+    <!-- Profile content (hidden until loaded) -->
+    <div id="profile-content" class="hidden">
+        <!-- Header section -->
+        <div class="flex flex-col md:flex-row gap-6 items-start">
+            <!-- Avatar section -->
+            <div class="bg-card p-6 rounded-lg shadow-md border border-border w-full md:w-64">
+                <div class="aspect-square overflow-hidden rounded-full bg-muted mb-4 relative group">
+                    <img id="avatar-preview" class=" object-cover" src="img/bookie-cartoon.webp" style="width: 400px; margin: auto;" alt="Profile avatar">
+                    <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <label for="avatar-upload" class="cursor-pointer text-white hover:text-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M12 12v9"></path><path d="m16 16-4-4-4 4"></path></svg>
+                            <span class="block text-xs mt-1">Change</span>
+                        </label>
+                    </div>
+                </div>
+                <form id="avatar-form" class="hidden">
+                    <input type="file" id="avatar-upload" name="avatar" accept="image/*" class="hidden">
+                </form>
+                <h1 id="username-display" class="text-xl font-bold text-center truncate"></h1>
+                <p id="member-since" class="text-sm text-muted-foreground text-center"></p>
+            </div>
+
+            <!-- User stats section -->
+            <div class="bg-card p-6 rounded-lg shadow-md border border-border w-full flex-grow">
+                <h2 class="text-lg font-semibold mb-4">Stats & Credits</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-muted-foreground">Credits:</span>
+                            <span id="user-credits" class="font-medium"></span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-muted-foreground">Media Created:</span>
+                            <span id="stats-media" class="font-medium">0</span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-muted-foreground">Branches Created:</span>
+                            <span id="stats-branches" class="font-medium">0</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-muted-foreground">Segments Written:</span>
+                            <span id="stats-segments" class="font-medium">0</span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-muted-foreground">Comments Posted:</span>
+                            <span id="stats-comments" class="font-medium">0</span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-muted-foreground">Email:</span>
+                            <span id="user-email" class="font-medium truncate"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Storage usage -->
+                <h3 class="text-md font-semibold mt-4 mb-2">Storage Usage</h3>
+                <div class="mb-1 flex justify-between text-xs">
+                    <span id="storage-used"></span>
+                    <span id="storage-total"></span>
+                </div>
+                <div class="w-full bg-muted rounded-full h-2.5">
+                    <div id="storage-bar" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-2 text-xs text-muted-foreground">
+                    <span id="storage-avatars"></span>
+                    <span id="storage-images"></span>
+                    <span id="storage-texts"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bio section -->
+        <div class="bg-card p-6 rounded-lg shadow-md border border-border">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold">Bio</h2>
+                <button id="edit-bio-toggle" class="text-sm text-primary hover:underline">Edit</button>
+            </div>
+            <div id="bio-display" class="prose prose-sm dark:prose-invert max-w-none">
+                <p id="bio-content" class="min-h-[3rem]">No bio yet.</p>
+            </div>
+            <div id="bio-edit" class="hidden">
+                <textarea id="bio-textarea" class="w-full p-2 rounded-md border border-border bg-background min-h-[6rem]" maxlength="500"></textarea>
+                <div class="flex justify-between mt-2">
+                    <span id="bio-char-count" class="text-sm text-muted-foreground">0/500</span>
+                    <div class="space-x-2">
+                        <button id="bio-cancel" class="text-sm hover:underline">Cancel</button>
+                        <button id="bio-save" class="btn-primary btn-sm">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security section -->
+        <div class="bg-card p-6 rounded-lg shadow-md border border-border">
+            <h2 class="text-lg font-semibold mb-4">Security</h2>
+            
+            <!-- Passkeys section -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-md font-medium">Passkeys</h3>
+                    <button id="register-new-passkey" class="btn-primary btn-sm">Add New Passkey</button>
+                </div>
+                <div id="passkeys-container" class="space-y-2">
+                    <p class="text-muted-foreground text-sm">Loading passkeys...</p>
+                </div>
+            </div>
+            
+            <!-- Fallback passphrase section -->
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-md font-medium">Fallback Passphrase</h3>
+                    <button id="toggle-passphrase-form" class="btn-outline btn-sm">
+                        <span id="passphrase-action">Set</span> Passphrase
+                    </button>
+                </div>
+                <div id="passphrase-status" class="text-sm text-muted-foreground">
+                    No passphrase set. Setting a passphrase allows you to log in without a passkey.
+                </div>
+                
+                <form id="passphrase-form" class="mt-4 space-y-4 hidden">
+                    <div id="current-passphrase-container" class="hidden">
+                        <label for="current-passphrase" class="block text-sm font-medium mb-1">Current Passphrase</label>
+                        <input type="password" id="current-passphrase" name="current-password" class="w-full p-2 rounded-md border border-border bg-background" required>
+                    </div>
+                    
+                    <div>
+                        <label for="new-passphrase" class="block text-sm font-medium mb-1">New Passphrase</label>
+                        <input type="password" id="new-passphrase" class="w-full p-2 rounded-md border border-border bg-background" required minlength="8">
+                        <p class="text-xs text-muted-foreground mt-1">Minimum 8 characters</p>
+                    </div>
+                    
+                    <div>
+                        <label for="confirm-passphrase" class="block text-sm font-medium mb-1">Confirm New Passphrase</label>
+                        <input type="password" id="confirm-passphrase" class="w-full p-2 rounded-md border border-border bg-background" required>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" id="cancel-passphrase" class="btn-ghost btn-sm">Cancel</button>
+                        <button type="submit" class="btn-primary btn-sm">Save Passphrase</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(async () => {
+    // Import passkey functions
+    const { registerPasskey } = await import('/assets/js/passkey-auth.js');
+    
+    // Function to load profile data
+    async function loadProfile() {
+        try {
+            const response = await fetch('/api/users/profile.php');
+            if (!response.ok) {
+                throw new Error('Failed to load profile');
+            }
+            
+            const profile = await response.json();
+            renderProfile(profile);
+            
+            // Load passkeys
+            await loadPasskeys();
+            
+            // Hide loading, show content
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('profile-content').classList.remove('hidden');
+        } catch (err) {
+            console.error('Profile load error:', err);
+            if (err.message.includes('Unauthorized')) {
+                window.location.href = '/?page=login';
+            }
+        }
+    }
+    
+    // Function to render profile data
+    function renderProfile(profile) {
+        // Basic info
+        document.getElementById('username-display').textContent = profile.user.username;
+        document.getElementById('user-email').textContent = profile.user.email;
+        document.getElementById('member-since').textContent = `Member since ${new Date(profile.user.created_at).toLocaleDateString()}`;
+        console.log(profile);
+        // Avatar
+        if (profile.user.avatar_url) {
+            document.getElementById('avatar-preview').src = profile.user.avatar_url;
+        }
+        
+        // Bio
+        const bioContent = document.getElementById('bio-content');
+        const bioTextarea = document.getElementById('bio-textarea');
+        if (profile.user.bio) {
+            bioContent.textContent = profile.user.bio;
+            bioTextarea.value = profile.user.bio;
+        } else {
+            bioContent.textContent = 'No bio yet.';
+            bioTextarea.value = '';
+        }
+        updateBioCharCount();
+        
+        // Credits
+        document.getElementById('user-credits').textContent = profile.credits;
+        
+        // Stats
+        document.getElementById('stats-media').textContent = profile.stats.media_created;
+        document.getElementById('stats-branches').textContent = profile.stats.branches_created;
+        document.getElementById('stats-segments').textContent = profile.stats.segments_written;
+        document.getElementById('stats-comments').textContent = profile.stats.comments_posted;
+        
+        // Storage
+        document.getElementById('storage-used').textContent = `Used: ${profile.disk_usage.used_formatted}`;
+        document.getElementById('storage-total').textContent = `Total: ${profile.disk_usage.quota_formatted}`;
+        document.getElementById('storage-bar').style.width = `${profile.disk_usage.percent}%`;
+        
+        document.getElementById('storage-avatars').textContent = `Avatars: ${profile.disk_usage.breakdown.avatars}`;
+        document.getElementById('storage-images').textContent = `Images: ${profile.disk_usage.breakdown.images}`;
+        document.getElementById('storage-texts').textContent = `Texts: ${profile.disk_usage.breakdown.texts}`;
+        
+        // Passphrase status
+        updatePassphraseUI(profile.has_passphrase);
+    }
+
+    // Function to load passkeys
+    async function loadPasskeys() {
+        try {
+            const response = await fetch('/api/users/passkeys.php');
+            const text = await response.text();
+
+            console.log('HTTP Status:', response.status);
+            console.log('Raw response:', text);
+
+            if (!text || !response.ok) {
+                throw new Error('Failed to load passkeys');
+            }
+
+            const data = JSON.parse(text);
+            console.log('Passkeys:', data);
+
+            if (!data.passkeys || !Array.isArray(data.passkeys)) {
+                throw new Error('Invalid passkeys format');
+            }
+
+            renderPasskeys(data.passkeys);
+        } catch (err) {
+            console.error('Passkeys load error:', err);
+            document.getElementById('passkeys-container').innerHTML = 
+                '<p class="text-red-500 text-sm">Failed to load passkeys. Please refresh the page.</p>';
+        }
+    }
+
+    // Function to render passkeys
+    function renderPasskeys(passkeys) {
+        const container = document.getElementById('passkeys-container');
+        
+        if (passkeys.length === 0) {
+            container.innerHTML = '<p class="text-muted-foreground text-sm">No passkeys registered yet.</p>';
+            return;
+        }
+        
+        const passkeysHtml = passkeys.map(passkey => `
+            <div class="flex justify-between items-center p-3 bg-background rounded border border-border">
+                <div>
+                 
+                    <div class="text-xs text-muted-foreground">
+                        Created: ${new Date(passkey.created_at).toLocaleDateString()}<br>
+                        Last used: ${passkey.last_used !== 'Never' ? new Date(passkey.last_used).toLocaleDateString() : 'Never'}
+                    </div>
+                </div>
+                <button class="revoke-passkey btn-outline btn-sm text-red-500" data-id="${passkey.id}">Revoke</button>
+            </div>
+        `).join('');
+        
+        container.innerHTML = passkeysHtml;
+        
+        // Add event listeners to revoke buttons
+        document.querySelectorAll('.revoke-passkey').forEach(button => {
+            button.addEventListener('click', handleRevokePasskey);
+        });
+    }
+    
+    // Function to handle passkey revocation
+    async function handleRevokePasskey(e) {
+        const passkeyId = e.target.dataset.id;
+        if (!confirm('Are you sure you want to revoke this passkey? You will no longer be able to use it to log in.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/users/revoke_passkey.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ passkey_id: passkeyId })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to revoke passkey');
+            }
+            
+            // Reload passkeys
+            await loadPasskeys();
+        } catch (err) {
+            alert(err.message);
+            console.error('Revoke error:', err);
+        }
+    }
+    
+    // Function to update passphrase UI
+    function updatePassphraseUI(hasPassphrase) {
+        const statusEl = document.getElementById('passphrase-status');
+        const actionEl = document.getElementById('passphrase-action');
+        const currentContainer = document.getElementById('current-passphrase-container');
+        
+        if (hasPassphrase) {
+            statusEl.textContent = 'Passphrase is set. You can use it to log in without a passkey.';
+            actionEl.textContent = 'Change';
+            currentContainer.classList.remove('hidden');
+        } else {
+            statusEl.textContent = 'No passphrase set. Setting a passphrase allows you to log in without a passkey.';
+            actionEl.textContent = 'Set';
+            currentContainer.classList.add('hidden');
+        }
+    }
+    
+    // Function to update bio character count
+    function updateBioCharCount() {
+        const textarea = document.getElementById('bio-textarea');
+        const counter = document.getElementById('bio-char-count');
+        counter.textContent = `${textarea.value.length}/500`;
+    }
+    
+    // Event listener for bio textarea
+    document.getElementById('bio-textarea').addEventListener('input', updateBioCharCount);
+    
+    // Event listener for bio edit toggle
+    document.getElementById('edit-bio-toggle').addEventListener('click', () => {
+        document.getElementById('bio-display').classList.add('hidden');
+        document.getElementById('bio-edit').classList.remove('hidden');
+    });
+    
+    // Event listener for bio cancel
+    document.getElementById('bio-cancel').addEventListener('click', () => {
+        document.getElementById('bio-edit').classList.add('hidden');
+        document.getElementById('bio-display').classList.remove('hidden');
+    });
+    
+    // Event listener for bio save
+    document.getElementById('bio-save').addEventListener('click', async () => {
+        const bioText = document.getElementById('bio-textarea').value;
+        
+        try {
+            const response = await fetch('/api/users/update_bio.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bio: bioText })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to update bio');
+            }
+            
+            // Update the displayed bio
+            document.getElementById('bio-content').textContent = result.bio || 'No bio yet.';
+            
+            // Hide edit form
+            document.getElementById('bio-edit').classList.add('hidden');
+            document.getElementById('bio-display').classList.remove('hidden');
+        } catch (err) {
+            alert(err.message);
+            console.error('Bio update error:', err);
+        }
+    });
+    
+    // Event listener for register new passkey
+    document.getElementById('register-new-passkey').addEventListener('click', async () => {
+        try {
+            await registerPasskey();
+            alert('New passkey registered successfully!');
+            await loadPasskeys();
+        } catch (err) {
+            console.error(err);
+            alert('Failed to register new passkey: ' + err.message);
+        }
+    });
+    
+    // Event listener for toggle passphrase form
+    document.getElementById('toggle-passphrase-form').addEventListener('click', () => {
+        const form = document.getElementById('passphrase-form');
+        form.classList.toggle('hidden');
+
+        const hasPassphrase = document.getElementById('current-passphrase-container').classList.contains('hidden') === false;
+        const currentInput = document.getElementById('current-passphrase');
+
+        if (hasPassphrase) {
+            currentInput.setAttribute('required', 'required');
+        } else {
+            currentInput.removeAttribute('required');
+        }
+    });
+    
+    // Event listener for cancel passphrase
+    document.getElementById('cancel-passphrase').addEventListener('click', () => {
+        document.getElementById('passphrase-form').classList.add('hidden');
+        document.getElementById('passphrase-form').reset();
+    });
+    
+    // Event listener for passphrase form submission
+    document.getElementById('passphrase-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const newPassphrase = document.getElementById('new-passphrase').value;
+        const confirmPassphrase = document.getElementById('confirm-passphrase').value;
+        const currentPassphrase = document.getElementById('current-passphrase').value;
+        
+        if (newPassphrase !== confirmPassphrase) {
+            alert('Passphrases do not match');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/users/set_passphrase.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    passphrase: newPassphrase,
+                    current_passphrase: currentPassphrase
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to set passphrase');
+            }
+            
+            alert('Passphrase updated successfully');
+            document.getElementById('passphrase-form').classList.add('hidden');
+            document.getElementById('passphrase-form').reset();
+            
+            // Update UI to show passphrase is set
+            updatePassphraseUI(true);
+            
+        } catch (err) {
+            alert(err.message);
+            console.error('Passphrase update error:', err);
+        }
+    });
+    
+    // Event listener for avatar upload
+    document.getElementById('avatar-upload').addEventListener('change', async (e) => {
+        if (!e.target.files.length) return;
+        
+        const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append('avatar', file);
+        
+        try {
+            const response = await fetch('/api/users/upload_avatar.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to upload avatar');
+            }
+            
+            // Update avatar preview
+            document.getElementById('avatar-preview').src = result.avatar_url;
+            
+        } catch (err) {
+            alert(err.message);
+            console.error('Avatar upload error:', err);
+        }
+    });
+    
+    // Load profile data when page loads
+    await loadProfile();
+})();
+
+
+
+</script>

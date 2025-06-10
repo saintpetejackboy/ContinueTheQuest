@@ -1,0 +1,41 @@
+<!-- register.html !-->
+<div class="w-full max-w-md mx-auto mt-12">
+    <div class="bg-card p-8 rounded-lg shadow-lg border border-border">
+        <h1 class="text-2xl font-bold text-center mb-6">Create an Account</h1>
+        <form id="register-form" class="space-y-4">
+            <div>
+                <label for="username" class="block text-sm font-medium text-muted-foreground mb-1">Username</label>
+                <input type="text" id="username" name="username" class="form-input" required>
+            </div>
+            <div>
+                <label for="email" class="block text-sm font-medium text-muted-foreground mb-1">Email</label>
+                <input type="email" id="email" name="email" class="form-input" required>
+            </div>
+            <button type="submit" class="btn-primary w-full">Register with Passkey</button>
+        </form>
+    </div>
+</div>
+<script>
+    (async () => {
+        const { registerUser, registerPasskey } = await import('/assets/js/passkey-auth.js');
+        const form = document.getElementById('register-form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = form.username.value;
+            const email = form.email.value;
+            try {
+                // Step 1: Create the user and establish a session
+                await registerUser(username, email);
+
+                // Step 2: NOW that we are logged in, register the first passkey
+                await registerPasskey();
+                
+                // Success! Redirect to the profile page.
+                window.location.href = '/?page=profile';
+            } catch (err) {
+                console.error(err);
+                alert('Registration failed. ' + err.message);
+            }
+        });
+    })();
+</script>

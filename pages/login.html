@@ -1,0 +1,99 @@
+<div class="w-full max-w-md mx-auto mt-12">
+    <div class="bg-card p-8 rounded-lg shadow-lg border border-border">
+        <h1 class="text-2xl font-bold text-center mb-6">Sign In</h1>
+        
+        <div id="passkey-login">
+            <form id="passkey-form" class="space-y-4">
+                <button type="submit" class="btn-primary w-full">Sign in with a Passkey</button>
+            </form>
+            
+            <div class="mt-4 text-center">
+                <button id="toggle-passphrase" class="text-sm text-primary hover:underline">
+                    Use Passphrase Instead
+                </button>
+            </div>
+        </div>
+        
+        <div id="passphrase-login" class="hidden">
+            <form id="passphrase-form" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium mb-1">Username</label>
+                    <input type="text" id="username" class="w-full p-2 rounded-md border border-border bg-background" required>
+                </div>
+                
+                <div>
+                    <label for="passphrase" class="block text-sm font-medium mb-1">Passphrase</label>
+                    <input type="password" id="passphrase" class="w-full p-2 rounded-md border border-border bg-background" required>
+                </div>
+                
+                <button type="submit" class="btn-primary w-full">Sign in with Passphrase</button>
+            </form>
+            
+            <div class="mt-4 text-center">
+                <button id="toggle-passkey" class="text-sm text-primary hover:underline">
+                    Use Passkey Instead
+                </button>
+            </div>
+        </div>
+        
+        <p class="text-center text-sm text-muted-foreground mt-4">
+            Don't have an account? <a href="?page=register" class="text-primary hover:underline">Register</a>
+        </p>
+    </div>
+</div>
+
+<script>
+(async () => {
+    const { loginPasskey } = await import('/assets/js/passkey-auth.js');
+    
+    // Toggle between passkey and passphrase login
+    document.getElementById('toggle-passphrase').addEventListener('click', () => {
+        document.getElementById('passkey-login').classList.add('hidden');
+        document.getElementById('passphrase-login').classList.remove('hidden');
+    });
+    
+    document.getElementById('toggle-passkey').addEventListener('click', () => {
+        document.getElementById('passphrase-login').classList.add('hidden');
+        document.getElementById('passkey-login').classList.remove('hidden');
+    });
+    
+    // Passkey login form
+    document.getElementById('passkey-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            await loginPasskey();
+            window.location.href = '/?page=profile';
+        } catch (err) {
+            console.error('Login Error:', err);
+            alert(err.message || 'Login failed. Please try again.');
+        }
+    });
+    
+    // Passphrase login form
+    document.getElementById('passphrase-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const passphrase = document.getElementById('passphrase').value;
+        
+        try {
+            const response = await fetch('/api/auth/passphrase_login.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, passphrase })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Login failed');
+            }
+            
+            window.location.href = '/?page=profile';
+        } catch (err) {
+            console.error('Login Error:', err);
+            alert(err.message || 'Login failed. Please try again.');
+        }
+    });
+})();
+</script>
