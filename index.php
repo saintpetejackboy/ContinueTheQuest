@@ -55,6 +55,9 @@ $currentUser = getCurrentUser();
             </div>
             <a href="?page=browse" class="nav-link text-muted-foreground hover:text-foreground transition-colors">Browse</a>
             <a href="?page=about" class="nav-link text-muted-foreground hover:text-foreground transition-colors">About</a>
+            <?php if ($currentUser && $currentUser['is_admin']): ?>
+                <a href="?page=admin" class="nav-link text-muted-foreground hover:text-foreground transition-colors">Admin</a>
+            <?php endif; ?>
         </nav>
         
         <div class="flex items-center gap-4">
@@ -93,6 +96,9 @@ $currentUser = getCurrentUser();
         <a href="?page=about" class="block px-3 py-2 rounded-lg hover:bg-muted transition-colors">About</a>
         <a href="?page=faq" class="block px-3 py-2 rounded-lg hover:bg-muted transition-colors">FAQ</a>
         <a href="?page=contact" class="block px-3 py-2 rounded-lg hover:bg-muted transition-colors">Contact</a>
+        <?php if ($currentUser && $currentUser['is_admin']): ?>
+            <a href="?page=admin" class="block px-3 py-2 rounded-lg hover:bg-muted transition-colors">Admin</a>
+        <?php endif; ?>
         
         <div class="border-t border-border mt-4 pt-4">
             <div class="text-sm font-medium text-muted-foreground mb-2 px-3">Legal</div>
@@ -145,7 +151,7 @@ $currentUser = getCurrentUser();
     
 <!-- Core Scripts -->
 <script src="/assets/js/core.js" defer></script>
-<script src="assets/js/router.js"></script>
+<script src="/assets/js/router.js" defer></script>
 <?php include('includes/coin.php'); ?>
 </body>
 </html>

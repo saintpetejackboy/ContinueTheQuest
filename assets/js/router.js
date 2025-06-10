@@ -26,8 +26,11 @@ const Router = {
     this._cleanupCurrentPage();
 
     try {
-      const res = await fetch(`pages/${page}.html`);
-      if (!res.ok) throw new Error('not found');
+      let res = await fetch(`/pages/${page}.html`);
+      if (!res.ok) {
+        res = await fetch(`/pages/${page}/index.html`);
+        if (!res.ok) throw new Error('not found');
+      }
 
       // Inject the HTML (link & script tags will be parsed)
       content.innerHTML = await res.text();
