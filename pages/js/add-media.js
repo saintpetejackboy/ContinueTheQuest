@@ -193,6 +193,7 @@ class AddMediaManager {
     }
     
     removeFile(index) {
+        URL.revokeObjectURL(this.selectedFiles[index]);
         this.selectedFiles.splice(index, 1);
         
         // Adjust cover image index if necessary
@@ -333,6 +334,12 @@ class AddMediaManager {
     
     // Cleanup method for router
     cleanup() {
+        // Revoke all object URLs to prevent memory leaks
+        this.selectedFiles.forEach(file => {
+            if (file instanceof File) {
+                URL.revokeObjectURL(file);
+            }
+        });
         
         // Clear timeouts
         if (this.tagSearchTimeout) {

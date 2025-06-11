@@ -1,186 +1,263 @@
--- 01_users.sql
-CREATE TABLE Users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(255) UNIQUE NOT NULL,
-    email VARCHAR(255),
-    is_admin TINYINT(1) DEFAULT 0,
-    is_banned TINYINT(1) DEFAULT 0,
-    credit_balance INT DEFAULT 0,
-    sort_preference ENUM('new', 'hot', 'rising', 'popular') DEFAULT 'new',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_active_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX(username),
-    INDEX(email)
-);
-
--- Add missing columns to Users table
-ALTER TABLE Users 
-ADD COLUMN quota BIGINT DEFAULT 104857600, -- Default 100MB (100 * 1024 * 1024)
-ADD COLUMN bio TEXT DEFAULT NULL,
-ADD COLUMN avatar VARCHAR(255) DEFAULT NULL,
-ADD COLUMN passphrase_hash VARCHAR(255) DEFAULT NULL;
-
--- Rename credit_balance to credits for consistency with your code
-ALTER TABLE Users 
-CHANGE COLUMN credit_balance credits INT DEFAULT 0;
 
 
-CREATE TABLE User_Passkeys (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    credential_id VARBINARY(255) NOT NULL, -- Keep VARBINARY for efficiency, or change to BLOB if needed
-    public_key BLOB NOT NULL,              -- CHANGE THIS TO BLOB
-    sign_count INT UNSIGNED NOT NULL,
-    transports VARCHAR(255),
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_used_at DATETIME,
-    UNIQUE KEY (credential_id), -- No need for length specifier if BLOB/VARBINARY directly, or if using a sufficiently large VARBINARY
-    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
-);
+-- --------------------------------------------------------
 
-ALTER TABLE User_Passkeys
-ADD COLUMN attestation_type VARCHAR(255) NOT NULL DEFAULT 'none' AFTER transports,
-ADD COLUMN aaguid CHAR(36) AFTER attestation_type;
+--
+-- Table structure for table `admin_moderation`
+--
 
--- 02_media.sql
-CREATE TABLE Media (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) UNIQUE NOT NULL,
-    description TEXT,
-    cover_image VARCHAR(255),
-    created_by INT,
-    vote_score INT DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX(created_at),
-    INDEX(vote_score),
-    INDEX(created_by)
-);
+CREATE TABLE `admin_moderation` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `device_hash` varchar(255) DEFAULT NULL,
+  `action` varchar(255) DEFAULT NULL,
+  `reason` text DEFAULT NULL,
+  `expires_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- 03_branches.sql
-CREATE TABLE Branches (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    media_id INT,
-    title VARCHAR(255),
-    summary TEXT,
-    branch_type ENUM('before', 'after', 'other'),
-    source_type ENUM('book', 'show', 'movie', 'other'),
-    cover_image VARCHAR(255),
-    created_by INT,
-    vote_score INT DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX(media_id),
-    INDEX(created_by),
-    INDEX(created_at),
-    INDEX(vote_score)
-);
+-- --------------------------------------------------------
 
--- 04_segments.sql
-CREATE TABLE Segments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    branch_id INT,
-    title VARCHAR(255),
-    markdown_body LONGTEXT,
-    image_path VARCHAR(255),
-    created_by INT,
-    vote_score INT DEFAULT 0,
-    order_index INT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX(branch_id),
-    INDEX(created_by),
-    INDEX(order_index),
-    INDEX(created_at),
-    INDEX(vote_score)
-);
+--
+-- Table structure for table `backup_endpoints`
+--
 
--- 05_tags.sql
-CREATE TABLE Tags (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) UNIQUE,
-    is_genre TINYINT(1) DEFAULT 0,
-    created_by INT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX(name),
-    INDEX(is_genre),
-    INDEX(created_by)
-);
+CREATE TABLE `backup_endpoints` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `url` varchar(255) NOT NULL,
+  `encrypted_credentials` text NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE Tag_Links (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tag_id INT,
-    target_type ENUM('media', 'branch', 'segment'),
-    target_id INT,
-    tagged_by INT,
-    tagged_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE INDEX unique_tag_target (tag_id, target_type, target_id),
-    INDEX(tag_id),
-    INDEX(tagged_by)
-);
+-- --------------------------------------------------------
 
--- 06_comments_votes.sql
-CREATE TABLE Comments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    segment_id INT,
-    user_id INT,
-    body TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    is_anonymous TINYINT(1) DEFAULT 0,
-    INDEX(segment_id),
-    INDEX(user_id),
-    INDEX(created_at)
-);
+--
+-- Table structure for table `backup_logs`
+--
 
-CREATE TABLE Votes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    target_type ENUM('media', 'branch', 'segment'),
-    target_id INT,
-    vote_value TINYINT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX(user_id),
-    INDEX(target_type, target_id),
-    INDEX(created_at)
-);
+CREATE TABLE `backup_logs` (
+  `id` int(11) NOT NULL,
+  `schedule_id` int(11) NOT NULL,
+  `started_at` datetime NOT NULL,
+  `finished_at` datetime NOT NULL,
+  `success` tinyint(1) NOT NULL,
+  `output` text DEFAULT NULL,
+  `error_message` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- 07_credits_logs.sql
-CREATE TABLE Credits_Log (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    change_amount INT,
-    reason VARCHAR(255),
-    related_id INT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX(user_id),
-    INDEX(created_at)
-);
+-- --------------------------------------------------------
 
--- 08_admin_moderation.sql
-CREATE TABLE Admin_Moderation (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    ip_address VARCHAR(45),
-    device_hash VARCHAR(255),
-    action VARCHAR(255),
-    reason TEXT,
-    expires_at DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX(user_id),
-    INDEX(action),
-    INDEX(created_at)
-);
+--
+-- Table structure for table `backup_schedules`
+--
 
+CREATE TABLE `backup_schedules` (
+  `id` int(11) NOT NULL,
+  `endpoint_id` int(11) NOT NULL,
+  `backup_type` enum('code','database','both') NOT NULL DEFAULT 'both',
+  `frequency` enum('hourly','daily','weekly','monthly') NOT NULL DEFAULT 'daily',
+  `last_run_at` datetime DEFAULT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE Submissions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    type ENUM('notify','contact') NOT NULL COMMENT 'notify = early-access form; contact = message form',
-    name VARCHAR(255) NULL,
-    email VARCHAR(255) NOT NULL,
-    subject VARCHAR(255) NULL,
-    message TEXT NULL,
-    consent TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = user consented',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX(type),
-    INDEX(email),
-    INDEX(created_at)
-);
+-- --------------------------------------------------------
 
+--
+-- Table structure for table `branches`
+--
 
+CREATE TABLE `branches` (
+  `id` int(11) NOT NULL,
+  `media_id` int(11) DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `summary` text DEFAULT NULL,
+  `branch_type` enum('before','after','other') DEFAULT NULL,
+  `source_type` enum('book','show','movie','other') DEFAULT NULL,
+  `cover_image` varchar(255) DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `vote_score` int(11) DEFAULT 0,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `comments`
+--
+
+CREATE TABLE `comments` (
+  `id` int(11) NOT NULL,
+  `segment_id` int(11) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `body` text DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `is_anonymous` tinyint(1) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `credits_log`
+--
+
+CREATE TABLE `credits_log` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `change_amount` int(11) DEFAULT NULL,
+  `reason` varchar(255) DEFAULT NULL,
+  `related_id` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `media`
+--
+
+CREATE TABLE `media` (
+  `id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `cover_image` varchar(255) DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `vote_score` int(11) DEFAULT 0,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `media_images`
+--
+
+CREATE TABLE `media_images` (
+  `id` int(11) NOT NULL,
+  `media_id` int(11) NOT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `order_index` int(11) DEFAULT 0,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `segments`
+--
+
+CREATE TABLE `segments` (
+  `id` int(11) NOT NULL,
+  `branch_id` int(11) DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `markdown_body` longtext DEFAULT NULL,
+  `image_path` varchar(255) DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `vote_score` int(11) DEFAULT 0,
+  `order_index` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `submissions`
+--
+
+CREATE TABLE `submissions` (
+  `id` int(11) NOT NULL,
+  `type` enum('notify','contact') NOT NULL COMMENT 'notify = early-access form; contact = message form',
+  `name` varchar(255) DEFAULT NULL,
+  `email` varchar(255) NOT NULL,
+  `subject` varchar(255) DEFAULT NULL,
+  `message` text DEFAULT NULL,
+  `consent` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1 = user consented',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tags`
+--
+
+CREATE TABLE `tags` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `is_genre` tinyint(1) DEFAULT 0,
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tag_links`
+--
+
+CREATE TABLE `tag_links` (
+  `id` int(11) NOT NULL,
+  `tag_id` int(11) DEFAULT NULL,
+  `target_type` enum('media','branch','segment') DEFAULT NULL,
+  `target_id` int(11) DEFAULT NULL,
+  `tagged_by` int(11) DEFAULT NULL,
+  `tagged_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL,
+  `username` varchar(255) NOT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `is_admin` tinyint(1) DEFAULT 0,
+  `is_banned` tinyint(1) DEFAULT 0,
+  `credits` int(11) DEFAULT 0,
+  `sort_preference` enum('new','hot','rising','popular') DEFAULT 'new',
+  `created_at` datetime DEFAULT current_timestamp(),
+  `last_active_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `quota` bigint(20) DEFAULT 1048576,
+  `bio` text DEFAULT NULL,
+  `avatar` varchar(255) DEFAULT NULL,
+  `passphrase_hash` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_passkeys`
+--
+
+CREATE TABLE `user_passkeys` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `credential_id` varbinary(255) NOT NULL,
+  `public_key` blob NOT NULL,
+  `sign_count` int(10) UNSIGNED NOT NULL,
+  `transports` varchar(255) DEFAULT NULL,
+  `attestation_type` varchar(255) NOT NULL DEFAULT 'none',
+  `aaguid` char(36) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `last_used_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `votes`
+--
+
+CREATE TABLE `votes` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `target_type` enum('media','branch','segment') DEFAULT NULL,
+  `target_id` int(11) DEFAULT NULL,
+  `vote_value` tinyint(4) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

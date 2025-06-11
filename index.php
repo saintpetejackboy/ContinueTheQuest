@@ -54,6 +54,9 @@ $currentUser = getCurrentUser();
                 </div>
             </div>
             <a href="?page=browse" class="nav-link text-muted-foreground hover:text-foreground transition-colors">Browse</a>
+            <?php if ($currentUser): ?>
+                <a href="?page=add-media" class="nav-link text-muted-foreground hover:text-foreground transition-colors">Add Media</a>
+            <?php endif; ?>
             <a href="?page=about" class="nav-link text-muted-foreground hover:text-foreground transition-colors">About</a>
             <?php if ($currentUser && $currentUser['is_admin']): ?>
                 <a href="?page=admin" class="nav-link text-muted-foreground hover:text-foreground transition-colors">Admin</a>
@@ -93,6 +96,9 @@ $currentUser = getCurrentUser();
             </div>
         </div>
         <a href="?page=browse" class="block px-3 py-2 rounded-lg hover:bg-muted transition-colors">Browse</a>
+        <?php if ($currentUser): ?>
+            <a href="?page=add-media" class="block px-3 py-2 rounded-lg hover:bg-muted transition-colors">Add Media</a>
+        <?php endif; ?>
         <a href="?page=about" class="block px-3 py-2 rounded-lg hover:bg-muted transition-colors">About</a>
         <a href="?page=faq" class="block px-3 py-2 rounded-lg hover:bg-muted transition-colors">FAQ</a>
         <a href="?page=contact" class="block px-3 py-2 rounded-lg hover:bg-muted transition-colors">Contact</a>

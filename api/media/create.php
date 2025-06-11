@@ -31,16 +31,6 @@ $tags = json_decode($_POST['tags'] ?? '[]', true) ?: [];
 $coverImageIndex = intval($_POST['cover_image_index'] ?? 0);
 
 $db = getDB();
-
-// Prevent duplicate media titles (case-insensitive via collation)
-$dupStmt = $db->prepare('SELECT id FROM media WHERE title = ?');
-$dupStmt->execute([$title]);
-if ($dupStmt->fetch()) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Media with this title already exists. Please choose a different title.']);
-    exit;
-}
-
 $db->beginTransaction();
 
 try {
