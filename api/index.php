@@ -4,8 +4,6 @@
 require __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../includes/utils.php';
 
-// Start session for CSRF
-session_start();
 
 // Set JSON header by default
 header('Content-Type: application/json');
@@ -55,13 +53,9 @@ function handleGenres($method) {
         jsonResponse(['error' => 'Method not allowed'], 405);
     }
 
-    error_log('handleGenres reached');   // ← log right away
-
     $db = getDB();
     $stmt = $db->query("SELECT id, name FROM Tags WHERE is_genre = 1 ORDER BY name");
     $genres = $stmt->fetchAll();
-
-    error_log('Found '. count($genres) .' genres');   // ← check how many
 
     jsonResponse(['genres' => $genres]);
 }

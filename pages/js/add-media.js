@@ -3,18 +3,19 @@ class AddMediaManager {
     constructor() {
         this.selectedFiles = [];
         this.tagSearchTimeout = null;
+        this.titleCheckTimeout = null;
         this.coverImageIndex = 0;
         this.userCredits = 0;
         this.taggingSystem = null;
         
         this.init();
     }
+
     
     init() {
-        this.loadUserCredits();
         this.setupEventListeners();
         this.setupTagSystem();
-        this.updateCostEstimate();
+        this.loadUserCredits();
     }
     
     async loadUserCredits() {
@@ -23,7 +24,12 @@ class AddMediaManager {
             if (response.ok) {
                 const data = await response.json();
                 this.userCredits = data.credits || 0;
+                this.userStorageUsed = data.space_used || 0;
+                this.userStorageAvailable = data.space_available || 0;
                 document.getElementById('user-credits').textContent = this.userCredits;
+                document.getElementById('storage-used').textContent = this.formatFileSize(this.userStorageUsed);
+                document.getElementById('storage-available').textContent = this.formatFileSize(this.userStorageAvailable);
+                this.updateCostEstimate();
             }
         } catch (error) {
             console.error('Error loading user credits:', error);
@@ -74,6 +80,40 @@ class AddMediaManager {
         description.addEventListener('input', () => {
             const count = description.value.length;
             document.getElementById('description-count').textContent = count;
+        });
+        
+        // Title uniqueness check and suggestion
+        const titleInput = document.getElementById('title');
+        const titleWarning = document.getElementById('title-warning');
+        titleInput.addEventListener('input', () => {
+            clearTimeout(this.titleCheckTimeout);
+            const value = titleInput.value.trim();
+            if (!value) {
+                titleWarning.classList.add('hidden');
+                return;
+            }
+            this.titleCheckTimeout = setTimeout(async () => {
+                try {
+                    const resp = await fetch(`/api/media/check-title.php?title=${encodeURIComponent(value)}`);
+                    if (resp.ok) {
+                        const result = await resp.json();
+                        if (result.exists) {
+                            titleWarning.innerHTML =
+                                `Title already exists. <button type="button" id="use-suggested" class="underline">Use "${result.suggestion}"</button>`;
+                            titleWarning.classList.remove('hidden');
+                            document.getElementById('use-suggested').addEventListener('click', () => {
+                                titleInput.value = result.suggestion;
+                                titleWarning.classList.add('hidden');
+                                titleInput.focus();
+                            });
+                        } else {
+                            titleWarning.classList.add('hidden');
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error checking title:', err);
+                }
+            }, 500);
         });
     }
     
@@ -142,6 +182,8 @@ class AddMediaManager {
         container.classList.remove('hidden');
         container.innerHTML = '';
         
+        // Track duplicate file names to give unique display names
+        const nameCounts = {};
         this.selectedFiles.forEach((file, index) => {
             const wrapper = document.createElement('div');
             wrapper.className = 'relative group';
@@ -174,10 +216,18 @@ class AddMediaManager {
             controls.appendChild(removeBtn);
             overlay.appendChild(controls);
             
-            // File info
+            // File info with unique display name on duplicate names
             const info = document.createElement('div');
             info.className = 'mt-2 text-xs text-muted-foreground truncate';
-            info.textContent = `${file.name} (${this.formatFileSize(file.size)})`;
+            // Generate a unique display name if there are duplicates
+            const originalName = file.name;
+            const count = nameCounts[originalName] || 0;
+            const parts = originalName.split('.');
+            const ext = parts.length > 1 ? '.' + parts.pop() : '';
+            const baseName = parts.join('.') || originalName;
+            const displayName = count > 0 ? `${baseName} (${count})${ext}` : originalName;
+            nameCounts[originalName] = count + 1;
+            info.textContent = `${displayName} (${this.formatFileSize(file.size)})`;
             
             wrapper.appendChild(img);
             wrapper.appendChild(overlay);
@@ -217,32 +267,57 @@ class AddMediaManager {
     
 
     
+    getSelectedBytes() {
+        return this.selectedFiles.reduce((total, file) => total + file.size, 0);
+    }
+
     updateCostEstimate() {
+        // Estimate credits
         const baseCost = 1; // Creating media
-        const tagCostData = this.taggingSystem ? this.taggingSystem.getCostEstimate() : { newTags: 0, totalCost: 0 };
+        const tagCostData = this.taggingSystem
+            ? this.taggingSystem.getCostEstimate()
+            : { newTags: 0, totalCost: 0 };
         const totalCost = baseCost + tagCostData.totalCost;
-        
+
+        // Update credits UI
         const estimateEl = document.getElementById('estimated-credits');
         const breakdownEl = document.getElementById('cost-breakdown');
-        const containerEl = document.getElementById('credits-estimate');
-        
+        const costContainerEl = document.getElementById('credits-estimate');
         estimateEl.textContent = totalCost;
-        
         let breakdown = 'Media creation: 1 credit';
         if (tagCostData.newTags > 0) {
             breakdown += `, New tags: ${tagCostData.newTags} credits`;
         }
         breakdownEl.textContent = breakdown;
-        
-        containerEl.classList.remove('hidden');
-        
-        // Update submit button
+        costContainerEl.classList.remove('hidden');
+
+        // Estimate storage
+        const storageContainerEl = document.getElementById('storage-estimate');
+        const storageEstimateEl = document.getElementById('estimated-storage');
+        const storageBreakdownEl = document.getElementById('storage-breakdown');
+        const selectedBytes = this.getSelectedBytes();
+        if (this.selectedFiles.length === 0) {
+            storageContainerEl.classList.add('hidden');
+        } else {
+            storageContainerEl.classList.remove('hidden');
+            storageEstimateEl.textContent = this.formatFileSize(selectedBytes);
+            storageBreakdownEl.textContent = `Available: ${this.formatFileSize(
+                this.userStorageAvailable
+            )}. After upload: ${this.formatFileSize(
+                Math.max(this.userStorageAvailable - selectedBytes, 0)
+            )}`;
+        }
+
+        // Update submit button state
         const submitBtn = document.getElementById('submit-button');
         const submitText = document.getElementById('submit-text');
-        
         if (totalCost > this.userCredits) {
             submitBtn.disabled = true;
             submitText.textContent = `Insufficient Credits (Need ${totalCost})`;
+            submitBtn.classList.add('opacity-50');
+        } else if (selectedBytes > this.userStorageAvailable) {
+            submitBtn.disabled = true;
+            submitText.textContent = 'Insufficient Storage';
             submitBtn.classList.add('opacity-50');
         } else {
             submitBtn.disabled = false;
@@ -345,6 +420,9 @@ class AddMediaManager {
         if (this.tagSearchTimeout) {
             clearTimeout(this.tagSearchTimeout);
         }
+        if (this.titleCheckTimeout) {
+            clearTimeout(this.titleCheckTimeout);
+        }
         
         // Cleanup tagging system
         if (this.taggingSystem) {
@@ -353,10 +431,8 @@ class AddMediaManager {
     }
 }
 
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    window.addMediaManager = new AddMediaManager();
-});
+// Initialize for router-loaded page
+window.addMediaManager = new AddMediaManager();
 
 // Cleanup for router
 window.addMediaPage = {

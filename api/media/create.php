@@ -28,6 +28,7 @@ if ($title === '') {
 
 $description = trim($_POST['description'] ?? '');
 $tags = json_decode($_POST['tags'] ?? '[]', true) ?: [];
+$tags = array_unique(array_filter(array_map('trim', $tags)));
 $coverImageIndex = intval($_POST['cover_image_index'] ?? 0);
 
 $db = getDB();
@@ -53,14 +54,20 @@ try {
     $existingTagIds = [];
     
     if (!empty($tags)) {
-        $placeholders = str_repeat('?,', count($tags) - 1) . '?';
-        $stmt = $db->prepare("SELECT id, name FROM tags WHERE name IN ($placeholders)");
-        $stmt->execute($tags);
-        $existingTags = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-        
+        $lowerTags = array_map('mb_strtolower', $tags);
+        $placeholders = str_repeat('?,', count($lowerTags) - 1) . '?';
+        $stmt = $db->prepare("SELECT id, name FROM tags WHERE LOWER(name) IN ($placeholders)");
+        $stmt->execute($lowerTags);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $existingTags = [];
+        foreach ($rows as $row) {
+            $existingTags[mb_strtolower($row['name'])] = $row['id'];
+        }
+
         foreach ($tags as $tagName) {
-            if (isset($existingTags[$tagName])) {
-                $existingTagIds[] = $existingTags[$tagName];
+            $lower = mb_strtolower($tagName);
+            if (isset($existingTags[$lower])) {
+                $existingTagIds[] = $existingTags[$lower];
             } else {
                 $newTags[] = $tagName;
                 $creditsNeeded++; // Each new tag costs 1 credit
@@ -217,7 +224,11 @@ function convertImageToWebP($source, $destination) {
     }
     
     if (!$image) return false;
-    
+
+    if (!imageistruecolor($image)) {
+        imagepalettetotruecolor($image);
+    }
+
     // Convert to WebP with quality 85
     $result = imagewebp($image, $destination, 85);
     imagedestroy($image);

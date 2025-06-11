@@ -4,7 +4,9 @@ module.exports = {
   content: [
     './*.php',
     './pages/*.html',
+    './pages/admin/**/*.html',
     './assets/js/*.js',
+    './pages/admin/js/*.js',
   ],
   darkMode: 'class',
   theme: {

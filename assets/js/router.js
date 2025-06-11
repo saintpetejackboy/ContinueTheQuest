@@ -72,8 +72,12 @@ const Router = {
   _runInlineScripts(container) {
     container.querySelectorAll('script').forEach(old => {
       const s = document.createElement('script');
-      if (old.src) s.src = old.src;
-      else s.textContent = old.textContent;
+      if (old.src) {
+        s.src = old.src;
+        s.async = false;
+      } else {
+        s.textContent = old.textContent;
+      }
       document.body.appendChild(s);
       old.remove();
     });

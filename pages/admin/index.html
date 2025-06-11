@@ -2,15 +2,28 @@
 <section class="max-w-6xl mx-auto space-y-6">
   <h1 class="text-2xl font-semibold">Admin Dashboard</h1>
   <nav class="flex space-x-4 border-b border-border pb-2">
-    <a href="?page=admin" class="text-primary border-b-2 border-primary pb-1">Manage Users</a>
+    <a href="?page=admin&section=users" data-section="users" class="text-primary border-b-2 border-primary pb-1">Manage Users</a>
+    <a href="?page=admin&section=stats" data-section="stats" class="text-muted-foreground hover:text-primary pb-1">System Stats</a>
+    <a href="?page=admin&section=backups" data-section="backups" class="text-muted-foreground hover:text-primary pb-1">Backups</a>
   </nav>
 
   <div id="admin-content" class="mt-4">
     <div class="text-center py-8">
       <div class="animate-spin inline-block h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-      <p class="mt-2 text-muted-foreground">Loading users...</p>
+      <p class="mt-2 text-muted-foreground">Loading...</p>
     </div>
   </div>
 
+  <!-- File Viewer Modal -->
+  <div id="file-viewer-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+    <div id="file-viewer-content" class="bg-card rounded-lg p-6 max-w-4xl w-full max-h-[80vh] overflow-auto transform transition-all scale-95 opacity-0 border border-border">
+      <div class="flex justify-between items-center mb-4">
+        <h3 id="file-viewer-title" class="text-xl font-semibold"></h3>
+        <button type="button" id="file-viewer-close" class="btn-secondary">Close</button>
+      </div>
+      <div id="file-viewer-body"></div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="/pages/admin/js/admin.js"></script>
 </section>
