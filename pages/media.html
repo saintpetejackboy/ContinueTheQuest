@@ -6,10 +6,13 @@
 (function() {
     const scriptsToLoad = [];
     if (typeof TaggingSystem === 'undefined') {
-        scriptsToLoad.push('/assets/js/tagging-system.js');
+        scriptsToLoad.push('/pages/js/tagging-system.js');
     }
     if (typeof MediaPage === 'undefined') {
         scriptsToLoad.push('/pages/js/media.js');
+    }
+    if (typeof CommentThread === 'undefined') {
+        scriptsToLoad.push('/pages/js/comment-thread.js');
     }
     let loadIndex = 0;
     function loadNext() {

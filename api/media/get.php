@@ -23,7 +23,7 @@ try {
     // Fetch main media data and author info
     $stmt = $db->prepare(
         'SELECT m.id, m.title, m.description, m.cover_image, m.created_by, m.vote_score, m.created_at,
-                u.username, u.avatar, u.is_admin
+                u.username, u.avatar
          FROM media m
          JOIN users u ON u.id = m.created_by
          WHERE m.id = ?'
@@ -36,10 +36,18 @@ try {
         exit;
     }
 
-    // Fetch images
-    $stmt = $db->prepare('SELECT id, file_name, order_index, vote_score, hidden FROM media_images WHERE media_id = ? ORDER BY order_index ASC');
-    $stmt->execute([$mediaId]);
-    $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Fetch images (include hidden for editors/admins)
+    $currentUser = getCurrentUser();
+    $canEditOwner = $currentUser && $currentUser['id'] === (int)$media['created_by'];
+    $isAdmin = $currentUser && !empty($currentUser['is_admin']);
+    if ($canEditOwner || $isAdmin) {
+        $imgStmt = $db->prepare('SELECT id, file_name, order_index, vote_score, hidden FROM media_images WHERE media_id = ? ORDER BY order_index ASC');
+        $imgStmt->execute([$mediaId]);
+    } else {
+        $imgStmt = $db->prepare('SELECT id, file_name, order_index, vote_score, hidden FROM media_images WHERE media_id = ? AND hidden = 0 ORDER BY order_index ASC');
+        $imgStmt->execute([$mediaId]);
+    }
+    $images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Fetch tags
     $stmt = $db->prepare(
@@ -51,9 +59,8 @@ try {
     $stmt->execute([$mediaId]);
     $tags = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Check edit permissions
-    $currentUser = getCurrentUser();
-    $canEdit = $currentUser && $currentUser['id'] === (int)$media['created_by'];
+    // Determine edit permissions
+    $canEdit = $canEditOwner || $isAdmin;
 
     echo json_encode([
         'media' => [
@@ -64,9 +71,9 @@ try {
             'created_by' => (int)$media['created_by'],
             'author' => $media['username'],
             'author_avatar' => $media['avatar']
-                                 ? "/uploads/users/{$media['created_by']}/avatars/{$media['avatar']}"
-                                 : null,
-            'is_admin' => (bool)$media['is_admin'],
+                ? "/uploads/users/{$media['created_by']}/avatars/{$media['avatar']}"
+                : null,
+            'is_admin' => $isAdmin,
             'vote_score' => (int)$media['vote_score'],
             'created_at' => $media['created_at'],
             'images' => array_map(function($img) {
@@ -81,6 +88,7 @@ try {
             'tags' => array_map(function($t) {
                 return ['id' => (int)$t['id'], 'name' => $t['name']];
             }, $tags),
+            'can_edit_owner' => $canEditOwner,
             'can_edit' => $canEdit
         ]
     ]);

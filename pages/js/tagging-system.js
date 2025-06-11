@@ -1,4 +1,4 @@
-// /assets/js/tagging-system.js
+// /pages/js/tagging-system.js
 // Modular tagging system that can be used across the project
 
 class TaggingSystem {

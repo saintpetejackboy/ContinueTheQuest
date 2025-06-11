@@ -165,6 +165,28 @@
     </div>
 </div>
 
+<style>
+#storage-container {
+    position: relative;
+    width: 100%;
+    background-color: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#storage-bar {
+    height: 100%;
+    background-color: #4caf50;
+    transition: width 0.3s ease;
+}
+
+#storage-bar.overused {
+    background-color: red;
+}
+
+
+</style>
+
 <script>
 (async () => {
     // Import passkey functions
@@ -229,9 +251,25 @@
         document.getElementById('stats-comments').textContent = profile.stats.comments_posted;
         
         // Storage
-        document.getElementById('storage-used').textContent = `Used: ${profile.disk_usage.used_formatted}`;
-        document.getElementById('storage-total').textContent = `Total: ${profile.disk_usage.quota_formatted}`;
-        document.getElementById('storage-bar').style.width = `${profile.disk_usage.percent}%`;
+
+document.getElementById('storage-used').textContent = `Used: ${profile.disk_usage.used_formatted}`;
+document.getElementById('storage-total').textContent = `Total: ${profile.disk_usage.quota_formatted}`;
+
+const storageBar = document.getElementById('storage-bar');
+let percent = profile.disk_usage.percent;
+
+// Clamp the percentage to 100 for visual width
+const clampedPercent = Math.min(percent, 100);
+storageBar.style.width = `${clampedPercent}%`;
+
+// Change color to red if usage is over 100%
+if (percent > 100) {
+    storageBar.classList.add('overused');
+} else {
+    storageBar.classList.remove('overused');
+}
+
+
         
         document.getElementById('storage-avatars').textContent = `Avatars: ${profile.disk_usage.breakdown.avatars}`;
         document.getElementById('storage-images').textContent = `Images: ${profile.disk_usage.breakdown.images}`;

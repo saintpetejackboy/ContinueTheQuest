@@ -22,13 +22,26 @@ if (!in_array($targetType, $allowedTypes, true) || $targetId < 1) {
 
 $db = getDB();
 try {
-    $stmt = $db->prepare(
-        'SELECT id, user_id, body, is_anonymous, vote_score, created_at
-         FROM comments
-         WHERE target_type = ? AND target_id = ? AND hidden = 0
-         ORDER BY created_at ASC'
-    );
-    $stmt->execute([$targetType, $targetId]);
+    // Fetch comments (include hidden comments for admins)
+    $currentUser = getCurrentUser();
+    $isAdmin = $currentUser && !empty($currentUser['is_admin']);
+    if ($isAdmin) {
+        $stmt = $db->prepare(
+            'SELECT id, user_id, body, is_anonymous, vote_score, hidden, created_at
+             FROM comments
+             WHERE target_type = ? AND target_id = ?
+             ORDER BY created_at ASC'
+        );
+        $stmt->execute([$targetType, $targetId]);
+    } else {
+        $stmt = $db->prepare(
+            'SELECT id, user_id, body, is_anonymous, vote_score, created_at
+             FROM comments
+             WHERE target_type = ? AND target_id = ? AND hidden = 0
+             ORDER BY created_at ASC'
+        );
+        $stmt->execute([$targetType, $targetId]);
+    }
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $comments = [];
     foreach ($rows as $row) {
@@ -40,6 +53,9 @@ try {
             'vote_score' => (int)$row['vote_score'],
             'created_at' => $row['created_at']
         ];
+        if (isset($row['hidden'])) {
+            $comment['hidden'] = (bool)$row['hidden'];
+        }
         if (!$comment['is_anonymous']) {
             $userStmt = $db->prepare('SELECT username, avatar FROM users WHERE id = ?');
             $userStmt->execute([$row['user_id']]);

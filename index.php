@@ -2,11 +2,13 @@
 require __DIR__ . '/bootstrap.php';
 
 $currentUser = getCurrentUser();
-include('pages/frag/header.php'); 
-include('pages/frag/mobile.php'); 
+
+
 ?>
 
+<?php include('pages/frag/header.php'); ?>
 
+<?php include('pages/frag/menu.php'); ?>
 
     
 <!-- Main Content -->
@@ -19,6 +21,6 @@ include('pages/frag/mobile.php');
 <!-- Core Scripts -->
 <script src="/assets/js/core.js" defer></script>
 <script src="/assets/js/router.js" defer></script>
-<?php include('includes/coin.php'); ?>
+<?php include('pages/frag/footer.php'); ?>
 </body>
 </html>

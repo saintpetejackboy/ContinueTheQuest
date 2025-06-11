@@ -42,7 +42,8 @@ try {
     if (!$row) {
         throw new Exception('Media not found');
     }
-    if ((int)$row['created_by'] !== $user['id']) {
+    // Only media owner or admins may edit media
+    if ((int)$row['created_by'] !== $user['id'] && empty($user['is_admin'])) {
         http_response_code(403);
         echo json_encode(['error' => 'Forbidden']);
         exit;
