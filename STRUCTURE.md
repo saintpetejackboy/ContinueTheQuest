@@ -1,90 +1,306 @@
-# Project Structure
+# ContinueTheQuest — Project Structure
 
-## Directory Layout
+## 🗂 Directory Overview
 
 ```
 continuethequest/
-├── api/                    # API endpoints
-│   └── index.php          # Main API router
-├── assets/                # Static assets
-│   ├── js/               # JavaScript files
-│   │   ├── core.js       # Core functionality
-│   │   └── router.js     # Page routing
-│   └── css/              # Additional CSS (if needed)
-├── db/                    # Database files
-│   └── schema/           # SQL schema files
-│       └── schema.sql    # Complete schema
-├── includes/              # PHP includes
-│   └── utils.php         # Utility functions
-├── logs/                  # Application logs (git ignored)
-├── pages/                 # Page content
-│   ├── home.html         # Home page content
-│   ├── home.js           # Home page JS (optional)
-│   ├── about.html        # About page
-│   ├── browse.html       # Browse media page
-│   └── genre.html        # Genre-specific browse page
-├── test-data/             # Test/dummy data (git ignored)
-│   └── genres.json       # Sample genres
-├── uploads/               # User uploads (git ignored)
-│   └── users/            # User-specific directories
-├── .env                   # Environment config (git ignored)
-├── .env.example           # Example env file
-├── .gitignore            # Git ignore rules
-├── .htaccess             # Apache config
-├── .repomixignore        # Repomix ignore rules
-├── 404.html              # 404 error page
-├── 500.html              # 500 error page
-├── bootstrap.php         # Environment loader
-├── deploy.php            # Deployment script
-├── index.php             # Main entry point
-├── input.css             # Tailwind input
-├── output.css            # Compiled CSS (git ignored)
-├── package.json          # NPM config
-├── README.md             # Project readme
-└── tailwind.config.js    # Tailwind config
+├── api/              # RESTful endpoints (admin, auth, media, etc.)
+├── assets/           # Static assets (js/, css/)
+├── db/               # SQL schema
+├── favicons/         # Site icons and manifest
+├── img/              # Misc images
+├── includes/         # PHP includes/utilities
+├── logs/             # Log files (.gitignored)
+├── node_modules/     # NPM dependencies
+├── pages/            # Frontend views (HTML/JS/CSS)
+│   ├── admin/        # Admin-specific views
+│   ├── js/           # Page-specific JS
+│   └── frag/         # Header, footer, menu (modular PHP)
+├── scripts/          # Maintenance/dev tools
+├── test-data/        # Dev/test fixtures (.gitignored)
+├── uploads/          # User files by ID (.gitignored)
+├── vendor/           # Composer packages (PHP)
+├── .env              # Local config
+├── index.php         # App entry point
+├── bootstrap.php     # Runtime initializer
+├── input.css         # Tailwind source
+├── output.css        # Compiled CSS (.gitignored)
+├── tailwind.config.js# Tailwind config
+└── misc files        # 404.html, .gitignore, package.json, etc.
 ```
 
-## Key Components
 
-### Frontend Architecture
-- **Single Entry Point**: `index.php` serves as the main layout/skeleton
-- **Dynamic Loading**: Pages are loaded via JavaScript without full page refreshes
-- **Modular Pages**: Each page can have its own HTML, JS, and CSS files
-- **URL Routing**: Uses query parameters (`?page=name`) for navigation
+## 🧠 Architecture Summary
 
-### Backend Architecture
-- **Procedural PHP**: Fast, simple procedural style
-- **API Endpoints**: RESTful API in `/api/` for AJAX calls
-- **Database**: MariaDB with comprehensive schema
-- **File Storage**: User uploads stored in filesystem by user ID
+### Frontend
 
-### JavaScript Module System
-- **core.js**: Core functionality (menu, theme, utilities)
-- **router.js**: Handles page navigation and content loading
-- **Page-specific JS**: Optional JS files for individual pages
+* **Single entrypoint** (`index.php`) with dynamic page loading
+* **Router-based navigation** using query params (`?page=xyz`)
+* **Reusable fragments** in `pages/frag/` for header, footer, menu
+* **Tailwind CSS**, dark theme-first with a toggle
 
-### CSS Architecture
-- **Tailwind CSS**: Utility-first CSS framework
-- **Dark Theme Default**: Built with dark mode as primary
-- **Custom Components**: Defined in `input.css` layers
-- **Page-specific CSS**: Optional CSS files for unique page styles
+### Backend
 
-## Development Workflow
+* **Procedural PHP**, fast and readable
+* **Modular API structure** under `/api/`
+* **MariaDB** for storage, with normalized schema
+* **Uploads stored** per-user in filesystem
 
-1. **Add a New Page**:
-   - Create `pages/[name].html`
-   - Optionally add `pages/[name].js` and `pages/[name].css`
-   - Link to it with `?page=[name]`
+### JavaScript
 
-2. **Add API Endpoint**:
-   - Add case in `api/index.php`
-   - Create handler function
-   - Use from frontend with `fetch('/api/?endpoint=[name]')`
+* `core.js`: global utilities, theme, menu, etc.
+* `router.js`: handles SPA-like navigation
+* Per-page JS optionally loaded (`pages/js/`)
 
-3. **Build CSS**:
-   - Edit `input.css` or component classes
-   - Run `npm run build-css` or `npm run watch-css`
+---
 
-4. **Deploy Changes**:
-   - Run `php deploy.php` to verify setup
-   - Checks database, directories, and configuration
+## 🛠 Developer Notes
+
+* **Add a new page**: create `pages/[page].html` + optional `js/`, `css/`
+* **Add API**: extend `api/index.php` or add a file under `api/[module]/`
+* **Tailwind**: modify `input.css` and rebuild via `npm run build-css` (optional)
+
+---
+
+## 📄 Relevant SQL
+
+-- Table structure for table `admin_moderation`
+
+
+CREATE TABLE `admin_moderation` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `device_hash` varchar(255) DEFAULT NULL,
+  `action` varchar(255) DEFAULT NULL,
+  `reason` text DEFAULT NULL,
+  `expires_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Table structure for table `backup_endpoints`
+
+CREATE TABLE `backup_endpoints` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `url` varchar(255) NOT NULL,
+  `encrypted_credentials` text NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Table structure for table `backup_logs`
+
+CREATE TABLE `backup_logs` (
+  `id` int(11) NOT NULL,
+  `schedule_id` int(11) NOT NULL,
+  `started_at` datetime NOT NULL,
+  `finished_at` datetime NOT NULL,
+  `success` tinyint(1) NOT NULL,
+  `output` text DEFAULT NULL,
+  `error_message` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Table structure for table `backup_schedules`
+
+CREATE TABLE `backup_schedules` (
+  `id` int(11) NOT NULL,
+  `endpoint_id` int(11) NOT NULL,
+  `backup_type` enum('code','database','both') NOT NULL DEFAULT 'both',
+  `frequency` enum('hourly','daily','weekly','monthly') NOT NULL DEFAULT 'daily',
+  `last_run_at` datetime DEFAULT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Table structure for table `branches`
+
+CREATE TABLE `branches` (
+  `id` int(11) NOT NULL,
+  `media_id` int(11) DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `summary` text DEFAULT NULL,
+  `branch_type` enum('before','after','other') DEFAULT NULL,
+  `source_type` enum('book','show','movie','other') DEFAULT NULL,
+  `cover_image` varchar(255) DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `vote_score` int(11) DEFAULT 0,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Table structure for table `comments`
+
+CREATE TABLE `comments` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `target_type` enum('media','branch','segment','comment') NOT NULL,
+  `target_id` int(11) NOT NULL,
+  `body` text NOT NULL,
+  `is_anonymous` tinyint(1) NOT NULL DEFAULT 0,
+  `vote_score` int(11) NOT NULL DEFAULT 0,
+  `hidden` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- Table structure for table `credits_log`
+
+
+CREATE TABLE `credits_log` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `change_amount` int(11) DEFAULT NULL,
+  `reason` varchar(255) DEFAULT NULL,
+  `related_id` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- Table structure for table `media`
+
+CREATE TABLE `media` (
+  `id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `cover_image` varchar(255) DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `vote_score` int(11) DEFAULT 0,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+--
+-- Table structure for table `media_images`
+--
+
+CREATE TABLE `media_images` (
+  `id` int(11) NOT NULL,
+  `media_id` int(11) NOT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `order_index` int(11) NOT NULL DEFAULT 0,
+  `vote_score` int(11) NOT NULL DEFAULT 0,
+  `hidden` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+--
+-- Table structure for table `segments`
+--
+
+CREATE TABLE `segments` (
+  `id` int(11) NOT NULL,
+  `branch_id` int(11) DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `markdown_body` longtext DEFAULT NULL,
+  `image_path` varchar(255) DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `vote_score` int(11) DEFAULT 0,
+  `order_index` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+--
+-- Table structure for table `submissions`
+--
+
+CREATE TABLE `submissions` (
+  `id` int(11) NOT NULL,
+  `type` enum('notify','contact') NOT NULL COMMENT 'notify = early-access form; contact = message form',
+  `name` varchar(255) DEFAULT NULL,
+  `email` varchar(255) NOT NULL,
+  `subject` varchar(255) DEFAULT NULL,
+  `message` text DEFAULT NULL,
+  `consent` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1 = user consented',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+--
+-- Table structure for table `tags`
+--
+
+CREATE TABLE `tags` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `is_genre` tinyint(1) DEFAULT 0,
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+--
+-- Table structure for table `tag_links`
+--
+
+CREATE TABLE `tag_links` (
+  `id` int(11) NOT NULL,
+  `tag_id` int(11) DEFAULT NULL,
+  `target_type` enum('media','branch','segment') DEFAULT NULL,
+  `target_id` int(11) DEFAULT NULL,
+  `tagged_by` int(11) DEFAULT NULL,
+  `tagged_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL,
+  `username` varchar(255) NOT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `is_admin` tinyint(1) DEFAULT 0,
+  `is_banned` tinyint(1) DEFAULT 0,
+  `credits` int(11) DEFAULT 0,
+  `sort_preference` enum('new','hot','rising','popular') DEFAULT 'new',
+  `created_at` datetime DEFAULT current_timestamp(),
+  `last_active_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `quota` bigint(20) DEFAULT 1048576,
+  `bio` text DEFAULT NULL,
+  `avatar` varchar(255) DEFAULT NULL,
+  `passphrase_hash` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+--
+-- Table structure for table `user_passkeys`
+--
+
+CREATE TABLE `user_passkeys` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `credential_id` varbinary(255) NOT NULL,
+  `public_key` blob NOT NULL,
+  `sign_count` int(10) UNSIGNED NOT NULL,
+  `transports` varchar(255) DEFAULT NULL,
+  `attestation_type` varchar(255) NOT NULL DEFAULT 'none',
+  `aaguid` char(36) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `last_used_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+--
+-- Table structure for table `votes`
+--
+
+CREATE TABLE `votes` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `target_type` enum('media','branch','segment','comment','image') NOT NULL,
+  `target_id` int(11) NOT NULL,
+  `vote_value` tinyint(4) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
