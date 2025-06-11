@@ -1,4 +1,3 @@
-// Simple router for loading page content
 // assets/js/router.js
 const Router = {
   init() {
@@ -18,33 +17,34 @@ const Router = {
     if (!content) return;
     
     const page = new URLSearchParams(location.search).get('page') || 'home';
-    
-    // Update navigation highlighting
     this.updateNav(page);
-    
-    // Clean up any previous page resources
     this._cleanupCurrentPage();
 
     try {
-      let res = await fetch(`/pages/${page}.html`);
-      if (!res.ok) {
-        res = await fetch(`/pages/${page}/index.html`);
-        if (!res.ok) throw new Error('not found');
+      let res;
+
+      // —— Special case: admin page only lives at /pages/admin/index.html
+      if (page === 'admin') {
+        res = await fetch(`/pages/admin/index.html`);
+        if (!res.ok) throw new Error('admin not found');
+      } else {
+        // default behavior for all other pages
+        res = await fetch(`/pages/${page}.html`);
+        if (!res.ok) {
+          res = await fetch(`/pages/${page}/index.html`);
+          if (!res.ok) throw new Error('not found');
+        }
       }
 
-      // Inject the HTML (link & script tags will be parsed)
       content.innerHTML = await res.text();
-      
-      // Run any inline scripts
       this._runInlineScripts(content);
-      
-      // Scroll to top
       window.scrollTo(0, 0);
-      
-      // Update document title
-      const pageTitle = content.querySelector('h1')?.textContent || page.charAt(0).toUpperCase() + page.slice(1);
+
+      const pageTitle =
+        content.querySelector('h1')?.textContent ||
+        page.charAt(0).toUpperCase() + page.slice(1);
       document.title = `${pageTitle} | ContinueThe.Quest`;
-      
+
     } catch (error) {
       console.error('Page loading error:', error);
       content.innerHTML = `
@@ -60,22 +60,15 @@ const Router = {
   updateNav(page) {
     document.querySelectorAll('.nav-link').forEach(link => {
       const linkPage = new URLSearchParams(link.getAttribute('href')).get('page');
-      if (linkPage === page) {
-        link.classList.add('font-medium');
-      } else {
-        link.classList.remove('font-medium');
-      }
+      link.classList.toggle('font-medium', linkPage === page);
     });
   },
   
   _cleanupCurrentPage() {
-    // Call cleanup method if available on current page
     if (window.homePage?.cleanup) window.homePage.cleanup();
-    // Add other page cleanup methods as they're implemented
+    // add other page-specific cleanup calls here
   },
 
-  // <script> tags injected via innerHTML won't execute automatically,
-  // so we move them out and re-append them to trigger execution.
   _runInlineScripts(container) {
     container.querySelectorAll('script').forEach(old => {
       const s = document.createElement('script');
