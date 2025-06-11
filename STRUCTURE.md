@@ -21,7 +21,8 @@ continuethequest/
 │   ├── home.html         # Home page content
 │   ├── home.js           # Home page JS (optional)
 │   ├── about.html        # About page
-│   └── browse.html       # Browse page
+│   ├── browse.html       # Browse media page
+│   └── genre.html        # Genre-specific browse page
 ├── test-data/             # Test/dummy data (git ignored)
 │   └── genres.json       # Sample genres
 ├── uploads/               # User uploads (git ignored)

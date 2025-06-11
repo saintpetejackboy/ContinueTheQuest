@@ -11,7 +11,6 @@ class AddMediaManager {
         this.init();
     }
 
-    
     init() {
         this.setupEventListeners();
         this.setupTagSystem();
@@ -41,9 +40,32 @@ class AddMediaManager {
         const fileInput = document.getElementById('images');
         const uploadZone = document.getElementById('upload-zone');
         const description = document.getElementById('description');
+        const tagInput = document.getElementById('tag-input');
         
         // Form submission
         form.addEventListener('submit', (e) => this.handleSubmit(e));
+        
+        // Prevent Enter key from submitting form on tag input
+        tagInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                // Trigger add tag functionality instead
+                const addBtn = document.getElementById('add-tag-btn');
+                if (addBtn) {
+                    addBtn.click();
+                }
+            }
+        });
+        
+        // Also prevent Enter on title input from submitting (optional)
+        const titleInput = document.getElementById('title');
+        titleInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                // Move focus to next field
+                description.focus();
+            }
+        });
         
         // File input
         fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
@@ -83,7 +105,6 @@ class AddMediaManager {
         });
         
         // Title uniqueness check and suggestion
-        const titleInput = document.getElementById('title');
         const titleWarning = document.getElementById('title-warning');
         titleInput.addEventListener('input', () => {
             clearTimeout(this.titleCheckTimeout);
@@ -265,8 +286,6 @@ class AddMediaManager {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
     
-
-    
     getSelectedBytes() {
         return this.selectedFiles.reduce((total, file) => total + file.size, 0);
     }
@@ -326,6 +345,22 @@ class AddMediaManager {
         }
     }
     
+    // Helper method to parse and format SQL errors into user-friendly messages
+    formatErrorMessage(error) {
+        // Check for duplicate entry SQL error
+        if (error.includes('SQLSTATE[23000]') && error.includes('Duplicate entry') && error.includes("for key 'title'")) {
+            return "🚫 Oops! That title is already taken. Please choose a different one or try our suggested alternative above.";
+        }
+        
+        // Check for other common SQL errors and format them nicely
+        if (error.includes('SQLSTATE')) {
+            return "🔧 Something went wrong on our end. Please try again, and if the problem persists, contact support.";
+        }
+        
+        // For other errors, return as-is (assuming they're already user-friendly)
+        return error;
+    }
+    
     async handleSubmit(e) {
         e.preventDefault();
         
@@ -363,7 +398,7 @@ class AddMediaManager {
             const result = await response.json();
             
             if (response.ok && result.success) {
-                this.showSuccess(`Media created successfully! Used ${result.credits_used} credits.`);
+                this.showSuccess(`✨ Media created successfully! Used ${result.credits_used} credits.`);
                 
                 // Reset form after short delay
                 setTimeout(() => {
@@ -375,7 +410,9 @@ class AddMediaManager {
             
         } catch (error) {
             console.error('Error creating media:', error);
-            this.showError(error.message);
+            // Use the helper method to format SQL errors nicely
+            const userFriendlyError = this.formatErrorMessage(error.message);
+            this.showError(userFriendlyError);
         } finally {
             // Re-enable form
             submitBtn.disabled = false;

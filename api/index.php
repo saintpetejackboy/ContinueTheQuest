@@ -68,13 +68,56 @@ function handleSearch($method) {
         jsonResponse(['error' => 'Method not allowed'], 405);
     }
     
-    $query = $_GET['q'] ?? '';
-    if (strlen($query) < 3) {
-        jsonResponse(['results' => []]);
+    if ($method !== 'GET') {
+        jsonResponse(['error' => 'Method not allowed'], 405);
     }
-    
-    // TODO: Implement actual search
-    jsonResponse(['results' => [], 'query' => $query]);
+
+    $query = trim($_GET['q'] ?? '');
+    $sort = $_GET['sort'] ?? 'new';
+    $limit = min(intval($_GET['limit'] ?? 20), 100);
+    $offset = max(intval($_GET['offset'] ?? 0), 0);
+    $genreId = intval($_GET['genre_id'] ?? 0);
+
+    $db = getDB();
+    $whereClauses = [];
+    $params = [];
+    if ($query !== '') {
+        $whereClauses[] = '(m.title LIKE :query OR m.description LIKE :query)';
+        $params[':query'] = "%{$query}%";
+    }
+    if ($genreId) {
+        $whereClauses[] = 'EXISTS (SELECT 1 FROM tag_links tl WHERE tl.target_type = \'media\' AND tl.target_id = m.id AND tl.tag_id = :genre_id)';
+        $params[':genre_id'] = $genreId;
+    }
+    $whereSQL = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
+
+    switch ($sort) {
+        case 'popular':
+        case 'hot':
+            $orderBy = 'm.vote_score DESC, m.created_at DESC';
+            break;
+        case 'rising':
+            $orderBy = 'm.created_at DESC';
+            break;
+        default:
+            $orderBy = 'm.created_at DESC';
+    }
+
+    $sql = "SELECT m.id, m.title, m.description, m.cover_image, m.created_by, m.vote_score, m.created_at
+        FROM media m
+        {$whereSQL}
+        ORDER BY {$orderBy}
+        LIMIT :limit OFFSET :offset";
+    $stmt = $db->prepare($sql);
+    foreach ($params as $key => $val) {
+        $stmt->bindValue($key, $val, is_int($val) ? PDO::PARAM_INT : PDO::PARAM_STR);
+    }
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    jsonResponse(['results' => $results]);
 }
 
 /**

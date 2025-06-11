@@ -112,5 +112,72 @@
   </div>
 </div>
 
-<script src="/assets/js/tagging-system.js"></script>
-<script src="/pages/js/add-media.js"></script>
+
+<script>
+// Quick fix: Only load scripts if classes don't already exist
+(function() {
+    const scriptsToLoad = [];
+    
+    // Check if TaggingSystem exists, if not queue it for loading
+    if (typeof TaggingSystem === 'undefined') {
+        scriptsToLoad.push('/assets/js/tagging-system.js');
+    }
+    
+    // Check if AddMediaManager exists, if not queue it for loading
+    if (typeof AddMediaManager === 'undefined') {
+        scriptsToLoad.push('/pages/js/add-media.js');
+    }
+    
+    // Load scripts sequentially
+    let loadIndex = 0;
+    function loadNextScript() {
+        if (loadIndex >= scriptsToLoad.length) {
+            // All scripts loaded, initialize
+            initializeAddMedia();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = scriptsToLoad[loadIndex];
+        script.onload = () => {
+            loadIndex++;
+            loadNextScript();
+        };
+        script.onerror = () => {
+            console.error('Failed to load script:', scriptsToLoad[loadIndex]);
+            loadIndex++;
+            loadNextScript();
+        };
+        document.head.appendChild(script);
+    }
+    
+    function initializeAddMedia() {
+        // Cleanup any existing instance
+        if (window.addMediaManager && typeof window.addMediaManager.cleanup === 'function') {
+            window.addMediaManager.cleanup();
+        }
+        
+        // Create new instance
+        if (typeof AddMediaManager !== 'undefined') {
+            window.addMediaManager = new AddMediaManager();
+        }
+    }
+    
+    // Start loading or initialize immediately if classes exist
+    if (scriptsToLoad.length > 0) {
+        loadNextScript();
+    } else {
+        initializeAddMedia();
+    }
+})();
+
+// Cleanup for router
+window.addMediaPage = {
+    cleanup: () => {
+        if (window.addMediaManager && typeof window.addMediaManager.cleanup === 'function') {
+            window.addMediaManager.cleanup();
+            window.addMediaManager = null;
+        }
+    }
+};
+</script>
