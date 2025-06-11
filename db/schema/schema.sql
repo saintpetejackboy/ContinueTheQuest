@@ -89,12 +89,17 @@ CREATE TABLE `branches` (
 --
 
 CREATE TABLE `comments` (
-  `id` int(11) NOT NULL,
-  `segment_id` int(11) DEFAULT NULL,
-  `user_id` int(11) DEFAULT NULL,
-  `body` text DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `is_anonymous` tinyint(1) DEFAULT 0
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `target_type` enum('media','branch','segment','comment') NOT NULL,
+  `target_id` int(11) NOT NULL,
+  `body` text NOT NULL,
+  `is_anonymous` tinyint(1) NOT NULL DEFAULT 0,
+  `vote_score` int(11) NOT NULL DEFAULT 0,
+  `hidden` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  INDEX `idx_comments_target` (`target_type`,`target_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -135,11 +140,15 @@ CREATE TABLE `media` (
 --
 
 CREATE TABLE `media_images` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `media_id` int(11) NOT NULL,
   `file_name` varchar(255) NOT NULL,
-  `order_index` int(11) DEFAULT 0,
-  `created_at` datetime DEFAULT current_timestamp()
+  `order_index` int(11) NOT NULL DEFAULT 0,
+  `vote_score` int(11) NOT NULL DEFAULT 0,
+  `hidden` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  INDEX `idx_media_images_media` (`media_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -254,10 +263,13 @@ CREATE TABLE `user_passkeys` (
 --
 
 CREATE TABLE `votes` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) DEFAULT NULL,
-  `target_type` enum('media','branch','segment') DEFAULT NULL,
-  `target_id` int(11) DEFAULT NULL,
-  `vote_value` tinyint(4) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp()
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `target_type` enum('media','branch','segment','comment','image') NOT NULL,
+  `target_id` int(11) NOT NULL,
+  `vote_value` tinyint(4) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uix_votes_user_target` (`user_id`,`target_type`,`target_id`),
+  INDEX `idx_votes_target` (`target_type`,`target_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

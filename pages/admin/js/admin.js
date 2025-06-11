@@ -87,6 +87,8 @@
   // Load appropriate section
   if (section === 'stats') {
     await loadStats();
+  } else if (section === 'backups') {
+    await loadBackups();
   } else {
     await loadUsers();
   }
@@ -207,6 +209,7 @@
         container.innerHTML = `<div class="text-red-500">Error: ${data.error || 'Failed to load stats'}</div>`;
         return;
       }
+
       const { uptime, total_files, total_users, total_media, logs, markdown } = data;
       let html = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">';
       html += `<div class="card"><div class="text-lg font-semibold mb-2">Uptime</div><div>${uptime}</div></div>`;
@@ -236,4 +239,66 @@
       container.innerHTML = `<div class="text-red-500">Error: ${err.message}</div>`;
     }
   }
+
+  async function loadBackups() {
+    container.innerHTML = `
+      <div class="text-center py-8">
+        <div class="animate-spin inline-block h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        <p class="mt-2 text-muted-foreground">Loading backups...</p>
+      </div>`;
+    try {
+      const res = await fetch('/api/admin/backups.php');
+      const data = await res.json();
+      if (!res.ok) {
+        container.innerHTML = `<div class="text-red-500">Error: ${data.error || 'Failed to load backups'}</div>`;
+        return;
+      }
+      const { schedules, logs, files } = data;
+      let html = '<h2 class="text-xl font-semibold mb-2">Backup Schedules</h2>';
+      html += '<table class="w-full table-auto mb-6"><thead><tr><th>ID</th><th>Type</th><th>Frequency</th><th>Last Run</th><th>Enabled</th><th>Actions</th></tr></thead><tbody>';
+      schedules.forEach(s => {
+        html += `<tr class="border-t border-border"><td>${s.id}</td><td>${s.backup_type}</td><td>${s.frequency}</td><td>${s.last_run_at || 'never'}</td><td>${s.enabled ? 'Yes' : 'No'}</td><td><button data-action="run-backup" data-id="${s.id}" class="px-2 py-1 bg-primary text-white rounded">Run Now</button></td></tr>`;
+      });
+      html += '</tbody></table>';
+      html += '<h2 class="text-xl font-semibold mb-2">Backup Logs</h2>';
+      html += '<table class="w-full table-auto mb-6"><thead><tr><th>Schedule ID</th><th>Type</th><th>Started At</th><th>Finished At</th><th>Success</th></tr></thead><tbody>';
+      logs.forEach(l => {
+        html += `<tr class="border-t border-border"><td>${l.schedule_id}</td><td>${l.backup_type}</td><td>${l.started_at}</td><td>${l.finished_at}</td><td>${l.success ? '✔' : '✖'}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      html += '<h2 class="text-xl font-semibold mb-2">Backup Files</h2>';
+      html += '<ul class="list-disc list-inside">';
+      files.forEach(f => {
+        html += `<li><a href="/backups/${encodeURIComponent(f.name)}" class="text-primary hover:underline" target="_blank">${f.name}</a> (${f.size_formatted}, ${f.modified_at})</li>`;
+      });
+      html += '</ul>';
+      container.innerHTML = html;
+      container.querySelectorAll('button[data-action="run-backup"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id');
+          btn.disabled = true;
+          try {
+            const res2 = await fetch('/api/admin/backups.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ schedule_id: id }),
+            });
+            const result = await res2.json();
+            if (!res2.ok) {
+              alert('Error: ' + (result.error || 'Backup failed'));
+            } else {
+              await loadBackups();
+            }
+          } catch (err) {
+            alert('Error: ' + err.message);
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+    } catch (err) {
+      container.innerHTML = `<div class="text-red-500">Error: ${err.message}</div>`;
+    }
+  }
+
 })();

@@ -33,6 +33,7 @@ uploads/
 
 # Logs
 logs/
+backups/
 
 # Favicons and manifest
 favicons/

@@ -1,122 +1,57 @@
 <?php
 /**
- * Standalone Coin Component (mini, animated, bouncing & spinning)
+ * Standalone, Namespaced Spinning Coin SVG
  * Path: includes/coin.php
  */
 ?>
-<div class="ctq-coin-sm-wrapper">
-  <div class="ctq-coin-sm">
-    <div class="ctq-coin-sm__front">
-      <span class="ctq-coin-sm__currency">$</span>
-      <span class="ctq-coin-sm__top">Quest</span>
-      <span class="ctq-coin-sm__bottom">CTQ</span>
-    </div>
-    <div class="ctq-coin-sm__shadow"></div>
-  </div>
-</div>
+<span class="ctq-coin-spin-wrap">
+  <span class="ctq-coin-spin">
+    <svg viewBox="0 0 80 80" class="ctq-coin-spin-svg" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32" aria-hidden="true">
+      <circle cx="40" cy="40" r="36" stroke="#43C77E" stroke-width="4" fill="url(#ctq-gradient)"/>
+      <text x="40" y="37" text-anchor="middle" font-size="19" font-weight="bold" fill="#fff" font-family="Montserrat,Arial,sans-serif">$</text>
+      <text x="40" y="57" text-anchor="middle" font-size="8" fill="gold" font-family="Montserrat,Arial,sans-serif">CTQ</text>
+      <defs>
+        <radialGradient id="ctq-gradient" cx="0.4" cy="0.35" r="0.85">
+          <stop offset="0%" stop-color="gold"/>
+          <stop offset="100%" stop-color="yellow"/>
+        </radialGradient>
+      </defs>
+    </svg>
+  </span>
+</span>
 
 <style>
-/* Sane defaults and isolation */
-.ctq-coin-sm-wrapper {
+.ctq-coin-spin-wrap {
   display: inline-block;
+  vertical-align: middle;
+  /* Tweak size below as needed; SVG is 32x32px by default */
+  width: 1.7em;
+  height: 1.7em;
+  line-height: 1;
+  margin: 0 0.1em;
+}
+.ctq-coin-spin {
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+  /* 3D spinning effect */
+  animation: ctq-coin-spin-anim 1.2s linear infinite;
+  transform-style: preserve-3d;
+  will-change: transform;
+    text-shadow: 0px 0px 4px white;
+   border-radius: 50%;
+}
+.ctq-coin-spin-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
+  /* Prevent select/drag, etc. */
   user-select: none;
-  /* scale down further if you want: */
-  transform: scale(0.32);
-}
 
-/* Coin container handles spin+bounce */
-.ctq-coin-sm {
-  position: relative;
-  width: 80px; /* native size; scales with wrapper */
-  height: 80px;
-  animation:
-    ctq-coin-sm-bounce 1.6s cubic-bezier(.44,1.62,.63,1) infinite,
-    ctq-coin-sm-spin 2.5s linear infinite;
-  will-change: transform;
 }
-
-/* Coin face */
-.ctq-coin-sm__front {
-  width: 80px; height: 80px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 60% 30%, #ffe082 55%, #ffc107 95%, #9e7400 100%);
-  box-shadow: 0 4px 20px #0004, 0 0 0 4px #ffe082 inset;
-  position: absolute; top: 0; left: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  border: 3.5px solid #ffd54f;
-  z-index: 2;
-  /* 3D tilt on spin for realism */
-  animation: ctq-coin-sm-tilt 2.5s linear infinite;
-  will-change: transform;
-}
-
-.ctq-coin-sm__currency {
-  font-size: 2.2em;
-  font-weight: 900;
-  color: #ffc107;
-  text-shadow: 0 2px 2px #a57e00, 0 0 6px #fff8;
-  margin-bottom: 0.09em;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  font-family: "Montserrat", "Arial Black", sans-serif;
-  z-index: 3;
-}
-
-.ctq-coin-sm__top,
-.ctq-coin-sm__bottom {
-  font-size: 0.78em;
-  font-weight: 700;
-  color: #c3870a;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  text-shadow: 0 1px 0 #fff9;
-  line-height: 1;
-  position: absolute; left: 50%; transform: translateX(-50%);
-  font-family: "Montserrat", "Arial Black", sans-serif;
-  z-index: 4;
-  user-select: none;
-}
-
-.ctq-coin-sm__top    { top: 11%; }
-.ctq-coin-sm__bottom { bottom: 11%; }
-
-.ctq-coin-sm__shadow {
-  position: absolute;
-  left: 50%; bottom: -8px;
-  width: 54px; height: 12px;
-  background: radial-gradient(ellipse at center, #0003 70%, #0000 100%);
-  border-radius: 50%;
-  transform: translateX(-50%);
-  z-index: 1;
-  animation: ctq-coin-sm-shadow 1.6s cubic-bezier(.44,1.62,.63,1) infinite;
-  will-change: transform, opacity;
-}
-
-/* Animations */
-@keyframes ctq-coin-sm-bounce {
-  0%   { transform: translateY(0); }
-  15%  { transform: translateY(-20px); }
-  35%  { transform: translateY(-36px); }
-  50%  { transform: translateY(-40px); }
-  70%  { transform: translateY(-18px); }
-  100% { transform: translateY(0); }
-}
-@keyframes ctq-coin-sm-shadow {
-  0%   { opacity: .6; transform: translateX(-50%) scaleX(1) scaleY(1); }
-  35%  { opacity: .24; transform: translateX(-50%) scaleX(1.16) scaleY(0.68);}
-  50%  { opacity: .18; transform: translateX(-50%) scaleX(1.22) scaleY(0.5);}
-  70%  { opacity: .30; transform: translateX(-50%) scaleX(1.08) scaleY(0.9);}
-  100% { opacity: .6; transform: translateX(-50%) scaleX(1) scaleY(1);}
-}
-@keyframes ctq-coin-sm-spin {
-  0% { transform: rotateZ(0deg); }
-  100% { transform: rotateZ(360deg);}
-}
-@keyframes ctq-coin-sm-tilt {
-  0%   { transform: perspective(260px) rotateY(-12deg);}
-  33%  { transform: perspective(260px) rotateY(15deg);}
-  66%  { transform: perspective(260px) rotateY(-17deg);}
-  100% { transform: perspective(260px) rotateY(-12deg);}
+@keyframes ctq-coin-spin-anim {
+  0%   { transform: rotateY(0deg); box-shadow: 0px 0px 10px yellow; }
+  100% { transform: rotateY(360deg); box-shadow: 0px 0px 40px white;	 }
 }
 </style>

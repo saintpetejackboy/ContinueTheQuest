@@ -1,0 +1,50 @@
+<!-- media.html -->
+<div id="media-container" class="w-full max-w-4xl mx-auto mt-8"></div>
+
+<script>
+// Dynamically load dependencies and initialize
+(function() {
+    const scriptsToLoad = [];
+    if (typeof TaggingSystem === 'undefined') {
+        scriptsToLoad.push('/assets/js/tagging-system.js');
+    }
+    if (typeof MediaPage === 'undefined') {
+        scriptsToLoad.push('/pages/js/media.js');
+    }
+    let loadIndex = 0;
+    function loadNext() {
+        if (loadIndex >= scriptsToLoad.length) {
+            initMediaPage();
+            return;
+        }
+        const s = document.createElement('script');
+        s.src = scriptsToLoad[loadIndex++];
+        s.onload = loadNext;
+        s.onerror = () => { console.error('Failed to load', scriptsToLoad[loadIndex-1]); loadNext(); };
+        document.head.appendChild(s);
+    }
+    function initMediaPage() {
+        if (window.mediaPageManager && typeof window.mediaPageManager.cleanup === 'function') {
+            window.mediaPageManager.cleanup();
+        }
+        if (typeof MediaPage !== 'undefined') {
+            window.mediaPageManager = new MediaPage();
+        }
+    }
+    if (scriptsToLoad.length > 0) {
+        loadNext();
+    } else {
+        initMediaPage();
+    }
+})();
+
+// Provide cleanup hook for router
+window.mediaPage = {
+    cleanup: () => {
+        if (window.mediaPageManager && typeof window.mediaPageManager.cleanup === 'function') {
+            window.mediaPageManager.cleanup();
+            window.mediaPageManager = null;
+        }
+    }
+};
+</script>

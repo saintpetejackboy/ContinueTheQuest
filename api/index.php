@@ -60,14 +60,7 @@ function handleGenres($method) {
     jsonResponse(['genres' => $genres]);
 }
 
-/**
- * Handle search requests
- */
 function handleSearch($method) {
-    if ($method !== 'GET') {
-        jsonResponse(['error' => 'Method not allowed'], 405);
-    }
-    
     if ($method !== 'GET') {
         jsonResponse(['error' => 'Method not allowed'], 405);
     }
@@ -81,14 +74,21 @@ function handleSearch($method) {
     $db = getDB();
     $whereClauses = [];
     $params = [];
+
     if ($query !== '') {
-        $whereClauses[] = '(m.title LIKE :query OR m.description LIKE :query)';
-        $params[':query'] = "%{$query}%";
+        $whereClauses[] = '(m.title LIKE :query_title OR m.description LIKE :query_desc)';
+        $params[':query_title'] = "%{$query}%";
+        $params[':query_desc'] = "%{$query}%";
     }
+
     if ($genreId) {
-        $whereClauses[] = 'EXISTS (SELECT 1 FROM tag_links tl WHERE tl.target_type = \'media\' AND tl.target_id = m.id AND tl.tag_id = :genre_id)';
+        $whereClauses[] = 'EXISTS (
+            SELECT 1 FROM tag_links tl
+            WHERE tl.target_type = \'media\' AND tl.target_id = m.id AND tl.tag_id = :genre_id
+        )';
         $params[':genre_id'] = $genreId;
     }
+
     $whereSQL = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
     switch ($sort) {
@@ -104,21 +104,28 @@ function handleSearch($method) {
     }
 
     $sql = "SELECT m.id, m.title, m.description, m.cover_image, m.created_by, m.vote_score, m.created_at
-        FROM media m
-        {$whereSQL}
-        ORDER BY {$orderBy}
-        LIMIT :limit OFFSET :offset";
+            FROM media m
+            {$whereSQL}
+            ORDER BY {$orderBy}
+            LIMIT :limit OFFSET :offset";
+
     $stmt = $db->prepare($sql);
+
+    // Bind dynamic search parameters
     foreach ($params as $key => $val) {
         $stmt->bindValue($key, $val, is_int($val) ? PDO::PARAM_INT : PDO::PARAM_STR);
     }
+
+    // Bind limit/offset
     $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
     $stmt->execute();
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     jsonResponse(['results' => $results]);
 }
+
 
 /**
  * Handle stats requests
