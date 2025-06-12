@@ -174,7 +174,7 @@
                     <div class="mt-4 relative text-center">
                         <img src="/uploads/users/${m.created_by}/images/${m.cover_image}" class="w-full max-w-md mx-auto max-h-40 object-cover rounded">
                         ${(m.can_edit_owner || this.userIsAdmin)
-                            ? `<button id="remove-cover-btn" class="btn btn-ghost btn-xs p-1 absolute top-1 right-1 text-red-600">&times;</button>`
+                            ? `<button id="remove-cover-btn" class="btn btn-ghost btn-xs p-1 absolute top-1 right-1 text-red-600 bg-white/90 hover:bg-white shadow-sm rounded">&times;</button>`
                             : ''}
                     </div>
                 `;
@@ -186,42 +186,40 @@
                     const src = `/uploads/users/${m.created_by}/images/${img.file_name}`;
                     html += `<div class="relative group" data-image-id="${img.id}">`; // Added data-image-id for easier targeting
                     if (img.hidden) {
-                        html += `<div class="absolute inset-0 bg-black/50 flex items-center justify-center text-white z-10">Hidden</div>`;
+                        html += `<div class="absolute inset-0 bg-black/70 flex items-center justify-center text-white z-20 rounded">
+                            <span class="text-sm font-medium">Hidden</span>
+                        </div>`;
                     }
                     html += `<img src="${src}" class="w-full rounded">`;
                     html += `
-                        <div class="absolute top-1 right-1 flex flex-col items-center space-y-1">
-                            <button data-img-id="${img.id}" data-vote="1" class="img-vote-btn btn btn-ghost btn-xs p-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="absolute top-2 right-2 flex flex-col items-center space-y-1 z-30">
+                            <button data-img-id="${img.id}" data-vote="1" class="img-vote-btn btn btn-ghost btn-xs p-1 bg-white/90 hover:bg-white shadow-sm rounded">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                                 </svg>
                             </button>
-                            <span class="text-sm text-white bg-black/50 px-1 rounded image-vote-score">${img.vote_score}</span>
-                            <button data-img-id="${img.id}" data-vote="-1" class="img-vote-btn btn btn-ghost btn-xs p-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <span class="text-xs text-white bg-black/80 px-1.5 py-0.5 rounded font-medium image-vote-score">${img.vote_score}</span>
+                            <button data-img-id="${img.id}" data-vote="-1" class="img-vote-btn btn btn-ghost btn-xs p-1 bg-white/90 hover:bg-white shadow-sm rounded">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
-                            ${m.can_edit_owner ? `<button data-img-id="${img.id}" class="remove-image-btn btn btn-ghost btn-xs p-1 text-red-600" title="Remove Image">&times;</button>` : ''}
-                            ${this.userIsAdmin ? `<button data-img-id="${img.id}" data-action="${img.hidden ? 'unhide' : 'hide'}" class="toggle-image-visibility-btn btn btn-ghost btn-xs p-1 text-yellow-500" title="${img.hidden ? 'Unhide Image' : 'Hide Image'}">&#128065;</button>` : ''}
+                            ${m.can_edit_owner ? `<button data-img-id="${img.id}" class="remove-image-btn btn btn-ghost btn-xs p-1 text-red-600 bg-white/90 hover:bg-white shadow-sm rounded" title="Remove Image">&times;</button>` : ''}
+                            ${this.userIsAdmin ? `<button data-img-id="${img.id}" data-action="${img.hidden ? 'unhide' : 'hide'}" class="toggle-image-visibility-btn btn btn-ghost btn-xs p-1 text-yellow-600 bg-white/90 hover:bg-white shadow-sm rounded" title="${img.hidden ? 'Unhide Image' : 'Hide Image'}">&#128065;</button>` : ''}
                         </div>
                     `;
                     html += `</div>`;
                 });
                 html += `</div></div>`;
             }
-            html += `<div id="comments-section" class="mt-8">`;
-            html += `<h2 class="text-xl font-semibold mb-4">Comments</h2>`;
+
         if (this.userLoggedIn) {
-            html += `<div id="comment-form" class="mb-4">`;
-            html += `<textarea id="comment-body" rows="3" class="form-textarea w-full" placeholder="Write a comment..."></textarea>`;
-            html += `<button id="submit-comment-btn" class="btn-primary mt-2">💬 Post Comment</button>`;
-            html += `</div>`;
+
         } else {
             html += `<div id="join-comment-container" class="mb-4"></div>`;
         }
         html += `<div id="comment-thread" class="mt-8"></div>`;
-        html += `</div>`;
+    
             html += `<div id="branch-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden">`;
             html += `<div class="bg-card rounded p-4 w-full max-w-md">`;
             html += `<h3 class="text-lg font-semibold mb-2">Add Branch (Coming Soon)</h3>`;
@@ -451,20 +449,18 @@
                 // Update the UI directly
                 const imageContainer = this.container.querySelector(`div[data-image-id="${imgId}"]`);
                 if (imageContainer) {
-                    const hiddenOverlay = imageContainer.querySelector('.absolute.inset-0.bg-black\\/50');
+                    const hiddenOverlay = imageContainer.querySelector('.absolute.inset-0.bg-black\\/70');
                     const toggleButton = imageContainer.querySelector(`.toggle-image-visibility-btn[data-img-id="${imgId}"]`);
                     
                     if (action === 'hide') {
                         if (!hiddenOverlay) {
                             const overlay = document.createElement('div');
-                            overlay.className = 'absolute inset-0 bg-black/50 flex items-center justify-center text-white z-10';
-                            overlay.textContent = 'Hidden';
+                            overlay.className = 'absolute inset-0 bg-black/70 flex items-center justify-center text-white z-20 rounded';
+                            overlay.innerHTML = '<span class="text-sm font-medium">Hidden</span>';
                             imageContainer.prepend(overlay);
                         }
-                        imageContainer.classList.add('opacity-50'); // Visually indicate hidden state
                         if (toggleButton) {
                             toggleButton.dataset.action = 'unhide';
-                            toggleButton.textContent = 'Unhide';
                             toggleButton.title = 'Unhide Image';
                         }
                         if (window.notify) window.notify.info('Image hidden.');
@@ -472,10 +468,8 @@
                         if (hiddenOverlay) {
                             hiddenOverlay.remove();
                         }
-                        imageContainer.classList.remove('opacity-50'); // Remove visual hidden state
                         if (toggleButton) {
                             toggleButton.dataset.action = 'hide';
-                            toggleButton.textContent = 'Hide';
                             toggleButton.title = 'Hide Image';
                         }
                         if (window.notify) window.notify.info('Image unhidden.');

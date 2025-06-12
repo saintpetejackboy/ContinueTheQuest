@@ -7,7 +7,7 @@ class AddMediaManager {
         this.coverImageIndex = 0;
         this.userCredits = 0;
         this.taggingSystem = null;
-        
+
         this.init();
     }
 
@@ -16,7 +16,7 @@ class AddMediaManager {
         this.setupTagSystem();
         this.loadUserCredits();
     }
-    
+
     async loadUserCredits() {
         try {
             const response = await fetch('/api/users/profile.php');
@@ -34,13 +34,20 @@ class AddMediaManager {
             console.error('Error loading user credits:', error);
         }
     }
-    
+
     setupEventListeners() {
         const form = document.getElementById('add-media-form');
         const fileInput = document.getElementById('images');
         const uploadZone = document.getElementById('upload-zone');
         const description = document.getElementById('description');
         const tagInput = document.getElementById('tag-input');
+		
+		// stop the <label for="images"> click propagating up to uploadZone
+		const uploadLabel = document.querySelector('label[for="images"]');
+		if (uploadLabel) {
+		  uploadLabel.addEventListener('click', e => e.stopPropagation());
+		}
+
         
         // Form submission
         form.addEventListener('submit', (e) => this.handleSubmit(e));
@@ -137,7 +144,7 @@ class AddMediaManager {
             }, 500);
         });
     }
-    
+
     setupTagSystem() {
         // Initialize the modular tagging system
         this.taggingSystem = new TaggingSystem({
@@ -153,12 +160,61 @@ class AddMediaManager {
             }
         });
     }
-    
-    handleFileSelect(e) {
-        const files = Array.from(e.target.files);
-        this.addFiles(files);
+
+ handleFileSelect(e) {
+    // 1) clear any previous error/success messages
+    this.hideMessages();
+
+    const fileList = e.target.files;
+    // 2) ignore spurious change events with no files
+    if (!fileList || fileList.length === 0) {
+      return;
     }
-    
+
+    // 3) convert FileList → Array<File> and add them
+    const files = Array.from(fileList);
+    this.addFiles(files);
+
+    // 4) reset the <input> on the next tick so picking the same file again still fires change
+    setTimeout(() => {
+      e.target.value = '';
+    }, 0);
+  }
+
+  /**
+   * Validates a single File before adding:
+   *  - must be an image
+   *  - must be ≤ 10 MB
+   *  - silently skips duplicates (no error shown)
+   *
+   * @param {File} file
+   * @returns {boolean} true if OK to add, false otherwise
+   */
+  validateFile(file) {
+    // 1) type check
+    if (!file.type.startsWith('image/')) {
+      this.showError(`${file.name} is not an image file`);
+      return false;
+    }
+
+    // 2) size check (10 MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      this.showError(`${file.name} is too large (max 10MB)`);
+      return false;
+    }
+
+    // 3) duplicate check (skip silently)
+    if (this.selectedFiles.some(f =>
+      f.name === file.name &&
+      f.size === file.size &&
+      f.lastModified === file.lastModified
+    )) {
+      return false;
+    }
+
+    // 4) passed all checks
+    return true;
+  }
     addFiles(files) {
         files.forEach(file => {
             if (this.validateFile(file)) {
@@ -169,29 +225,9 @@ class AddMediaManager {
         this.renderImagePreviews();
         this.updateCostEstimate();
     }
-    
-    validateFile(file) {
-        // Check file type
-        if (!file.type.startsWith('image/')) {
-            this.showError(`${file.name} is not an image file`);
-            return false;
-        }
-        
-        // Check file size (10MB limit)
-        if (file.size > 10 * 1024 * 1024) {
-            this.showError(`${file.name} is too large (max 10MB)`);
-            return false;
-        }
-        
-        // Check if already added
-        if (this.selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
-            this.showError(`${file.name} is already added`);
-            return false;
-        }
-        
-        return true;
-    }
-    
+
+
+
     renderImagePreviews() {
         const container = document.getElementById('image-previews');
         
@@ -257,12 +293,12 @@ class AddMediaManager {
             container.appendChild(wrapper);
         });
     }
-    
+
     setCoverImage(index) {
         this.coverImageIndex = index;
         this.renderImagePreviews();
     }
-    
+
     removeFile(index) {
         URL.revokeObjectURL(this.selectedFiles[index]);
         this.selectedFiles.splice(index, 1);
@@ -277,7 +313,7 @@ class AddMediaManager {
         this.renderImagePreviews();
         this.updateCostEstimate();
     }
-    
+
     formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -285,7 +321,7 @@ class AddMediaManager {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
-    
+
     getSelectedBytes() {
         return this.selectedFiles.reduce((total, file) => total + file.size, 0);
     }
@@ -344,7 +380,7 @@ class AddMediaManager {
             submitBtn.classList.remove('opacity-50');
         }
     }
-    
+
     // Helper method to parse and format SQL errors into user-friendly messages
     formatErrorMessage(error) {
         // Check for duplicate entry SQL error
@@ -360,7 +396,7 @@ class AddMediaManager {
         // For other errors, return as-is (assuming they're already user-friendly)
         return error;
     }
-    
+
     async handleSubmit(e) {
         e.preventDefault();
         
@@ -420,7 +456,7 @@ class AddMediaManager {
             this.updateCostEstimate(); // This will set the correct button text
         }
     }
-    
+
     showError(message) {
         const errorEl = document.getElementById('add-media-error');
         errorEl.textContent = message;
@@ -429,7 +465,7 @@ class AddMediaManager {
         // Hide success message
         document.getElementById('add-media-success').classList.add('hidden');
     }
-    
+
     showSuccess(message) {
         const successEl = document.getElementById('add-media-success');
         successEl.textContent = message;
@@ -438,12 +474,12 @@ class AddMediaManager {
         // Hide error message
         document.getElementById('add-media-error').classList.add('hidden');
     }
-    
+
     hideMessages() {
         document.getElementById('add-media-error').classList.add('hidden');
         document.getElementById('add-media-success').classList.add('hidden');
     }
-    
+
     // Cleanup method for router
     cleanup() {
         // Revoke all object URLs to prevent memory leaks
@@ -468,14 +504,51 @@ class AddMediaManager {
     }
 }
 
-// Initialize for router-loaded page
-window.addMediaManager = new AddMediaManager();
-
-// Cleanup for router
-window.addMediaPage = {
-    cleanup: () => {
-        if (window.addMediaManager) {
-            window.addMediaManager.cleanup();
-        }
+// PROPER ROUTER INTEGRATION - PREVENT DOUBLE INITIALIZATION
+(function() {
+    // Check if router exists and if this page is already managed
+    if (window.Router && window.Router.pageManagers && window.Router.pageManagers['add-media']) {
+        console.log('AddMediaManager: Already initialized by router, skipping duplicate initialization');
+        return;
     }
-};
+
+    // Check if already initialized globally (fallback for non-router scenarios)
+    if (window.addMediaManager) {
+        console.log('AddMediaManager: Global instance already exists, skipping duplicate initialization');
+        return;
+    }
+
+    // Create the instance
+    console.log('AddMediaManager: Initializing new instance');
+    const addMediaManagerInstance = new AddMediaManager();
+    
+    // Set global reference for backward compatibility
+    window.addMediaManager = addMediaManagerInstance;
+
+    // Register with router for proper cleanup if router exists
+    if (window.Router && window.Router.pageManagers) {
+        window.Router.pageManagers['add-media'] = {
+            cleanup: () => {
+                console.log('AddMediaManager: Cleanup called by router');
+                if (addMediaManagerInstance && typeof addMediaManagerInstance.cleanup === 'function') {
+                    addMediaManagerInstance.cleanup();
+                }
+                // Clear global reference
+                window.addMediaManager = null;
+            }
+        };
+        console.log('AddMediaManager: Registered with router for cleanup');
+    } else {
+        // Fallback cleanup registration for non-router scenarios
+        window.addMediaPage = {
+            cleanup: () => {
+                console.log('AddMediaManager: Cleanup called via fallback method');
+                if (window.addMediaManager && typeof window.addMediaManager.cleanup === 'function') {
+                    window.addMediaManager.cleanup();
+                }
+                window.addMediaManager = null;
+            }
+        };
+        console.log('AddMediaManager: Router not found, using fallback cleanup registration');
+    }
+})();

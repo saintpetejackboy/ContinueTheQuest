@@ -38,6 +38,7 @@
         
         <div class="flex items-center gap-4">
             <?php if ($currentUser): ?>
+			<img src="https://continuethe.quest/img/credit.gif" style="height: 50px; margin-right: -20px;"><sup><?php echo $currentUser['credits']; ?></sup>  &nbsp; &nbsp; &nbsp; 
 			<?php echo '<img src="https://continuethe.quest/uploads/users/'.$currentUser['id'].'/avatars/'.$currentUser['avatar'].'" style="height: 50px;">'; ?>
                 <a href="?page=profile" class="text-sm font-medium hover:text-primary transition-colors">
                     <?php echo htmlspecialchars($currentUser['username']);   ?>

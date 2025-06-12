@@ -120,12 +120,12 @@
     
     // Check if TaggingSystem exists, if not queue it for loading
     if (typeof TaggingSystem === 'undefined') {
-        scriptsToLoad.push('/pages/js/tagging-system.js');
+        scriptsToLoad.push('/pages/js/tagging-system.js?v=1');
     }
     
     // Check if AddMediaManager exists, if not queue it for loading
     if (typeof AddMediaManager === 'undefined') {
-        scriptsToLoad.push('/pages/js/add-media.js');
+        scriptsToLoad.push('/pages/js/add-media.js?v=2');
     }
     
     // Load scripts sequentially
