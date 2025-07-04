@@ -61,7 +61,8 @@
                     defaultSort: 'new',
                     userLoggedIn: this.userLoggedIn,
                     isAdmin: this.userIsAdmin,
-                    maxDepth: 3
+                    maxDepth: 3,
+                    autoExpandAll: true
                 });
             }
         }
@@ -221,9 +222,57 @@
         html += `<div id="comment-thread" class="mt-8"></div>`;
     
             html += `<div id="branch-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden">`;
-            html += `<div class="bg-card rounded p-4 w-full max-w-md">`;
-            html += `<h3 class="text-lg font-semibold mb-2">Add Branch (Coming Soon)</h3>`;
-            html += `<button id="close-branch-modal" class="btn-secondary">Close</button>`;
+            html += `<div class="bg-card rounded-lg p-6 w-full max-w-lg space-y-4">`;
+            html += `<h3 class="text-xl font-semibold">Add a New Branch</h3>`;
+            html += `<p class="text-sm text-muted-foreground">Choose the type of branch and provide details below. Please check existing branches to avoid duplicates.</p>`;
+            html += `<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">`;
+            html += `
+                <label class="flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer hover:border-primary">
+                    <input type="radio" name="branch-type" value="after" class="sr-only" checked>
+                    <span class="text-lg font-medium">After</span>
+                    <span class="text-xs text-muted-foreground mt-1">Continue the story after the original ending (most common).</span>
+                </label>
+            `;
+            html += `
+                <label class="flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer hover:border-primary">
+                    <input type="radio" name="branch-type" value="before" class="sr-only">
+                    <span class="text-lg font-medium">Before</span>
+                    <span class="text-xs text-muted-foreground mt-1">Prequel or events leading up to the original story.</span>
+                </label>
+            `;
+            html += `
+                <label class="flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer hover:border-primary">
+                    <input type="radio" name="branch-type" value="other" class="sr-only">
+                    <span class="text-lg font-medium">Alternate</span>
+                    <span class="text-xs text-muted-foreground mt-1">Non-canon or fan-fiction variations of the original story.</span>
+                </label>
+            `;
+            html += `</div>`;
+            html += `<div>`;
+            html += `<label for="branch-title" class="block text-sm font-medium text-muted-foreground mb-1">Branch Title</label>`;
+            html += `<input type="text" id="branch-title" class="form-input w-full" placeholder="A descriptive title for this branch...">`;
+            html += `</div>`;
+            html += `<div>`;
+            html += `<label for="branch-summary" class="block text-sm font-medium text-muted-foreground mb-1">Summary</label>`;
+            html += `<textarea id="branch-summary" rows="3" class="form-textarea w-full" placeholder="Brief summary of what this branch covers..."></textarea>`;
+            html += `</div>`;
+            html += `<div>`;
+            html += `<label for="branch-source" class="block text-sm font-medium text-muted-foreground mb-1">Source Type</label>`;
+            html += `<select id="branch-source" class="form-select w-full">`;
+            html += `<option value="book">Book</option>`;
+            html += `<option value="movie">Movie</option>`;
+            html += `<option value="cartoon">Cartoon</option>`;
+            html += `<option value="cgi">CGI</option>`;
+            html += `<option value="manga">Manga</option>`;
+            html += `<option value="comic">Comic</option>`;
+            html += `<option value="other">Other</option>`;
+            html += `</select>`;
+            html += `<p class="text-xs text-muted-foreground mt-1">Source types should be managed via a dynamic table in the future (TODO: Admin GUI for source types).</p>`;
+            html += `</div>`;
+            html += `<div class="flex justify-end space-x-2">`;
+            html += `<button id="branch-cancel-btn" class="btn-secondary">Cancel</button>`;
+            html += `<button id="branch-submit-btn" class="btn-primary">Create Branch</button>`;
+            html += `</div>`;
             html += `</div></div>`;
             html += `</div>`;
             
@@ -284,8 +333,10 @@
             if (cbtn) cbtn.addEventListener('click', this._postCommentHandler);
             const branchBtn = this.container.querySelector('#add-branch-btn');
             if (branchBtn) branchBtn.addEventListener('click', this._addBranchHandler);
-            const closeBranch = this.container.querySelector('#close-branch-modal');
-            if (closeBranch) closeBranch.addEventListener('click', this._closeBranchHandler);
+            const cancelBranch = this.container.querySelector('#branch-cancel-btn');
+            if (cancelBranch) cancelBranch.addEventListener('click', () => this.container.querySelector('#branch-modal').classList.add('hidden'));
+            const submitBranch = this.container.querySelector('#branch-submit-btn');
+            if (submitBranch) submitBranch.addEventListener('click', () => this.handleBranchSubmit());
 
             // Media tag management via TaggingSystem
             if (this.media.can_edit) {
@@ -334,6 +385,11 @@
             this.container.querySelectorAll('.remove-image-btn').forEach(btn => {
                 if (this._removeImageHandler) btn.removeEventListener('click', this._removeImageHandler);
             });
+        // Branch form buttons
+        const cancelBranch = this.container.querySelector('#branch-cancel-btn');
+        if (cancelBranch) cancelBranch.removeEventListener('click', () => {});
+        const submitBranch = this.container.querySelector('#branch-submit-btn');
+        if (submitBranch) submitBranch.removeEventListener('click', () => {});
             this.container.querySelectorAll('.toggle-image-visibility-btn').forEach(btn => {
                 if (this._toggleImageVisibilityHandler) btn.removeEventListener('click', this._toggleImageVisibilityHandler);
             });
@@ -498,6 +554,25 @@
         } else {
             alert('No cover image to remove');
         }
+    }
+
+    /**
+     * Handles submission of the new branch form. Stub for future API integration.
+     */
+    async handleBranchSubmit() {
+        const modal = this.container.querySelector('#branch-modal');
+        const branchType = modal.querySelector('input[name="branch-type"]:checked')?.value;
+        const title = modal.querySelector('#branch-title')?.value.trim();
+        const summary = modal.querySelector('#branch-summary')?.value.trim();
+        const source = modal.querySelector('#branch-source')?.value;
+        if (!branchType || !title) {
+            alert('Please select a branch type and enter a title.');
+            return;
+        }
+        // TODO: call API endpoint (e.g., /api/branches/create.php) to persist branch
+        console.log('Create branch:', { branchType, title, summary, source });
+        // Close modal
+        modal.classList.add('hidden');
     }
 
         async updateMediaTags(tagData) {

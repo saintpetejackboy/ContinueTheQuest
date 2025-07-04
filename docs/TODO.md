@@ -34,6 +34,11 @@
  8. **Credit History UI**
     - Add a page for users to review their credit earning/spending history.
 
+ 9. **Branch & Story Support**
+    - Flesh out backend API and database support for branch creation, listing, and merging (e.g., `/api/branches/*`, source_types table).
+    - Implement dynamic `source_types` table and admin GUI to manage source type options for branches.
+    - Flesh out story/segment uploads in branches: file storage, quota enforcement, AI generation stubs (OpenAI integration, API key from `.env`).
+
  ## Long-Term Roadmap
 
  9. **Payment Processing Integration** (postpone until core is stable)
