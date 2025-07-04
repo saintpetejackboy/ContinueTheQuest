@@ -22,12 +22,30 @@ class TaggingSystem {
         this.searchTimeout = null;
         this.currentFocus = -1;
         
+        // Fetch user's current credits for new-tag cost confirmation
+        this.userCredits = 0;
+        this.fetchUserCredits();
         this.init();
     }
     
     init() {
         this.setupEventListeners();
         this.render();
+    }
+
+    /**
+     * Fetch the current user's credit balance for cost checks.
+     */
+    async fetchUserCredits() {
+        try {
+            const resp = await fetch('/api/users/profile.php');
+            if (resp.ok) {
+                const data = await resp.json();
+                this.userCredits = data.credits || 0;
+            }
+        } catch (err) {
+            console.error('TaggingSystem: failed to load user credits', err);
+        }
     }
     
     setupEventListeners() {
@@ -229,26 +247,50 @@ class TaggingSystem {
             item.appendChild(infoSpan);
         }
         
-        item.addEventListener('click', () => {
-            this.selectTag(tagName, isExisting);
+        item.addEventListener('click', async () => {
+            await this.selectTag(tagName, isExisting);
         });
         
         container.appendChild(item);
     }
     
-    selectTag(tagName, isExisting = false) {
+    /**
+     * Add a tag to the selection. For new tags, confirm cost and call API.
+     */
+    async selectTag(tagName, isExisting = false) {
         if (this.selectedTags.has(tagName)) return;
-        
+
+        if (!isExisting && this.options.allowNewTags) {
+            const cost = 1;
+            const confirmMsg = `Tag "${tagName}" is new and costs ${cost} credit. You have ${this.userCredits} credits available. Continue?`;
+            if (!window.confirm(confirmMsg)) return;
+            try {
+                const resp = await fetch('/api/tags/create.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ name: tagName })
+                });
+                const result = await resp.json();
+                if (!result.success) {
+                    window.alert(result.error || 'Failed to create tag');
+                    return;
+                }
+                this.userCredits = result.credits_left;
+            } catch (err) {
+                console.error('Error creating tag:', err);
+                window.alert('Error creating tag');
+                return;
+            }
+        }
+
         this.selectedTags.add(tagName);
-        
         if (isExisting) {
             this.existingTags.set(tagName, { existing: true });
         }
-        
+
         this.clearInput();
-        this.render();
         this.hideSuggestions();
-        
+        this.render();
         if (this.options.onTagsChanged) {
             this.options.onTagsChanged(this.getSelectedTags());
         }

@@ -12,13 +12,13 @@
  2. **Image Upload Dialog**
     - On the Media creation/edit page, the file dialog opens twice on image upload. Eliminate the duplicate trigger.
 
- 3. **Credits Deduction for Tags**
+ 3. **Credits Deduction for Tags** (✅ Implemented)
     - Ensure credits are properly deducted when a user purchases a new tag. Allow free re-use of existing tags.
     - Display the user's remaining credits before confirming a tag purchase.
 
  ## Short-Term Enhancements
 
- 4. **Tiered Commenting & Voting**
+ 4. **Tiered Commenting & Voting** (🛠 In progress)
     - Verify that comments, replies, and vote scores are correctly stored, retrieved, and displayed across media, branches, and segments.
 
  5. **Storage Quota Tracking**
@@ -34,8 +34,8 @@
  8. **Credit History UI**
     - Add a page for users to review their credit earning/spending history.
 
- 9. **Branch & Story Support**
-    - Flesh out backend API and database support for branch creation, listing, and merging (e.g., `/api/branches/*`, source_types table).
+ 9. **Branch & Story Support** (🛠 In progress)
+    - Flesh out backend API and database support for branch creation, listing, and merging (e.g., `/api/branches/*`, `source_types` table).
     - Implement dynamic `source_types` table and admin GUI to manage source type options for branches.
     - Flesh out story/segment uploads in branches: file storage, quota enforcement, AI generation stubs (OpenAI integration, API key from `.env`).
 
