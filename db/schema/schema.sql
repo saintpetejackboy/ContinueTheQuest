@@ -3,6 +3,22 @@
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `ai_models`
+--
+
+CREATE TABLE `ai_models` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `cost_per_use` int(11) DEFAULT 1,
+  `created_at` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `admin_moderation`
 --
 
@@ -161,7 +177,7 @@ CREATE TABLE `segments` (
   `id` int(11) NOT NULL,
   `branch_id` int(11) DEFAULT NULL,
   `title` varchar(255) DEFAULT NULL,
-  `markdown_body` longtext DEFAULT NULL,
+  `file_path` varchar(255) DEFAULT NULL,
   `image_path` varchar(255) DEFAULT NULL,
   `created_by` int(11) DEFAULT NULL,
   `vote_score` int(11) DEFAULT 0,
@@ -212,6 +228,7 @@ CREATE TABLE `tag_links` (
   `target_type` enum('media','branch','segment') DEFAULT NULL,
   `target_id` int(11) DEFAULT NULL,
   `tagged_by` int(11) DEFAULT NULL,
+  `is_mandatory` tinyint(1) DEFAULT 0,
   `tagged_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
