@@ -7,12 +7,13 @@ require_once __DIR__ . '/../../includes/utils.php';
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
-    exit;
+    jsonResponse(['success' => false, 'error' => 'Method not allowed'], 405);
 }
 
-$user = requireAuth();
+$user = getCurrentUser();
+if (!$user) {
+    jsonResponse(['success' => false, 'error' => 'Authentication required'], 401);
+}
 $input = json_decode(file_get_contents('php://input'), true);
 
 $segmentId = intval($input['segment_id'] ?? 0);
@@ -20,9 +21,7 @@ $title = trim($input['title'] ?? '');
 $description = trim($input['description'] ?? '');
 
 if ($segmentId <= 0 || empty($title)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Segment ID and title are required']);
-    exit;
+    jsonResponse(['success' => false, 'error' => 'Segment ID and title are required'], 400);
 }
 
 try {
@@ -34,29 +33,24 @@ try {
     $segment = $stmt->fetch();
     
     if (!$segment) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Segment not found']);
-        exit;
+        jsonResponse(['success' => false, 'error' => 'Segment not found'], 404);
     }
     
     // Check permissions (owner or admin)
     if ($segment['created_by'] != $user['id'] && !$user['is_admin']) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Permission denied']);
-        exit;
+        jsonResponse(['success' => false, 'error' => 'Permission denied'], 403);
     }
     
     // Update segment
     $updateStmt = $db->prepare('UPDATE segments SET title = ?, description = ? WHERE id = ?');
     $updateStmt->execute([$title, $description, $segmentId]);
     
-    echo json_encode([
+    jsonResponse([
         'success' => true,
         'message' => 'Segment updated successfully'
     ]);
     
 } catch (Exception $e) {
     error_log('Segment update error: ' . $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to update segment']);
+    jsonResponse(['success' => false, 'error' => 'Failed to update segment'], 500);
 }

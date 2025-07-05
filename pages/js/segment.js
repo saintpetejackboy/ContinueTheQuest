@@ -236,6 +236,25 @@ function escapeHTML(str) {
             // Comments section
             html += `<div id="comment-thread" class="mt-12 pt-8 border-t"></div>`;
             
+            // Edit modal
+            html += `<div id="edit-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">`;
+            html += `<div class="bg-card rounded-lg p-6 w-full max-w-md space-y-4">`;
+            html += `<h3 class="text-xl font-semibold">Edit Segment</h3>`;
+            html += `<div>`;
+            html += `<label for="edit-title" class="block text-sm font-medium mb-1">Title</label>`;
+            html += `<input type="text" id="edit-title" class="form-input w-full" placeholder="Segment title...">`;
+            html += `</div>`;
+            html += `<div>`;
+            html += `<label for="edit-description" class="block text-sm font-medium mb-1">Description</label>`;
+            html += `<textarea id="edit-description" rows="3" class="form-textarea w-full" placeholder="Segment description..."></textarea>`;
+            html += `</div>`;
+            html += `<div class="flex space-x-2">`;
+            html += `<button id="save-edit-btn" class="btn-primary flex-1">Save Changes</button>`;
+            html += `<button id="cancel-edit-btn" class="btn-secondary flex-1">Cancel</button>`;
+            html += `</div>`;
+            html += `</div>`;
+            html += `</div>`;
+            
             html += `</div>`;
             
             this.container.innerHTML = html;
@@ -312,8 +331,14 @@ function escapeHTML(str) {
             // Edit and delete buttons
             const editBtn = this.container.querySelector('#edit-segment-btn');
             const deleteBtn = this.container.querySelector('#delete-segment-btn');
-            if (editBtn) editBtn.addEventListener('click', () => this.editSegment());
+            if (editBtn) editBtn.addEventListener('click', () => this.openEditModal());
             if (deleteBtn) deleteBtn.addEventListener('click', () => this.deleteSegment());
+            
+            // Edit modal buttons
+            const saveEditBtn = this.container.querySelector('#save-edit-btn');
+            const cancelEditBtn = this.container.querySelector('#cancel-edit-btn');
+            if (saveEditBtn) saveEditBtn.addEventListener('click', () => this.saveSegmentEdit());
+            if (cancelEditBtn) cancelEditBtn.addEventListener('click', () => this.closeEditModal());
             
             // Tag editing buttons
             const editTagsBtn = this.container.querySelector('#edit-tags-btn');
@@ -353,17 +378,35 @@ function escapeHTML(str) {
             window.location.href = `?page=segment&id=${segmentId}`;
         }
 
-        async editSegment() {
-            const newTitle = prompt('Edit segment title:', this.segment.title);
-            if (newTitle === null) return;
+        openEditModal() {
+            const modal = this.container.querySelector('#edit-modal');
+            const titleInput = this.container.querySelector('#edit-title');
+            const descriptionInput = this.container.querySelector('#edit-description');
             
-            if (!newTitle.trim()) {
+            // Pre-fill with current values
+            titleInput.value = this.segment.title || '';
+            descriptionInput.value = this.segment.description || '';
+            
+            modal.classList.remove('hidden');
+        }
+        
+        closeEditModal() {
+            const modal = this.container.querySelector('#edit-modal');
+            modal.classList.add('hidden');
+        }
+        
+        async saveSegmentEdit() {
+            const titleInput = this.container.querySelector('#edit-title');
+            const descriptionInput = this.container.querySelector('#edit-description');
+            
+            const title = titleInput.value.trim();
+            const description = descriptionInput.value.trim();
+            
+            if (!title) {
                 alert('Title cannot be empty.');
+                titleInput.focus();
                 return;
             }
-            
-            const newDescription = prompt('Edit segment description:', this.segment.description || '');
-            if (newDescription === null) return;
             
             try {
                 const response = await fetch('/api/segments/update.php', {
@@ -371,13 +414,14 @@ function escapeHTML(str) {
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         segment_id: this.segmentId,
-                        title: newTitle.trim(),
-                        description: newDescription.trim()
+                        title: title,
+                        description: description
                     })
                 });
                 
                 const data = await response.json();
                 if (data.success) {
+                    this.closeEditModal();
                     location.reload();
                 } else {
                     alert('Failed to update segment: ' + (data.error || 'Unknown error'));

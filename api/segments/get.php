@@ -16,7 +16,7 @@ $db = getDB();
 $stmt = $db->prepare(
     'SELECT s.id, s.title, s.description, s.file_path, s.image_path, s.created_by, 
             s.vote_score, s.order_index, s.created_at,
-            u.username AS author, u.avatar_filename AS author_avatar,
+            u.username AS author, u.avatar AS author_avatar,
             b.id AS branch_id, b.title AS branch_title, b.summary AS branch_summary,
             b.branch_type, b.created_by AS branch_owner,
             m.id AS media_id, m.title AS media_title, m.description AS media_description
