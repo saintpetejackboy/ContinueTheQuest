@@ -325,7 +325,6 @@
             this._removeImageHandler = (e) => this.removeImage(parseInt(e.currentTarget.dataset.imgId, 10));
             this._toggleImageVisibilityHandler = (e) => this.toggleImageVisibility(parseInt(e.currentTarget.dataset.imgId, 10), e.currentTarget.dataset.action);
             this._removeCoverHandler = () => this.removeCover();
-            this._postCommentHandler = () => this.postComment();
             this._addBranchHandler = () => this.container.querySelector('#branch-modal').classList.remove('hidden');
             this._closeBranchHandler = () => this.container.querySelector('#branch-modal').classList.add('hidden');
 
@@ -344,8 +343,6 @@
             });
             const removeCoverBtn = this.container.querySelector('#remove-cover-btn');
             if (removeCoverBtn) removeCoverBtn.addEventListener('click', this._removeCoverHandler);
-            const cbtn = this.container.querySelector('#submit-comment-btn');
-            if (cbtn) cbtn.addEventListener('click', this._postCommentHandler);
             const branchBtn = this.container.querySelector('#add-branch-btn');
             if (branchBtn) branchBtn.addEventListener('click', this._addBranchHandler);
             const cancelBranch = this.container.querySelector('#branch-cancel-btn');
@@ -411,9 +408,6 @@
             // Remove cover button listener
             const removeCoverBtn = this.container.querySelector('#remove-cover-btn');
             if (removeCoverBtn && this._removeCoverHandler) removeCoverBtn.removeEventListener('click', this._removeCoverHandler);
-            // Remove comment submission listener
-            const cbtn = this.container.querySelector('#submit-comment-btn');
-            if (cbtn && this._postCommentHandler) cbtn.removeEventListener('click', this._postCommentHandler);
             // Remove branch modal listeners
             const branchBtn = this.container.querySelector('#add-branch-btn');
             if (branchBtn && this._addBranchHandler) branchBtn.removeEventListener('click', this._addBranchHandler);
@@ -703,129 +697,7 @@
             }
         }
 
-        async loadComments() {
-            try {
-                const res = await fetch(`/api/comments/get.php?target_type=media&target_id=${this.mediaId}`);
-                if (!res.ok) throw new Error('Failed to load comments');
-                const data = await res.json();
-                
-                const placeholder = this.container.querySelector('#comments-placeholder');
-                const list = this.container.querySelector('#comments-list');
-                
-                if (placeholder) placeholder.classList.add('hidden');
-                if (list) list.classList.remove('hidden');
-
-                if (!data.comments || !data.comments.length) {
-                    list.innerHTML = '<p class="text-muted-foreground">No comments yet.</p>';
-                } else {
-                    list.innerHTML = data.comments.map(c => `
-                        <div class="border-b border-border py-2 ${c.hidden ? 'opacity-50' : ''}" data-comment-id="${c.id}">
-                            <div class="flex items-center space-x-2 mb-1">
-                                <span class="font-medium">${c.is_anonymous ? 'Anonymous' : escapeHTML(c.username || '')}</span>
-                                <span class="text-sm text-muted-foreground">${new Date(c.created_at).toLocaleString()}</span>
-                                ${this.userIsAdmin ? `<button data-comment-id="${c.id}" data-action="${c.hidden ? 'unhide' : 'hide'}" class="hide-comment-btn btn btn-ghost btn-xs p-1 text-yellow-500 ml-auto">${c.hidden ? 'Unhide' : 'Hide'}</button>` : ''}
-                            </div>
-                            <p>${escapeHTML(c.body)}</p>
-                            <div class="flex items-center space-x-3 text-sm mt-2">
-                                <button data-comment-id="${c.id}" data-vote="1" class="comment-vote-btn btn btn-ghost btn-xs p-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                                    </svg>
-                                </button>
-                                <span class="comment-vote-score">${c.vote_score}</span>
-                                <button data-comment-id="${c.id}" data-vote="-1" class="comment-vote-btn btn btn-ghost btn-xs p-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    `).join('');
-
-                    // Bind comment vote and hide/unhide events
-                    this._commentVoteHandler = (e) => this.handleVote('comment', parseInt(e.currentTarget.dataset.commentId, 10), parseInt(e.currentTarget.dataset.vote, 10));
-                    this._toggleCommentVisibilityHandler = (e) => this.toggleCommentVisibility(parseInt(e.currentTarget.dataset.commentId, 10), e.currentTarget.dataset.action);
-
-                    list.querySelectorAll('.comment-vote-btn').forEach(btn => {
-                        btn.addEventListener('click', this._commentVoteHandler);
-                    });
-                    list.querySelectorAll('.hide-comment-btn').forEach(btn => {
-                        btn.addEventListener('click', this._toggleCommentVisibilityHandler);
-                    });
-                }
-            } catch (err) {
-                console.error('Load comments failed', err);
-                const list = this.container.querySelector('#comments-list');
-                const placeholder = this.container.querySelector('#comments-placeholder');
-                if (list) {
-                    list.innerHTML = '<p class="text-destructive">Error loading comments.</p>';
-                    list.classList.remove('hidden');
-                }
-                if (placeholder) placeholder.classList.add('hidden');
-                if (window.notify) window.notify.error('Failed to load comments.');
-            }
-        }
-
-        async postComment() {
-            const textarea = this.container.querySelector('#comment-body');
-            const body = textarea.value.trim();
-            if (!body) {
-                if (window.notify) window.notify.warning('Comment cannot be empty.');
-                return;
-            }
-            try {
-                const res = await fetch('/api/comments/create.php', {
-                    method: 'POST',
-                    headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({target_type:'media', target_id:this.mediaId, body})
-                });
-                const data = await res.json();
-                if (!res.ok || !data.success) throw new Error(data.message || 'Failed to post comment');
-                
-                textarea.value = ''; // Clear the textarea
-                await this.loadComments(); // Reload comments to show the new one
-                if (window.notify) window.notify.success('Comment posted successfully!');
-            } catch (err) {
-                console.error('Post comment failed', err);
-                if (window.notify) window.notify.error('Failed to post comment.');
-            }
-        }
-
-        async toggleCommentVisibility(commentId, action) {
-            try {
-                const res = await fetch('/api/comments/hide.php', { // Assuming a hide/unhide API for comments
-                    method: 'POST',
-                    headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({ id: commentId, action })
-                });
-                const data = await res.json();
-                if (!res.ok || !data.success) throw new Error(data.message || 'Failed to update comment visibility');
-                
-                // Update UI for the specific comment
-                const commentElement = this.container.querySelector(`div[data-comment-id="${commentId}"]`);
-                if (commentElement) {
-                    const toggleButton = commentElement.querySelector('.hide-comment-btn');
-                    if (action === 'hide') {
-                        commentElement.classList.add('opacity-50');
-                        if (toggleButton) {
-                            toggleButton.dataset.action = 'unhide';
-                            toggleButton.textContent = 'Unhide';
-                        }
-                        if (window.notify) window.notify.info('Comment hidden.');
-                    } else {
-                        commentElement.classList.remove('opacity-50');
-                        if (toggleButton) {
-                            toggleButton.dataset.action = 'hide';
-                            toggleButton.textContent = 'Hide';
-                        }
-                        if (window.notify) window.notify.info('Comment unhidden.');
-                    }
-                }
-            } catch (err) {
-                console.error('Toggle comment visibility failed', err);
-                if (window.notify) window.notify.error('Failed to toggle comment visibility.');
-            }
-        }
+        
 
         /**
          * Public cleanup method called by the Router when navigating away from this page.
