@@ -21,6 +21,7 @@ function escapeHTML(str) {
             this.commentThread = null;
             this.pendingFile = null;
             this.segmentTaggingSystem = null;
+            this.branchTaggingSystem = null;
 
             if (!this.branchId || !this.container) {
                 console.error('BranchPage: Missing branch ID or container');
@@ -28,7 +29,7 @@ function escapeHTML(str) {
             }
             
             // Set global reference for upload handlers
-            window.branchPage = this;
+            window.branchPageManager = this;
             
             this.init();
         }
@@ -143,11 +144,39 @@ function escapeHTML(str) {
                 <span>${escapeHTML(b.author)}</span>
                 <span>on ${new Date(b.created_at).toLocaleDateString()}</span>
             </div>`;
+            html += `<div class="flex items-center justify-between">`;
             html += `<div class="flex flex-wrap gap-2">`;
             this.tags.forEach(t => {
                 html += `<a href="?page=genre&id=${t.id}" class="px-2 py-1 bg-muted rounded text-xs">${escapeHTML(t.name)}</a>`;
             });
+            if (this.tags.length === 0) {
+                html += `<span class="text-muted-foreground text-xs">No tags</span>`;
+            }
             html += `</div>`;
+            if (this.canEdit) {
+                html += `<button id="edit-branch-tags-btn" class="btn-ghost btn-sm text-xs">Edit Tags</button>`;
+            }
+            html += `</div>`;
+            
+            // Branch tags editing form (hidden by default)
+            if (this.canEdit) {
+                html += `<div id="edit-branch-tags-form" class="mt-2 border rounded-lg p-4 space-y-3 hidden">`;
+                html += `<h3 class="text-sm font-medium">Edit Branch Tags</h3>`;
+                html += `<div class="space-y-2">`;
+                html += `<div class="flex space-x-2">`;
+                html += `<input type="text" id="branch-tag-input" class="form-input flex-1 text-sm" placeholder="Add tags...">`;
+                html += `<button type="button" id="add-branch-tag-btn" class="btn-secondary btn-sm">Add</button>`;
+                html += `</div>`;
+                html += `<div id="branch-tag-suggestions" class="hidden bg-card border rounded-lg shadow-lg max-h-32 overflow-y-auto"></div>`;
+                html += `<div id="branch-selected-tags" class="flex flex-wrap gap-2 min-h-[1rem]"></div>`;
+                html += `<p class="text-xs text-muted-foreground">Existing tags are free. New tags cost 1 credit each.</p>`;
+                html += `</div>`;
+                html += `<div class="flex space-x-2">`;
+                html += `<button id="save-branch-tags-btn" class="btn-primary btn-sm">Save Tags</button>`;
+                html += `<button id="cancel-branch-tags-btn" class="btn-secondary btn-sm">Cancel</button>`;
+                html += `</div>`;
+                html += `</div>`;
+            }
             
             // Branch cover image section
             html += `<div class="mt-4">`;
@@ -312,16 +341,16 @@ function escapeHTML(str) {
                     </button>`;
                     html += `</div>`;
                     html += `<div class="flex items-center space-x-2">`;
-                    html += `<button class="btn-ghost btn-sm" onclick="window.branchPage.readSegment(${segment.id})">Read</button>`;
+                    html += `<button class="btn-ghost btn-sm" onclick="window.branchPageManager.readSegment(${segment.id})">Read</button>`;
                     
                     // Add edit/delete buttons for creators and admins
                     if (this.userLoggedIn && (this.userIsAdmin || segment.created_by === this.currentUserId)) {
-                        html += `<button class="btn-ghost btn-sm text-muted-foreground hover:text-foreground" onclick="window.branchPage.editSegment(${segment.id})" title="Edit segment">
+                        html += `<button class="btn-ghost btn-sm text-muted-foreground hover:text-foreground" onclick="window.branchPageManager.editSegment(${segment.id})" title="Edit segment">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                         </button>`;
-                        html += `<button class="btn-ghost btn-sm text-muted-foreground hover:text-destructive" onclick="window.branchPage.deleteSegment(${segment.id})" title="Delete segment">
+                        html += `<button class="btn-ghost btn-sm text-muted-foreground hover:text-destructive" onclick="window.branchPageManager.deleteSegment(${segment.id})" title="Delete segment">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
@@ -461,22 +490,15 @@ function escapeHTML(str) {
             
             this.container.innerHTML = html;
             
-            // Initialize tagging system for segments
+            // Initialize tagging systems
             this.initializeSegmentTagging();
+            this.initializeBranchTagging();
         }
 
         initializeSegmentTagging() {
-            // Load tagging system script if not already loaded
-            if (typeof TaggingSystem === 'undefined') {
-                const script = document.createElement('script');
-                script.src = '/pages/js/tagging-system.js';
-                script.onload = () => {
-                    this.setupSegmentTagging();
-                };
-                document.head.appendChild(script);
-            } else {
+            this.loadTaggingSystemScript(() => {
                 this.setupSegmentTagging();
-            }
+            });
         }
 
         setupSegmentTagging() {
@@ -497,6 +519,67 @@ function escapeHTML(str) {
                 });
             } catch (error) {
                 console.error('Failed to initialize segment tagging system:', error);
+            }
+        }
+
+        initializeBranchTagging() {
+            this.loadTaggingSystemScript(() => {
+                this.setupBranchTagging();
+            });
+        }
+
+        loadTaggingSystemScript(callback) {
+            // Check if script is already loaded
+            if (typeof TaggingSystem !== 'undefined') {
+                callback();
+                return;
+            }
+            
+            // Check if script is already being loaded
+            const existingScript = document.querySelector('script[src="/pages/js/tagging-system.js"]');
+            if (existingScript) {
+                // Script is already loading, wait for it
+                existingScript.addEventListener('load', callback);
+                return;
+            }
+            
+            // Load the script
+            const script = document.createElement('script');
+            script.src = '/pages/js/tagging-system.js';
+            script.onload = callback;
+            script.onerror = () => {
+                console.error('Failed to load tagging-system.js');
+            };
+            document.head.appendChild(script);
+        }
+
+        setupBranchTagging() {
+            if (!this.canEdit) return; // Only set up if user can edit
+            
+            if (this.branchTaggingSystem) {
+                // Clean up existing system
+                this.branchTaggingSystem = null;
+            }
+            
+            try {
+                this.branchTaggingSystem = new TaggingSystem({
+                    inputSelector: '#branch-tag-input',
+                    suggestionsSelector: '#branch-tag-suggestions', 
+                    selectedTagsSelector: '#branch-selected-tags',
+                    addButtonSelector: '#add-branch-tag-btn',
+                    onTagsChanged: (tags) => {
+                        this.selectedBranchTags = tags;
+                    }
+                });
+                
+                // Pre-populate with existing tags
+                if (this.tags && this.tags.length > 0) {
+                    this.selectedBranchTags = this.tags.map(t => t.name);
+                    this.branchTaggingSystem.selectedTags = new Set(this.selectedBranchTags);
+                    this.branchTaggingSystem.render();
+                }
+            } catch (error) {
+                console.error('Failed to initialize branch tagging system:', error);
             }
         }
 
@@ -582,6 +665,22 @@ function escapeHTML(str) {
             const removeCoverBtn = this.container.querySelector('#remove-cover-btn');
             if (removeCoverBtn) {
                 removeCoverBtn.addEventListener('click', () => this.removeCoverImage());
+            }
+            
+            // Branch tag editing
+            const editTagsBtn = this.container.querySelector('#edit-branch-tags-btn');
+            if (editTagsBtn) {
+                editTagsBtn.addEventListener('click', () => this.toggleBranchTagsForm());
+            }
+            
+            const saveTagsBtn = this.container.querySelector('#save-branch-tags-btn');
+            if (saveTagsBtn) {
+                saveTagsBtn.addEventListener('click', () => this.saveBranchTags());
+            }
+            
+            const cancelTagsBtn = this.container.querySelector('#cancel-branch-tags-btn');
+            if (cancelTagsBtn) {
+                cancelTagsBtn.addEventListener('click', () => this.cancelBranchTagsEdit());
             }
             
             // Segment image upload
@@ -696,7 +795,7 @@ function escapeHTML(str) {
                             <div class="font-medium text-foreground mb-1">Preview Synopsis:</div>
                             <div class="text-muted-foreground">${escapeHTML(preview)}</div>
                         </div>
-                        <button class="btn-primary btn-sm mt-2 w-full" onclick="window.branchPage.uploadStoryFile()">Upload Segment</button>
+                        <button class="btn-primary btn-sm mt-2 w-full" onclick="window.branchPageManager.uploadStoryFile()">Upload Segment</button>
                     </div>
                 `;
             };
@@ -766,7 +865,7 @@ function escapeHTML(str) {
                     
                     // Clear tags
                     if (this.segmentTaggingSystem) {
-                        this.segmentTaggingSystem.clearAllTags();
+                        this.segmentTaggingSystem.clearTags();
                     }
                     this.selectedSegmentTags = [];
                     
@@ -1149,7 +1248,7 @@ function escapeHTML(str) {
                     if (this.userLoggedIn) {
                         html += `<div class="mt-4 pt-4 border-t">`;
                         html += `<textarea id="new-comment-${segmentId}" class="form-textarea w-full mb-2" rows="3" placeholder="Add a comment..."></textarea>`;
-                        html += `<button class="btn-primary btn-sm" onclick="window.branchPage.submitSegmentComment(${segmentId})">Post Comment</button>`;
+                        html += `<button class="btn-primary btn-sm" onclick="window.branchPageManager.submitSegmentComment(${segmentId})">Post Comment</button>`;
                         html += `</div>`;
                     }
                     
@@ -1161,7 +1260,7 @@ function escapeHTML(str) {
                     if (this.userLoggedIn) {
                         html += `<div class="mt-4 pt-4 border-t">`;
                         html += `<textarea id="new-comment-${segmentId}" class="form-textarea w-full mb-2" rows="3" placeholder="Be the first to comment..."></textarea>`;
-                        html += `<button class="btn-primary btn-sm" onclick="window.branchPage.submitSegmentComment(${segmentId})">Post Comment</button>`;
+                        html += `<button class="btn-primary btn-sm" onclick="window.branchPageManager.submitSegmentComment(${segmentId})">Post Comment</button>`;
                         html += `</div>`;
                     }
                     
@@ -1284,7 +1383,7 @@ function escapeHTML(str) {
                         html += `<div class="mt-6 p-4 border rounded-lg bg-muted/50">`;
                         html += `<h5 class="font-medium mb-3">Add a comment</h5>`;
                         html += `<textarea id="new-reader-comment" class="form-textarea w-full mb-3" rows="3" placeholder="Share your thoughts..."></textarea>`;
-                        html += `<button class="btn-primary btn-sm" onclick="window.branchPage.submitReaderComment()">Post Comment</button>`;
+                        html += `<button class="btn-primary btn-sm" onclick="window.branchPageManager.submitReaderComment()">Post Comment</button>`;
                         html += `</div>`;
                     }
                     
@@ -1297,7 +1396,7 @@ function escapeHTML(str) {
                         html += `<div class="mt-6 p-4 border rounded-lg bg-muted/50">`;
                         html += `<h5 class="font-medium mb-3">Be the first to comment</h5>`;
                         html += `<textarea id="new-reader-comment" class="form-textarea w-full mb-3" rows="3" placeholder="Share your thoughts..."></textarea>`;
-                        html += `<button class="btn-primary btn-sm" onclick="window.branchPage.submitReaderComment()">Post Comment</button>`;
+                        html += `<button class="btn-primary btn-sm" onclick="window.branchPageManager.submitReaderComment()">Post Comment</button>`;
                         html += `</div>`;
                     }
                     
@@ -1481,7 +1580,7 @@ function escapeHTML(str) {
                     <div class="border rounded p-3 bg-muted/50">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-sm font-medium">${escapeHTML(file.name)}</span>
-                            <button class="btn-ghost btn-sm" onclick="this.parentElement.parentElement.parentElement.remove(); window.branchPage.pendingSegmentImage = null;">×</button>
+                            <button class="btn-ghost btn-sm" onclick="this.parentElement.parentElement.parentElement.remove(); window.branchPageManager.pendingSegmentImage = null;">×</button>
                         </div>
                         <div class="text-xs text-muted-foreground mb-2">
                             Size: ${this.formatBytes(file.size)}
@@ -1623,7 +1722,7 @@ function escapeHTML(str) {
                 
                 // Clear tags
                 if (this.segmentTaggingSystem) {
-                    this.segmentTaggingSystem.clearAllTags();
+                    this.segmentTaggingSystem.clearTags();
                 }
                 this.selectedSegmentTags = [];
             }
@@ -1750,6 +1849,73 @@ function escapeHTML(str) {
             } catch (error) {
                 console.error('Failed to delete segment:', error);
                 alert('Failed to delete segment. Please try again.');
+            }
+        }
+
+        toggleBranchTagsForm() {
+            const form = this.container.querySelector('#edit-branch-tags-form');
+            const btn = this.container.querySelector('#edit-branch-tags-btn');
+            
+            if (form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+                btn.textContent = 'Cancel Edit';
+                
+                // Initialize tagging system when form is shown
+                setTimeout(() => {
+                    if (this.branchTaggingSystem) {
+                        this.branchTaggingSystem.render();
+                    }
+                }, 100);
+            } else {
+                form.classList.add('hidden');
+                btn.textContent = 'Edit Tags';
+                this.cancelBranchTagsEdit();
+            }
+        }
+
+        async saveBranchTags() {
+            if (!this.selectedBranchTags) {
+                this.selectedBranchTags = [];
+            }
+            
+            try {
+                const response = await fetch('/api/branches/update-tags.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        branch_id: this.branchId,
+                        tags: this.selectedBranchTags
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert(`Tags updated successfully! ${data.credits_used > 0 ? `Credits used: ${data.credits_used}` : ''}`);
+                    
+                    // Refresh page to show updated tags
+                    location.reload();
+                } else {
+                    alert('Failed to update tags: ' + (data.error || 'Unknown error'));
+                }
+                
+            } catch (error) {
+                console.error('Failed to save branch tags:', error);
+                alert('Failed to save tags. Please try again.');
+            }
+        }
+
+        cancelBranchTagsEdit() {
+            const form = this.container.querySelector('#edit-branch-tags-form');
+            const btn = this.container.querySelector('#edit-branch-tags-btn');
+            
+            form.classList.add('hidden');
+            btn.textContent = 'Edit Tags';
+            
+            // Reset tags to original state
+            if (this.branchTaggingSystem && this.tags) {
+                this.selectedBranchTags = this.tags.map(t => t.name);
+                this.branchTaggingSystem.selectedTags = new Set(this.selectedBranchTags);
+                this.branchTaggingSystem.render();
             }
         }
 

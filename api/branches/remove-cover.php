@@ -12,7 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$user = requireAuth();
+$user = getCurrentUser();
+if (!$user) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized']);
+    exit;
+}
 $input = json_decode(file_get_contents('php://input'), true);
 $branchId = intval($input['branch_id'] ?? 0);
 
