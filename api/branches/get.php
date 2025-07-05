@@ -15,10 +15,11 @@ if (!$branchId) {
 $db = getDB();
 // Fetch branch and owner info
 $stmt = $db->prepare(
-    'SELECT b.id, b.media_id, b.title, b.summary, b.branch_type, b.source_type,
+    'SELECT b.id, b.media_id, m.title AS media_title, b.title, b.summary, b.branch_type, b.source_type,
             b.cover_image, b.created_by, b.vote_score, b.created_at,
             u.username AS author, u.avatar AS author_avatar
      FROM branches b
+     LEFT JOIN media m ON m.id = b.media_id
      LEFT JOIN users u ON u.id = b.created_by
      WHERE b.id = ?'
 );

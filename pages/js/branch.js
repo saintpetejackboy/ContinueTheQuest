@@ -122,7 +122,7 @@ function escapeHTML(str) {
                     <div class="text-sm text-muted-foreground">
                         <label for="story-file" class="font-medium text-primary hover:text-primary/80 cursor-pointer">Click to upload text</label> or drag and drop
                     </div>
-                    <p class="text-xs text-muted-foreground">TXT or MD up to 500KB</p>
+                    <p class="text-xs text-muted-foreground">Supported file types: .txt, .md (Markdown); max size 500 KB.</p>
                 </div>
                 <input type="file" id="story-file" accept=".txt,.md" class="hidden">
             </div>`;
@@ -213,7 +213,11 @@ function escapeHTML(str) {
             const costEl = modal.querySelector('#generate-cost');
             const creditsEl = modal.querySelector('#user-credits-gen');
             // Build default prompt
-            const prompt = `Continue the story ${this.branch.branch_type} the branch titled "${this.branch.title}" under media ID ${this.branch.media_id}. Summary: ${this.branch.summary}`;
+            const prompt = `You will contribute a short story to the ${this.branch.branch_type} continuation of "${this.branch.media_title}". ` +
+                           `The branch is titled "${this.branch.title}". Keep it concise and professional. ` +
+                           `Here is the user-provided summary: ${this.branch.summary}. ` +
+                           `Respond with only the full story text (no code or JSON), do not reveal you are an AI. ` +
+                           `Write in the style of a Hollywood-caliber fanfic writer.`;
             debug.textContent = prompt;
             costEl.textContent = '---'; // TODO: calculate cost
             creditsEl.textContent = this.userCredits;
