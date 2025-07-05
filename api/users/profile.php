@@ -81,13 +81,13 @@ try {
     $stats['media_count']   = $stats['media_created'];
     // branches
     try {
-        $stmt = $db->prepare('SELECT COUNT(*) AS cnt FROM Branches WHERE user_id = ?');
+        $stmt = $db->prepare('SELECT COUNT(*) AS cnt FROM Branches WHERE created_by = ?');
         $stmt->execute([$ud['id']]);
         $stats['branches_created'] = (int)$stmt->fetch(PDO::FETCH_ASSOC)['cnt'];
     } catch (Exception $e) { /* table may not exist */ }
     // segments
     try {
-        $stmt = $db->prepare('SELECT COUNT(*) AS cnt FROM Segments WHERE user_id = ?');
+        $stmt = $db->prepare('SELECT COUNT(*) AS cnt FROM Segments WHERE created_by = ?');
         $stmt->execute([$ud['id']]);
         $stats['segments_written'] = (int)$stmt->fetch(PDO::FETCH_ASSOC)['cnt'];
     } catch (Exception $e) { }

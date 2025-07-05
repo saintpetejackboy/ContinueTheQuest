@@ -148,17 +148,22 @@ function escapeHTML(str) {
             // Voting and actions
             html += `<div class="flex items-center justify-center space-x-4">`;
             html += `<div class="flex items-center space-x-2">`;
-            html += `<button class="vote-btn btn-ghost btn-sm" data-vote="1">`;
-            html += `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">`;
-            html += `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />`;
-            html += `</svg>`;
-            html += `</button>`;
-            html += `<span id="vote-score" class="font-medium">${s.vote_score}</span>`;
-            html += `<button class="vote-btn btn-ghost btn-sm" data-vote="-1">`;
-            html += `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">`;
-            html += `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />`;
-            html += `</svg>`;
-            html += `</button>`;
+            html += `<button id="reader-vote-up" class="btn-ghost btn-sm p-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+            </button>`;
+            html += `<span id="reader-vote-score" class="text-sm font-medium">0</span>`;
+            html += `<button id="reader-vote-down" class="btn-ghost btn-sm p-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>`;
+            html += `</div>`;
+            html += `<button id="download-story-btn" class="btn-ghost btn-sm">Download Branch</button>`;
+            html += `<button id="fullscreen-btn" class="btn-ghost btn-sm">Fullscreen</button>`;
+            html += `<button id="close-segment-reader" class="btn-ghost btn-sm">×</button>`;
+            html += `</div>`;
             html += `</div>`;
             
             // Edit/Delete buttons for owners/admins
@@ -248,6 +253,12 @@ function escapeHTML(str) {
             html += `<label for="edit-description" class="block text-sm font-medium mb-1">Description</label>`;
             html += `<textarea id="edit-description" rows="3" class="form-textarea w-full" placeholder="Segment description..."></textarea>`;
             html += `</div>`;
+            html += `<div>`;
+            html += `<label for="edit-segment-image" class="block text-sm font-medium text-muted-foreground mb-1">Image (Optional)</label>`;
+            html += `<input type="file" id="edit-segment-image" class="form-input w-full" accept="image/*">`;
+            html += `<p class="text-xs text-muted-foreground mt-1">Upload a new image for this segment. Existing image will be replaced.</p>`;
+            html += `<div id="current-segment-image-preview" class="mt-2"></div>`;
+            html += `</div>`;
             html += `<div class="flex space-x-2">`;
             html += `<button id="save-edit-btn" class="btn-primary flex-1">Save Changes</button>`;
             html += `<button id="cancel-edit-btn" class="btn-secondary flex-1">Cancel</button>`;
@@ -281,12 +292,29 @@ function escapeHTML(str) {
                 formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold">$1</strong>');
                 formatted = formatted.replace(/\*(.+?)\*/g, '<em class="italic">$1</em>');
                 
+                // Lists
+                formatted = formatted.replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
+                formatted = formatted.replace(/^\d+\. (.+)$/gm, '<li class="ml-4 list-decimal">$1</li>');
+
+                // Blockquotes
+                formatted = formatted.replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-primary pl-4 italic my-4">$1</blockquote>');
+
+                // Code blocks (simple pre-wrap for now)
+                formatted = formatted.replace(/```([a-z]*)\n([\s\S]*?)```/g, '<pre class="bg-muted p-3 rounded-lg overflow-x-auto my-4"><code class="text-sm language-$1">$2</code></pre>');
+                formatted = formatted.replace(/`(.+?)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-sm">$1</code>');
+
+                // Horizontal rule
+                formatted = formatted.replace(/^-{3,}$/gm, '<hr class="my-8 border-t-2 border-border"/>');
+
+                // Links
+                formatted = formatted.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" class="text-primary hover:underline" target="_blank">$1</a>');
+
                 // Convert paragraphs with proper spacing
                 const paragraphs = formatted.split('\n\n');
                 const formattedParagraphs = paragraphs.map(para => {
                     if (para.trim() === '') return '';
-                    // Don't wrap headers in paragraphs
-                    if (para.trim().match(/^<h[1-6]/)) return para.trim();
+                    // Don't wrap headers, lists, blockquotes, code blocks, or horizontal rules in paragraphs
+                    if (para.trim().match(/^(<h[1-6]|<li|<blockquote|<pre|<hr)/)) return para.trim();
                     return `<p class="mb-6 leading-relaxed">${para.trim().replace(/\n/g, '<br>')}</p>`;
                 }).filter(para => para !== '');
                 
@@ -320,13 +348,17 @@ function escapeHTML(str) {
             
             // Navigation buttons
             const prevBtn = this.container.querySelector('#prev-segment-btn');
-            const nextBtn = this.container.querySelector('#next-segment-btn');
-            if (prevBtn && this.navigation.prev_segment) {
-                prevBtn.addEventListener('click', () => this.navigateToSegment(this.navigation.prev_segment.id));
-            }
-            if (nextBtn && this.navigation.next_segment) {
-                nextBtn.addEventListener('click', () => this.navigateToSegment(this.navigation.next_segment.id));
-            }
+            const nextBtn = modal.querySelector('#next-segment-btn');
+            if (prevBtn) prevBtn.addEventListener('click', () => this.navigateSegment(-1));
+            if (nextBtn) nextBtn.addEventListener('click', () => this.navigateSegment(1));
+
+            // Download button
+            const downloadBtn = modal.querySelector('#download-story-btn');
+            if (downloadBtn) downloadBtn.addEventListener('click', () => this.downloadBranch());
+
+            // Fullscreen button
+            const fullscreenBtn = modal.querySelector('#fullscreen-btn');
+            if (fullscreenBtn) fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
             
             // Edit and delete buttons
             const editBtn = this.container.querySelector('#edit-segment-btn');
@@ -382,10 +414,25 @@ function escapeHTML(str) {
             const modal = this.container.querySelector('#edit-modal');
             const titleInput = this.container.querySelector('#edit-title');
             const descriptionInput = this.container.querySelector('#edit-description');
-            
+            const imageInput = modal.querySelector('#edit-segment-image');
+            const currentImagePreview = modal.querySelector('#current-segment-image-preview');
+
             // Pre-fill with current values
             titleInput.value = this.segment.title || '';
             descriptionInput.value = this.segment.description || '';
+            imageInput.value = ''; // Clear file input
+
+            if (this.segment.image_path) {
+                currentImagePreview.innerHTML = `
+                    <img src="/uploads/users/${this.segment.created_by}/${this.segment.image_path}" class="w-32 h-32 object-cover rounded-lg mb-2">
+                    <label class="flex items-center text-sm text-muted-foreground">
+                        <input type="checkbox" id="remove-current-segment-image" class="mr-2">
+                        Remove current image
+                    </label>
+                `;
+            } else {
+                currentImagePreview.innerHTML = '<p class="text-sm text-muted-foreground">No current image.</p>';
+            }
             
             modal.classList.remove('hidden');
         }
@@ -393,14 +440,21 @@ function escapeHTML(str) {
         closeEditModal() {
             const modal = this.container.querySelector('#edit-modal');
             modal.classList.add('hidden');
+            modal.querySelector('#edit-segment-image').value = ''; // Clear file input
+            const removeCheckbox = modal.querySelector('#remove-current-segment-image');
+            if (removeCheckbox) removeCheckbox.checked = false; // Uncheck remove option
         }
         
         async saveSegmentEdit() {
-            const titleInput = this.container.querySelector('#edit-title');
-            const descriptionInput = this.container.querySelector('#edit-description');
-            
+            const modal = this.container.querySelector('#edit-modal');
+            const titleInput = modal.querySelector('#edit-title');
+            const descriptionInput = modal.querySelector('#edit-description');
+            const imageInput = modal.querySelector('#edit-segment-image');
+            const removeCurrentImage = modal.querySelector('#remove-current-segment-image')?.checked || false;
+
             const title = titleInput.value.trim();
             const description = descriptionInput.value.trim();
+            const imageFile = imageInput.files[0];
             
             if (!title) {
                 alert('Title cannot be empty.');
@@ -408,15 +462,19 @@ function escapeHTML(str) {
                 return;
             }
             
+            const formData = new FormData();
+            formData.append('segment_id', this.segmentId);
+            formData.append('title', title);
+            formData.append('description', description);
+            if (imageFile) {
+                formData.append('image', imageFile);
+            }
+            formData.append('remove_image', removeCurrentImage ? 'true' : 'false');
+
             try {
                 const response = await fetch('/api/segments/update.php', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        segment_id: this.segmentId,
-                        title: title,
-                        description: description
-                    })
+                    body: formData
                 });
                 
                 const data = await response.json();
@@ -602,6 +660,63 @@ function escapeHTML(str) {
                 this.selectedTags = this.tags.filter(t => !t.is_mandatory).map(t => t.name);
                 this.taggingSystem.selectedTags = new Set(this.selectedTags);
                 this.taggingSystem.render();
+            }
+        }
+
+        async downloadBranch() {
+            try {
+                // Fetch all segments for the current branch
+                const res = await fetch(`/api/segments/list.php?branch_id=${this.segment.branch_id}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (!data.success || !data.segments) throw new Error(data.error || 'Failed to load segments for download');
+
+                let fullStoryContent = '';
+                for (const seg of data.segments) {
+                    // Fetch content for each segment
+                    const contentRes = await fetch(`/api/segments/content.php?id=${seg.id}`);
+                    if (!contentRes.ok) throw new Error(`HTTP ${contentRes.status}`);
+                    const contentData = await contentRes.json();
+                    if (!contentData.success || !contentData.content) throw new Error(contentData.error || 'Failed to load segment content');
+
+                    fullStoryContent += `# ${seg.title}\n\n`;
+                    if (seg.description) {
+                        fullStoryContent += `*${seg.description}*\n\n`;
+                    }
+                    fullStoryContent += `${contentData.content}\n\n---\n\n`;
+                }
+
+                const branchTitle = escapeHTML(this.segment.branch_title || 'story').replace(/[^a-zA-Z0-9-_]/g, '');
+                const filename = `${branchTitle}.md`;
+                const blob = new Blob([fullStoryContent], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                if (window.notify) window.notify.success('Branch downloaded successfully!');
+
+            } catch (err) {
+                console.error('Download branch failed:', err);
+                if (window.notify) window.notify.error('Failed to download branch.');
+            }
+        }
+
+        toggleFullscreen() {
+            const modal = this.container.querySelector('#segment-reader-modal');
+            if (!modal) return;
+
+            if (!document.fullscreenElement) {
+                modal.requestFullscreen().catch(err => {
+                    alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                document.exitFullscreen();
             }
         }
 

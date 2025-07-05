@@ -46,7 +46,7 @@
                     <div>
                         <div class="flex justify-between mb-2">
                             <span class="text-muted-foreground">Credits:</span>
-                            <span id="user-credits" class="font-medium"></span>
+                            <span id="user-credits" class="font-medium flex items-center gap-1"><img src="/img/credit.gif" class="h-5"></span>
                         </div>
                         <div class="flex justify-between mb-2">
                             <span class="text-muted-foreground">Media Created:</span>
@@ -87,6 +87,25 @@
                     <span id="storage-images"></span>
                     <span id="storage-texts"></span>
                 </div>
+            </div>
+        </div>
+
+        <!-- Navigation to user contributions -->
+        <div class="bg-card p-6 rounded-lg shadow-md border border-border">
+            <h2 class="text-lg font-semibold mb-4">Your Contributions</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="?page=my_media" class="btn-outline flex items-center justify-center gap-2">
+                    📚 My Media
+                </a>
+                <a href="?page=my_branches" class="btn-outline flex items-center justify-center gap-2">
+                    🌿 My Branches
+                </a>
+                <a href="?page=my_segments" class="btn-outline flex items-center justify-center gap-2">
+                    📜 My Segments
+                </a>
+                <a href="?page=my_comments" class="btn-outline flex items-center justify-center gap-2">
+                    💬 My Comments
+                </a>
             </div>
         </div>
 

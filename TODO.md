@@ -5,26 +5,31 @@ This file tracks the remaining tasks and future enhancements for the ContinueThe
 ## 🚀 Up Next: Core Feature Enhancements
 
 ### 1. Comments for Segments
-- [ ] **API**: Implement API endpoints for creating, reading, updating, and deleting comments on individual segments.
-- [ ] **UI**: Add comment threads to segment cards and the story reader modal.
-- [ ] **Real-time**: Ensure comments appear in real-time without a full page reload.
+- [x] **API**: Implement API endpoints for creating, reading, updating, and deleting comments on individual segments.
+- [x] **UI**: Add comment threads to segment cards and the story reader modal.
+- [x] **Real-time**: Ensure comments appear in real-time without a full page reload.
 
 ### 2. Image Uploads for Branches & Segments
-- [ ] **Branches**: Add functionality to upload, remove, and manage cover images for branches.
-- [ ] **Segments**: Allow a single image upload per segment during creation.
-- [ ] **Storage**: Integrate image uploads with the user storage quota system.
-- [ ] **Optimization**: Implement WebP conversion for all uploaded images to save space and improve performance.
+- [x] **Branches**: Add functionality to upload, remove, and manage cover images for branches.
+- [x] **Segments**: Allow a single image upload per segment during creation.
+- [x] **Storage**: Integrate image uploads with the user storage quota system.
+- [x] **Optimization**: Implement WebP conversion for all uploaded images to save space and improve performance.
 
 ### 3. Enhanced Story Reader
-- [ ] **Navigation**: Add "next" and "previous" buttons to navigate between segments in order.
-- [ ] **Styling**: Improve Markdown rendering with better CSS for a more polished look.
-- [ ] **Export**: Add options to download or export full stories/branches.
-- [ ] **Fullscreen Mode**: Implement a fullscreen or distraction-free reading mode.
+- [x] **Navigation**: Add "next" and "previous" buttons to navigate between segments in order.
+- [x] **Styling**: Improve Markdown rendering with better CSS for a more polished look.
+- [x] **Export**: Add options to download or export full stories/branches.
+- [x] **Fullscreen Mode**: Implement a fullscreen or distraction-free reading mode.
 
 ### 4. Segment Management
 - [ ] **CRUD**: Allow creators and admins to edit and delete segments.
 - [ ] **Reordering**: Implement drag-and-drop reordering for segments within a branch.
-- [ ] **Duplication**: Add a feature to duplicate a segment for easier variations.
+
+## 5. User Contribution Pages
+- [x] **My Media**: Implemented page and API to list user's created media. Sorting fixed.
+- [x] **My Branches**: Implemented page and API to list user's created branches.
+- [x] **My Segments**: Implemented page and API to list user's written segments.
+- [x] **My Comments**: Implemented page and API to list user's posted comments.
 
 ## 🔧 Future Enhancements
 

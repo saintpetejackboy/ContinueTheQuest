@@ -284,6 +284,11 @@
             html += `</select>`;
             html += `<p class="text-xs text-muted-foreground mt-1">Source types should be managed via a dynamic table in the future (TODO: Admin GUI for source types).</p>`;
             html += `</div>`;
+            html += `<div>`;
+            html += `<label for="branch-cover-image" class="block text-sm font-medium text-muted-foreground mb-1">Cover Image (Optional)</label>`;
+            html += `<input type="file" id="branch-cover-image" class="form-input w-full" accept="image/*">`;
+            html += `<p class="text-xs text-muted-foreground mt-1">Upload a cover image for this branch.</p>`;
+            html += `</div>`;
             html += `<div class="flex justify-end space-x-2">`;
             html += `<button id="branch-cancel-btn" class="btn-secondary">Cancel</button>`;
             html += `<button id="branch-submit-btn" class="btn-primary">Create Branch</button>`;
@@ -291,9 +296,76 @@
             html += `</div></div>`;
 
             html += `</div>`; // Close main div
-            this.container.innerHTML = html;
-        }
+            html += `<div id="edit-branch-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">`;
+            html += `<div class="bg-card rounded-lg p-6 w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto">`;
+            html += `<h3 class="text-xl font-semibold">Edit Branch</h3>`;
+            html += `<input type="hidden" id="edit-branch-id">`;
+            html += `<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">`;
+            html += `
+                <label class="relative flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer bg-card
+                                hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary
+                                has-[:checked]:text-primary-foreground has-[:checked]:ring-2 has-[:checked]:ring-offset-1
+                                has-[:checked]:ring-primary has-[:checked]:shadow-inner transition-all">
+                    <input type="radio" name="edit-branch-type" value="after" class="sr-only">
+                    <span class="text-lg font-medium">🌿 After</span>
+                    <span class="text-xs mt-1">Continue the story after the original ending (most common).</span>
+                </label>
+            `;
+            html += `
+                <label class="relative flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer bg-card
+                                hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary
+                                has-[:checked]:text-primary-foreground has-[:checked]:ring-2 has-[:checked]:ring-offset-1
+                                has-[:checked]:ring-primary has-[:checked]:shadow-inner transition-all">
+                    <input type="radio" name="edit-branch-type" value="before" class="sr-only">
+                    <span class="text-lg font-medium">📜 Before</span>
+                    <span class="text-xs mt-1">Prequel or events leading up to the original story.</span>
+                </label>
+            `;
+            html += `
+                <label class="relative flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer bg-card
+                                hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary
+                                has-[:checked]:text-primary-foreground has-[:checked]:ring-2 has-[:checked]:ring-offset-1
+                                has-[:checked]:ring-primary has-[:checked]:shadow-inner transition-all">
+                    <input type="radio" name="edit-branch-type" value="other" class="sr-only">
+                    <span class="text-lg font-medium">🎭 Alternate</span>
+                    <span class="text-xs mt-1">Non-canon or fan-fiction variations of the original story.</span>
+                </label>
+            `;
+            html += `</div>`;
+            html += `<div>`;
+            html += `<label for="edit-branch-title" class="block text-sm font-medium text-muted-foreground mb-1">Branch Title</label>`;
+            html += `<input type="text" id="edit-branch-title" class="form-input w-full" placeholder="A descriptive title for this branch...">`;
+            html += `</div>`;
+            html += `<div>`;
+            html += `<label for="edit-branch-summary" class="block text-sm font-medium text-muted-foreground mb-1">Summary</label>`;
+            html += `<textarea id="edit-branch-summary" rows="3" class="form-textarea w-full" placeholder="Brief summary of what this branch covers..."></textarea>`;
+            html += `</div>`;
+            html += `<div>`;
+            html += `<label for="edit-branch-source" class="block text-sm font-medium text-muted-foreground mb-1">Source Type</label>`;
+            html += `<select id="edit-branch-source" class="form-select w-full">`;
+            html += `<option value="book">Book</option>`;
+            html += `<option value="movie">Movie</option>`;
+            html += `<option value="tv_show">TV Show</option>`;
+            html += `<option value="game">Game</option>`;
+            html += `<option value="comic_book">Comic Book</option>`;
+            html += `<option value="other">Other</option>`;
+            html += `</select>`;
+            html += `</div>`;
+            html += `<div>`;
+            html += `<label for="edit-branch-cover-image" class="block text-sm font-medium text-muted-foreground mb-1">Cover Image (Optional)</label>`;
+            html += `<input type="file" id="edit-branch-cover-image" class="form-input w-full" accept="image/*">`;
+            html += `<p class="text-xs text-muted-foreground mt-1">Upload a new cover image for this branch. Existing image will be replaced.</p>`;
+            html += `<div id="current-branch-cover-preview" class="mt-2"></div>`;
+            html += `</div>`;
+            html += `<div class="flex justify-end space-x-2">`;
+            html += `<button id="edit-branch-cancel-btn" class="btn-secondary">Cancel</button>`;
+            html += `<button id="edit-branch-submit-btn" class="btn-primary">Save Changes</button>`;
+            html += `</div>`;
+            html += `</div></div>`;
 
+            this.container.innerHTML = html;
+
+        }
         /**
          * Renders only the media tags section.
          * @param {Array} tags - Array of tag objects.
@@ -349,6 +421,12 @@
             if (cancelBranch) cancelBranch.addEventListener('click', () => this.container.querySelector('#branch-modal').classList.add('hidden'));
             const submitBranch = this.container.querySelector('#branch-submit-btn');
             if (submitBranch) submitBranch.addEventListener('click', () => this.handleBranchSubmit());
+
+            // Edit branch modal buttons
+            const editBranchCancelBtn = this.container.querySelector('#edit-branch-cancel-btn');
+            if (editBranchCancelBtn) editBranchCancelBtn.addEventListener('click', () => this.closeEditBranchModal());
+            const editBranchSubmitBtn = this.container.querySelector('#edit-branch-submit-btn');
+            if (editBranchSubmitBtn) editBranchSubmitBtn.addEventListener('click', () => this.handleEditBranchSubmit());
 
             // Media tag management via TaggingSystem
             if (this.media.can_edit) {
@@ -413,6 +491,12 @@
             if (branchBtn && this._addBranchHandler) branchBtn.removeEventListener('click', this._addBranchHandler);
             const closeBranch = this.container.querySelector('#close-branch-modal');
             if (closeBranch && this._closeBranchHandler) closeBranch.removeEventListener('click', this._closeBranchHandler);
+
+            // Edit branch modal listeners
+            const editBranchCancelBtn = this.container.querySelector('#edit-branch-cancel-btn');
+            if (editBranchCancelBtn) editBranchCancelBtn.removeEventListener('click', () => {});
+            const editBranchSubmitBtn = this.container.querySelector('#edit-branch-submit-btn');
+            if (editBranchSubmitBtn) editBranchSubmitBtn.removeEventListener('click', () => {});
 
             // Comment specific listeners (these are re-bound in loadComments, but ensure they are removed here too)
             this.container.querySelectorAll('.comment-vote-btn').forEach(btn => {
@@ -565,59 +649,151 @@
         }
     }
 
-    /**
-     * Handles submission of the new branch form. Stub for future API integration.
-     */
-    async handleBranchSubmit() {
-        const modal = this.container.querySelector('#branch-modal');
-        const branchType = modal.querySelector('input[name="branch-type"]:checked')?.value;
-        const title = modal.querySelector('#branch-title')?.value.trim();
-        const summary = modal.querySelector('#branch-summary')?.value.trim();
-        const source = modal.querySelector('#branch-source')?.value;
-        if (!branchType || !title) {
-            alert('Please select a branch type and enter a title.');
-            return;
-        }
-        try {
-            const resp = await fetch('/api/branches/create.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    media_id: this.mediaId,
-                    branch_type: branchType,
-                    source_type: source,
-                    title: title,
-                    summary: summary
-                })
-            });
-            const data = await resp.json();
-            if (!resp.ok || !data.success) {
-                throw new Error(data.error || 'Failed to create branch');
-            }
-            modal.classList.add('hidden');
-            this.loadBranches();
-        } catch (err) {
-            alert(err.message || 'Error creating branch');
-        }
-    }
+        /**
+         * Opens the modal for editing an existing branch.
+         * @param {object} branch - The branch object to edit.
+         */
+        openEditBranchModal(branch) {
+            const modal = this.container.querySelector('#edit-branch-modal');
+            modal.querySelector('#edit-branch-id').value = branch.id;
+            modal.querySelector('#edit-branch-title').value = branch.title;
+            modal.querySelector('#edit-branch-summary').value = branch.summary;
+            modal.querySelector(`input[name="edit-branch-type"][value="${branch.branch_type}"]`).checked = true;
+            modal.querySelector('#edit-branch-source').value = branch.source_type;
 
-    /**
-     * Fetch and render the list of branches for this media.
-     */
-    async loadBranches() {
-        try {
-            const res = await fetch(`/api/branches/list.php?media_id=${this.mediaId}`);
-            const data = await res.json();
-            if (!data.success) throw new Error(data.error || 'Failed to load branches');
-            const listEl = this.container.querySelector('#media-branches-list');
-            if (!listEl) return;
-            if (!data.branches.length) {
-                listEl.innerHTML = '<p class="text-muted-foreground text-center py-4">No branches have been created for this media yet.</p>';
+            const currentCoverPreview = modal.querySelector('#current-branch-cover-preview');
+            if (branch.cover_image) {
+                currentCoverPreview.innerHTML = `
+                    <img src="/uploads/users/${branch.created_by}/images/${branch.cover_image}" class="w-32 h-32 object-cover rounded-lg mb-2">
+                    <label class="flex items-center text-sm text-muted-foreground">
+                        <input type="checkbox" id="remove-current-branch-cover" class="mr-2">
+                        Remove current cover image
+                    </label>
+                `;
+            } else {
+                currentCoverPreview.innerHTML = '<p class="text-sm text-muted-foreground">No current cover image.</p>';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        /**
+         * Closes the edit branch modal and resets its file input.
+         */
+        closeEditBranchModal() {
+            this.container.querySelector('#edit-branch-modal').classList.add('hidden');
+            this.container.querySelector('#edit-branch-cover-image').value = ''; // Clear file input
+            const removeCheckbox = this.container.querySelector('#remove-current-branch-cover');
+            if (removeCheckbox) removeCheckbox.checked = false; // Uncheck remove option
+        }
+
+        /**
+         * Handles submission of the edit branch form.
+         */
+        async handleEditBranchSubmit() {
+            const modal = this.container.querySelector('#edit-branch-modal');
+            const branchId = modal.querySelector('#edit-branch-id').value;
+            const branchType = modal.querySelector('input[name="edit-branch-type"]:checked')?.value;
+            const title = modal.querySelector('#edit-branch-title').value.trim();
+            const summary = modal.querySelector('#edit-branch-summary').value.trim();
+            const source = modal.querySelector('#edit-branch-source').value;
+            const coverImageInput = modal.querySelector('#edit-branch-cover-image');
+            const coverImage = coverImageInput.files[0];
+            const removeCurrentCover = modal.querySelector('#remove-current-branch-cover')?.checked || false;
+
+            if (!branchType || !title) {
+                alert('Please select a branch type and enter a title.');
                 return;
             }
-            listEl.innerHTML = data.branches.map(b => {
-                const coverPath = b.display_image ? `/uploads/users/${b.created_by}/images/${b.display_image}` : '/img/bookie-cartoon.webp';
-                return `
+
+            const formData = new FormData();
+            formData.append('id', branchId);
+            formData.append('branch_type', branchType);
+            formData.append('source_type', source);
+            formData.append('title', title);
+            formData.append('summary', summary);
+            if (coverImage) {
+                formData.append('cover_image', coverImage);
+            }
+            formData.append('remove_cover', removeCurrentCover ? 'true' : 'false');
+
+            try {
+                const resp = await fetch('/api/branches/update.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to update branch');
+                }
+                this.closeEditBranchModal();
+                this.loadBranches();
+            } catch (err) {
+                alert(err.message || 'Error updating branch');
+            }
+        }
+
+        /**
+         * Handles submission of the new branch form. Stub for future API integration.
+         */
+        async handleBranchSubmit() {
+            const modal = this.container.querySelector('#branch-modal');
+            const branchType = modal.querySelector('input[name="branch-type"]:checked')?.value;
+            const title = modal.querySelector('#branch-title')?.value.trim();
+            const summary = modal.querySelector('#branch-summary')?.value.trim();
+            const source = modal.querySelector('#branch-source')?.value;
+            const coverImageInput = modal.querySelector('#branch-cover-image');
+            const coverImage = coverImageInput.files[0];
+
+            if (!branchType || !title) {
+                alert('Please select a branch type and enter a title.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('media_id', this.mediaId);
+            formData.append('branch_type', branchType);
+            formData.append('source_type', source);
+            formData.append('title', title);
+            formData.append('summary', summary);
+            if (coverImage) {
+                formData.append('cover_image', coverImage);
+            }
+
+            try {
+                const resp = await fetch('/api/branches/create.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to create branch');
+                }
+                modal.classList.add('hidden');
+                coverImageInput.value = ''; // Clear the file input
+                this.loadBranches();
+            } catch (err) {
+                alert(err.message || 'Error creating branch');
+            }
+        }
+
+        /**
+         * Fetch and render the list of branches for this media.
+         */
+        async loadBranches() {
+            try {
+                const res = await fetch(`/api/branches/list.php?media_id=${this.mediaId}`);
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Failed to load branches');
+                const listEl = this.container.querySelector('#media-branches-list');
+                if (!listEl) return;
+                if (!data.branches.length) {
+                    listEl.innerHTML = '<p class="text-muted-foreground text-center py-4">No branches have been created for this media yet.</p>';
+                    return;
+                }
+                listEl.innerHTML = data.branches.map(b => {
+                    const coverPath = b.display_image ? `/uploads/users/${b.created_by}/images/${b.display_image}` : '/img/bookie-cartoon.webp';
+                    return `
                 <div class="card flex flex-col md:flex-row gap-4 p-4 hover:border-primary/50 transition-all">
                     <a href="?page=branch&id=${b.id}" class="block md:w-1/3 flex-shrink-0">
                         <img src="${coverPath}" alt="${escapeHTML(b.title)}" class="w-full h-48 object-cover rounded-lg" onerror="this.src='/img/bookie-cartoon.webp'">
@@ -652,10 +828,27 @@
                                 <span class="badge badge-outline">${escapeHTML(b.branch_type)}</span>
                                 <span class="badge badge-outline">${escapeHTML(b.source_type)}</span>
                             </div>
+                            ${(b.created_by === this.currentUserId || this.userIsAdmin) ? `
+                                <button data-branch-id="${b.id}" class="edit-branch-btn btn btn-ghost btn-sm" title="Edit Branch">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
             `}).join('');
+
+            // Bind edit branch buttons
+            this.container.querySelectorAll('.edit-branch-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const branchId = e.currentTarget.dataset.branchId;
+                    const branch = data.branches.find(b => b.id == branchId);
+                    if (branch) {
+                        this.openEditBranchModal(branch);
+                    }
+                });
+            });
+
         } catch (err) {
             console.error('MediaPage: loadBranches error', err);
         }
@@ -746,3 +939,4 @@
     }
 
 })(); // End of IIFE
+    

@@ -140,13 +140,12 @@ function getUserUploadDir($userId) {
         // Create subdirectories
         $subdirs = ['avatars', 'images', 'texts'];
         foreach ($subdirs as $dir) {
-          $path = __DIR__ . '/../uploads/users/' . $userId;
-if (!is_dir($path)) {
-    if (!mkdir($path, 0755, true)) {
-        error_log("Failed to create user directory: $path");
-    }
-}
-
+            $path = $baseDir . '/' . $dir;
+            if (!is_dir($path)) {
+                if (!mkdir($path, 0755, true)) {
+                    error_log("Failed to create subdirectory: $path");
+                }
+            }
         }
     }
     
@@ -199,4 +198,51 @@ function generateSlug($str) {
 function isAdmin() {
     $user = getCurrentUser();
     return $user && $user['is_admin'] == 1;
+}
+
+/**
+ * Converts an image to WebP format.
+ * Returns the new WebP filename on success, or false on failure.
+ */
+function convertToWebp($sourcePath, $destinationDir, $originalFileName) {
+    $extension = strtolower(pathinfo($originalFileName, PATHINFO_EXTENSION));
+    $newFileName = uniqid() . '.webp';
+    $destinationPath = $destinationDir . '/' . $newFileName;
+
+    $image = null;
+    switch ($extension) {
+        case 'jpeg':
+        case 'jpg':
+            $image = imagecreatefromjpeg($sourcePath);
+            break;
+        case 'png':
+            $image = imagecreatefrompng($sourcePath);
+            break;
+        case 'gif':
+            $image = imagecreatefromgif($sourcePath);
+            break;
+        case 'webp':
+            // Already webp, just copy it
+            if (copy($sourcePath, $destinationPath)) {
+                return $newFileName;
+            } else {
+                return false;
+            }
+        default:
+            return false; // Unsupported format
+    }
+
+    if ($image) {
+        imagesavealpha($image, true); // Preserve transparency for PNGs
+        if (imagewebp($image, $destinationPath, 80)) { // 80 is quality (0-100)
+            imagedestroy($image);
+            unlink($sourcePath); // Remove original file
+            return $newFileName;
+        } else {
+            imagedestroy($image);
+            return false;
+        }
+    } else {
+        return false;
+    }
 }
