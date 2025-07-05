@@ -4,6 +4,12 @@ This file tracks remaining changes needed for the branch page and story system i
 
 ## ✅ COMPLETED
 
+### Critical Fixes
+- [x] **Profile Image 404**: Fixed avatar path to use `/avatars/` subdirectory ✅
+- [x] **Storage Quota Error**: Fixed `formatBytes` function variable scope issue ✅  
+- [x] **Mandatory AI Tags**: Implemented non-removable AI tags with `is_mandatory` field ✅
+- [x] **MediaPage Warning**: Changed router warning to debug level ✅
+
 ### High Priority Items
 - [x] **Branch Page Permissions**: Hide order index from non-admins and non-creators ✅
 - [x] **Profile Images**: Add miniature user profile images next to branch creator names ✅
@@ -13,6 +19,9 @@ This file tracks remaining changes needed for the branch page and story system i
 - [x] **Storage Quota**: Implement user storage quota checking for story uploads ✅
 - [x] **AI Tagging**: Add mandatory AI tagging system for AI-assisted content ✅
 - [x] **Database Schema**: Remove `markdown_body` from segments table, use file links ✅
+- [x] **AI Generation**: Full OpenAI API integration with content generation ✅
+- [x] **Segment Display**: Show segments on branch pages with tags and metadata ✅
+- [x] **Story Reader**: In-browser story rendering with markdown support ✅
 
 ### Database Changes
 - [x] Created `ai_models` table with name, description, cost_per_use, is_active fields
@@ -21,45 +30,48 @@ This file tracks remaining changes needed for the branch page and story system i
 
 ### API Endpoints
 - [x] `/api/ai/models.php` - Get available AI models
-- [x] `/api/ai/status.php` - Check AI system status and API key availability
+- [x] `/api/ai/status.php` - Check AI system status and API key availability  
+- [x] `/api/ai/generate.php` - Generate AI content with OpenAI integration
 - [x] `/api/users/storage.php` - Get user storage usage and quota
 - [x] `/api/segments/upload.php` - Upload story segments with quota checking
+- [x] `/api/segments/list.php` - Get segments for a branch with tags and metadata
+- [x] `/api/segments/content.php` - Get content of a specific segment for reading
 
 ---
 
-## 🔄 IN PROGRESS / PENDING
+## 🔄 REMAINING ITEMS
 
 ### Medium Priority Items
 
-#### 1. **Tagging System for Branches and Segments** 🔄
-- [ ] Add tagging UI to branch pages (similar to media page)
-- [ ] Implement segment tagging in upload form
-- [ ] Add tag management for existing segments
-- [ ] Update tag_links table target_type enum if needed
+#### 1. **Voting System for Segments** 🔄
+- [ ] Add voting buttons to individual segments
+- [ ] Implement segment voting API endpoint  
+- [ ] Update vote counts in real-time
+- [ ] Add voting to segment reader modal
 
-#### 2. **Comments and Voting for Segments** 🔄
-- [ ] Add segment display with individual comment threads
-- [ ] Implement voting system for segments
-- [ ] Create segment list view on branch pages
-- [ ] Add segment management (edit, delete, reorder)
+#### 2. **Comments for Segments** 🔄
+- [ ] Add individual comment threads for each segment
+- [ ] Implement segment comment API endpoints
+- [ ] Add comment display in segment cards
+- [ ] Add commenting to segment reader modal
 
 #### 3. **Image Upload for Branches and Segments** 🔄
 - [ ] Add branch cover image upload/remove functionality
-- [ ] Implement single image upload for segments
+- [ ] Implement single image upload for segments during upload
 - [ ] Create image management UI (similar to media page)
 - [ ] Add image quota checking to storage system
 
-#### 4. **In-Browser Story Rendering** 🔄
-- [ ] Create story reader component for uploaded files
-- [ ] Add syntax highlighting for markdown files
-- [ ] Implement story navigation (next/previous segments)
-- [ ] Add export/download options
+#### 4. **Enhanced Story Reader** 🔄
+- [ ] Add story navigation (next/previous segments in order)
+- [ ] Improve markdown rendering with proper CSS
+- [ ] Add export/download options for full stories
+- [ ] Add fullscreen reading mode
 
-#### 5. **Branch Cover Image Management** 🔄
-- [ ] Add "Edit Cover Image" button for branch creators/admins
-- [ ] Implement image upload modal
-- [ ] Add remove cover image functionality
-- [ ] Update branch display to show cover images
+#### 5. **Segment Management** 🔄
+- [ ] Add edit/delete segment functionality for creators/admins
+- [ ] Implement segment reordering (drag & drop)
+- [ ] Add segment duplication feature
+- [ ] Add bulk segment operations
 
 ---
 
@@ -76,8 +88,8 @@ This file tracks remaining changes needed for the branch page and story system i
 - ✅ Model selection from database
 - ✅ Cost estimation and credit deduction
 - ✅ API key validation
-- [ ] Actual OpenAI API integration for story generation
-- [ ] AI-generated content tagging enforcement
+- ✅ OpenAI API integration for story generation
+- ✅ AI-generated content tagging enforcement
 
 ### Tagging System
 - ✅ Credit cost for new tags (1 credit each)
@@ -88,6 +100,7 @@ This file tracks remaining changes needed for the branch page and story system i
 
 ### Comments and Voting
 - ✅ Existing system works for branches
+- ✅ Segment display and metadata
 - [ ] Extend to segments with individual threads
 - [ ] Voting on individual segments
 - [ ] Moderation tools for admins

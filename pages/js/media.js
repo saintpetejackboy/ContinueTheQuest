@@ -819,7 +819,7 @@
         };
         console.log("MediaPage: Registered with Router's pageManagers.");
     } else {
-        console.warn("MediaPage: Router not found. MediaPage will not be managed for navigation cleanup.");
+        console.debug("MediaPage: Router not found. MediaPage will not be managed for navigation cleanup.");
         // If router isn't present (e.g., direct page load), instantiate anyway
         new MediaPage();
     }

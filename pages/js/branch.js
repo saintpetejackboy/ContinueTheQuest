@@ -37,6 +37,7 @@ function escapeHTML(str) {
             await this.fetchUserProfile();
             await this.fetchAIModels();
             await this.fetchAIStatus();
+            await this.fetchSegments();
             if (!this.branch) return;
             this.renderView();
             this.bindEvents();
@@ -115,6 +116,21 @@ function escapeHTML(str) {
             }
         }
 
+        async fetchSegments() {
+            try {
+                const res = await fetch(`/api/segments/list.php?branch_id=${this.branchId}`);
+                if (res.ok) {
+                    const d = await res.json();
+                    this.segments = d.segments || [];
+                } else {
+                    this.segments = [];
+                }
+            } catch (e) {
+                console.error('BranchPage: segments error', e);
+                this.segments = [];
+            }
+        }
+
         renderView() {
             const b = this.branch;
             let html = `<div class="space-y-4">`;
@@ -144,6 +160,56 @@ function escapeHTML(str) {
                 </svg>
             </button>`;
             html += `</div>`;
+            
+            // Segments section
+            if (this.segments && this.segments.length > 0) {
+                html += `<div class="mt-8 border-t pt-8">`;
+                html += `<h2 class="text-2xl font-semibold mb-4">Story Segments</h2>`;
+                html += `<div class="space-y-4">`;
+                
+                this.segments.forEach(segment => {
+                    html += `<div class="border rounded-lg p-4 bg-card">`;
+                    html += `<div class="flex items-start justify-between mb-2">`;
+                    html += `<div class="flex-1">`;
+                    html += `<h3 class="text-lg font-medium">${escapeHTML(segment.title)}</h3>`;
+                    html += `<div class="flex items-center space-x-2 text-sm text-muted-foreground mt-1">`;
+                    html += `<span>by</span>`;
+                    if (segment.author_avatar) {
+                        html += `<img src="/uploads/users/${segment.created_by}/avatars/${segment.author_avatar}" alt="${escapeHTML(segment.author)}" class="w-4 h-4 rounded-full object-cover">`;
+                    }
+                    html += `<span>${escapeHTML(segment.author)}</span>`;
+                    html += `<span>•</span>`;
+                    html += `<span>${new Date(segment.created_at).toLocaleDateString()}</span>`;
+                    if (this.canEdit || segment.can_edit) {
+                        html += `<span>•</span>`;
+                        html += `<span>Order: ${segment.order_index}</span>`;
+                    }
+                    html += `</div>`;
+                    html += `</div>`;
+                    html += `<div class="flex items-center space-x-2">`;
+                    html += `<span class="text-sm font-medium">${segment.vote_score}</span>`;
+                    html += `<button class="btn-ghost btn-sm" onclick="window.branchPage.readSegment(${segment.id})">Read</button>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                    
+                    // Tags
+                    if (segment.tags && segment.tags.length > 0) {
+                        html += `<div class="flex flex-wrap gap-2 mt-2">`;
+                        segment.tags.forEach(tag => {
+                            const tagClass = tag.is_mandatory ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground';
+                            const title = tag.is_mandatory ? 'Mandatory tag (cannot be removed)' : 'User tag';
+                            html += `<span class="px-2 py-1 rounded text-xs ${tagClass}" title="${title}">${escapeHTML(tag.name)}</span>`;
+                        });
+                        html += `</div>`;
+                    }
+                    
+                    html += `</div>`;
+                });
+                
+                html += `</div>`;
+                html += `</div>`;
+            }
+            
             html += `<div id="comment-thread" class="mt-8"></div>`;
             html += `<div class="mt-8 border-t pt-4 space-y-4">`;
             html += `<h2 class="text-xl font-semibold">Add Story Segment</h2>`;
@@ -205,6 +271,20 @@ function escapeHTML(str) {
             html += `</div>`;
             html += `</div></div>`;
             html += `</div>`;
+            
+            // Segment reader modal
+            html += `<div id="segment-reader-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">`;
+            html += `<div class="bg-card rounded-lg w-full max-w-4xl h-[90vh] flex flex-col">`;
+            html += `<div class="flex items-center justify-between p-4 border-b">`;
+            html += `<h3 id="segment-title-modal" class="text-xl font-semibold">Loading...</h3>`;
+            html += `<button id="close-segment-reader" class="btn-ghost btn-sm">×</button>`;
+            html += `</div>`;
+            html += `<div class="flex-1 overflow-auto p-6">`;
+            html += `<div id="segment-content" class="prose max-w-none">Loading content...</div>`;
+            html += `</div>`;
+            html += `</div>`;
+            html += `</div>`;
+            
             this.container.innerHTML = html;
         }
 
@@ -233,6 +313,10 @@ function escapeHTML(str) {
             // AI generation modal
             const genOpen = this.container.querySelector('#generate-story-btn');
             if (genOpen) genOpen.addEventListener('click', () => this.openGenerateModal());
+            
+            // Segment reader modal
+            const closeReader = this.container.querySelector('#close-segment-reader');
+            if (closeReader) closeReader.addEventListener('click', () => this.closeSegmentReader());
         }
 
         async handleVote(value) {
@@ -427,12 +511,140 @@ function escapeHTML(str) {
         }
 
         /**
-         * Submit the AI generation request. Stub for future integration.
+         * Submit the AI generation request.
          */
-        submitGenerate(prompt) {
-            console.log('AI generate prompt:', prompt);
-            alert('AI generation not yet implemented');
-            this.closeGenerateModal();
+        async submitGenerate(prompt) {
+            if (!this.aiStatus.api_key_configured) {
+                alert('AI generation is not available.');
+                return;
+            }
+            
+            const modal = this.container.querySelector('#generate-modal');
+            const modelSelect = modal.querySelector('#generate-model');
+            const titleEl = this.container.querySelector('#segment-title');
+            const orderEl = this.container.querySelector('#segment-order');
+            const submitBtn = modal.querySelector('#generate-submit');
+            
+            const selectedModel = modelSelect.value;
+            const title = titleEl?.value?.trim();
+            
+            if (!title) {
+                alert('Please enter a segment title.');
+                titleEl?.focus();
+                return;
+            }
+            
+            if (!selectedModel) {
+                alert('Please select an AI model.');
+                return;
+            }
+            
+            const cost = parseInt(modelSelect.selectedOptions[0].dataset.cost || 1);
+            if (this.userCredits < cost) {
+                alert(`Insufficient credits. Need ${cost} credits but only have ${this.userCredits}.`);
+                return;
+            }
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Generating...';
+            
+            try {
+                const requestData = {
+                    branch_id: this.branchId,
+                    title: title,
+                    model: selectedModel,
+                    prompt: prompt,
+                    tags: [] // User can add additional tags later
+                };
+                
+                if (orderEl && this.canEdit) {
+                    requestData.order_index = parseInt(orderEl.value || 1);
+                }
+                
+                const res = await fetch('/api/ai/generate.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert(`Story generated successfully! Credits used: ${data.credits_used}\nMandatory tags added: ${data.mandatory_tags.join(', ')}`);
+                    
+                    // Clear form and close modal
+                    titleEl.value = '';
+                    if (orderEl) orderEl.value = '1';
+                    this.closeGenerateModal();
+                    
+                    // Update user credits
+                    this.userCredits -= data.credits_used;
+                    
+                    // Refresh page to show new segment
+                    location.reload();
+                } else {
+                    alert('AI generation failed: ' + data.error);
+                }
+                
+            } catch (err) {
+                console.error('AI generation failed:', err);
+                alert('AI generation failed. Please try again.');
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Generate';
+            }
+        }
+
+        async readSegment(segmentId) {
+            const modal = this.container.querySelector('#segment-reader-modal');
+            const titleEl = modal.querySelector('#segment-title-modal');
+            const contentEl = modal.querySelector('#segment-content');
+            
+            // Show modal with loading state
+            modal.classList.remove('hidden');
+            titleEl.textContent = 'Loading...';
+            contentEl.innerHTML = 'Loading content...';
+            
+            try {
+                const res = await fetch(`/api/segments/content.php?id=${segmentId}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    titleEl.textContent = data.segment.title;
+                    
+                    // Render content based on file type
+                    if (data.file_type === 'md') {
+                        // Simple markdown rendering
+                        let content = escapeHTML(data.content);
+                        // Basic markdown formatting
+                        content = content.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+                        content = content.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+                        content = content.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+                        content = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                        content = content.replace(/\*(.+?)\*/g, '<em>$1</em>');
+                        content = content.replace(/\n\n/g, '</p><p>');
+                        content = '<p>' + content + '</p>';
+                        contentEl.innerHTML = content;
+                    } else {
+                        // Plain text
+                        const content = escapeHTML(data.content).replace(/\n/g, '<br>');
+                        contentEl.innerHTML = `<div class="whitespace-pre-wrap">${content}</div>`;
+                    }
+                } else {
+                    contentEl.innerHTML = `<p class="text-destructive">Error loading content: ${data.error}</p>`;
+                }
+                
+            } catch (err) {
+                console.error('Failed to load segment:', err);
+                contentEl.innerHTML = `<p class="text-destructive">Failed to load content. Please try again.</p>`;
+            }
+        }
+
+        closeSegmentReader() {
+            const modal = this.container.querySelector('#segment-reader-modal');
+            if (modal) modal.classList.add('hidden');
         }
 
         cleanup() {
