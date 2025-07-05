@@ -37,23 +37,12 @@
             console.log(`MediaPage: Initializing data for media ID ${this.mediaId}`);
             await this.fetchMedia();
             await this.fetchUserProfile();
-
-            if (!this.media) {
-                // Error already handled in fetchMedia, just return
-                return;
-            }
-
-            this.renderView(); // Render the main media content
-            this.bindEvents(); // Bind all necessary event listeners
-            
-            if (!this.userLoggedIn) {
-                this.loadJoinButtons();
-            }
-            // Initialize nested comment thread component
+            if (!this.media) return;
+            this.renderView();
+            this.bindEvents();
+            if (!this.userLoggedIn) this.loadJoinButtons();
             if (typeof CommentThread !== 'undefined') {
-                if (this.commentThread && typeof this.commentThread.cleanup === 'function') {
-                    this.commentThread.cleanup();
-                }
+                if (this.commentThread?.cleanup) this.commentThread.cleanup();
                 this.commentThread = new CommentThread({
                     containerSelector: '#comment-thread',
                     targetType: 'media',
@@ -65,6 +54,7 @@
                     autoExpandAll: true
                 });
             }
+            this.loadBranches();
         }
 
         async fetchMedia() {
@@ -220,31 +210,37 @@
             html += `<div id="join-comment-container" class="mb-4"></div>`;
         }
         html += `<div id="comment-thread" class="mt-8"></div>`;
+
+        // List existing branches for this media
+        html += `<div id="media-branches" class="mt-8">`;
+        html += `<h2 class="text-xl font-semibold mb-2">Branches</h2>`;
+        html += `<div id="media-branches-list" class="space-y-4"></div>`;
+        html += `</div>`;
     
-            html += `<div id="branch-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden">`;
-            html += `<div class="bg-card rounded-lg p-6 w-full max-w-lg space-y-4">`;
+            html += `<div id="branch-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">`;
+            html += `<div class="bg-card rounded-lg p-6 w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto">`;
             html += `<h3 class="text-xl font-semibold">Add a New Branch</h3>`;
             html += `<p class="text-sm text-muted-foreground">Choose the type of branch and provide details below. Please check existing branches to avoid duplicates.</p>`;
             html += `<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">`;
             html += `
-                <label class="flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer hover:border-primary">
-                    <input type="radio" name="branch-type" value="after" class="sr-only" checked>
-                    <span class="text-lg font-medium">After</span>
-                    <span class="text-xs text-muted-foreground mt-1">Continue the story after the original ending (most common).</span>
+                <label class="flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer hover:border-primary peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground">
+                    <input type="radio" name="branch-type" value="after" class="sr-only peer" checked>
+                    <span class="text-lg font-medium">🌿 After</span>
+                    <span class="text-xs peer-checked:text-primary-foreground mt-1">Continue the story after the original ending (most common).</span>
                 </label>
             `;
             html += `
-                <label class="flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer hover:border-primary">
-                    <input type="radio" name="branch-type" value="before" class="sr-only">
-                    <span class="text-lg font-medium">Before</span>
-                    <span class="text-xs text-muted-foreground mt-1">Prequel or events leading up to the original story.</span>
+                <label class="flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer hover:border-primary peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground">
+                    <input type="radio" name="branch-type" value="before" class="sr-only peer">
+                    <span class="text-lg font-medium">📜 Before</span>
+                    <span class="text-xs peer-checked:text-primary-foreground mt-1">Prequel or events leading up to the original story.</span>
                 </label>
             `;
             html += `
-                <label class="flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer hover:border-primary">
-                    <input type="radio" name="branch-type" value="other" class="sr-only">
-                    <span class="text-lg font-medium">Alternate</span>
-                    <span class="text-xs text-muted-foreground mt-1">Non-canon or fan-fiction variations of the original story.</span>
+                <label class="flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer hover:border-primary peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground">
+                    <input type="radio" name="branch-type" value="other" class="sr-only peer">
+                    <span class="text-lg font-medium">🎭 Alternate</span>
+                    <span class="text-xs peer-checked:text-primary-foreground mt-1">Non-canon or fan-fiction variations of the original story.</span>
                 </label>
             `;
             html += `</div>`;
@@ -569,10 +565,48 @@
             alert('Please select a branch type and enter a title.');
             return;
         }
-        // TODO: call API endpoint (e.g., /api/branches/create.php) to persist branch
-        console.log('Create branch:', { branchType, title, summary, source });
-        // Close modal
-        modal.classList.add('hidden');
+        try {
+            const resp = await fetch('/api/branches/create.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    media_id: this.mediaId,
+                    branch_type: branchType,
+                    source_type: source,
+                    title: title,
+                    summary: summary
+                })
+            });
+            const data = await resp.json();
+            if (!resp.ok || !data.success) {
+                throw new Error(data.error || 'Failed to create branch');
+            }
+            modal.classList.add('hidden');
+            this.loadBranches();
+        } catch (err) {
+            alert(err.message || 'Error creating branch');
+        }
+    }
+
+    /**
+     * Fetch and render the list of branches for this media.
+     */
+    async loadBranches() {
+        try {
+            const res = await fetch(`/api/branches/list.php?media_id=${this.mediaId}`);
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || 'Failed to load branches');
+            const listEl = this.container.querySelector('#media-branches-list');
+            if (!listEl) return;
+            listEl.innerHTML = data.branches.map(b => `
+                <a href="?page=branch&id=${b.id}" class="block p-4 border border-border rounded-lg hover:bg-muted">
+                    <h3 class="text-lg font-medium">${escapeHTML(b.title)}</h3>
+                    <p class="text-sm text-muted-foreground mt-1">${escapeHTML(b.summary)}</p>
+                </a>
+            `).join('');
+        } catch (err) {
+            console.error('MediaPage: loadBranches error', err);
+        }
     }
 
         async updateMediaTags(tagData) {

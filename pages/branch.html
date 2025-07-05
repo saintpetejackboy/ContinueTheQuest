@@ -1,0 +1,50 @@
+<!-- branch.html -->
+<div id="branch-container" class="w-full max-w-4xl mx-auto mt-8"></div>
+
+<script>
+// Dynamically load BranchPage and CommentThread scripts
+(function() {
+    const scripts = [];
+    if (typeof BranchPage === 'undefined') {
+        scripts.push('/pages/js/branch.js');
+    }
+    if (typeof CommentThread === 'undefined') {
+        scripts.push('/pages/js/comment-thread.js');
+    }
+    let i = 0;
+    function next() {
+        if (i >= scripts.length) {
+            initBranchPage();
+            return;
+        }
+        const s = document.createElement('script');
+        s.src = scripts[i++];
+        s.onload = next;
+        s.onerror = () => { console.error('Failed to load', scripts[i-1]); next(); };
+        document.head.appendChild(s);
+    }
+    function initBranchPage() {
+        if (window.branchPageManager && typeof window.branchPageManager.cleanup === 'function') {
+            window.branchPageManager.cleanup();
+        }
+        if (typeof BranchPage !== 'undefined') {
+            window.branchPageManager = new BranchPage();
+        }
+    }
+    if (scripts.length > 0) {
+        next();
+    } else {
+        initBranchPage();
+    }
+})();
+
+// Provide cleanup for router
+window.branchPage = {
+    cleanup: () => {
+        if (window.branchPageManager && typeof window.branchPageManager.cleanup === 'function') {
+            window.branchPageManager.cleanup();
+            window.branchPageManager = null;
+        }
+    }
+};
+</script>

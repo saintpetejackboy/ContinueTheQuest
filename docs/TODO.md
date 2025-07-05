@@ -18,8 +18,9 @@
 
  ## Short-Term Enhancements
 
- 4. **Tiered Commenting & Voting** (🛠 In progress)
-    - Verify that comments, replies, and vote scores are correctly stored, retrieved, and displayed across media, branches, and segments.
+ 4. **Tiered Commenting & Voting** (✅ Implemented for Media & Branch pages)
+    - Nested comments now auto-expand (media & branch).
+    - Vote buttons on media, branches, comments, and images record and display scores.
 
  5. **Storage Quota Tracking**
     - Enforce per-user disk quotas for uploaded text segments and images. Display usage stats in the user profile.

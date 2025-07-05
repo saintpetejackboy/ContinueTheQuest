@@ -14,7 +14,7 @@ continuethequest/
 ├── node_modules/     # NPM dependencies
 ├── pages/            # Frontend views (HTML/JS/CSS)
 │   ├── admin/        # Admin-specific views
-│   ├── js/           # Page-specific JS
+│   ├── js/           # Page-specific JS (media.js, add-media.js, branch.js, etc.)
 │   └── frag/         # Header, footer, menu (modular PHP)
 ├── scripts/          # Maintenance/dev tools
 ├── test-data/        # Dev/test fixtures (.gitignored)
