@@ -341,7 +341,7 @@ function escapeHTML(str) {
                     </button>`;
                     html += `</div>`;
                     html += `<div class="flex items-center space-x-2">`;
-                    html += `<button class="btn-ghost btn-sm" onclick="window.branchPageManager.readSegment(${segment.id})">Read</button>`;
+                    html += `<a href="?page=segment&id=${segment.id}" class="btn-ghost btn-sm">Read</a>`;
                     
                     // Add edit/delete buttons for creators and admins
                     if (this.userLoggedIn && (this.userIsAdmin || segment.created_by === this.currentUserId)) {
@@ -394,6 +394,16 @@ function escapeHTML(str) {
             html += `<div id="generate-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">`;
             html += `<div class="bg-card rounded-lg p-6 w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto">`;
             html += `<h3 class="text-xl font-semibold">Generate Story Segment</h3>`;
+            html += `<div id="generation-status" class="hidden p-4 bg-primary/10 border border-primary rounded-lg">`;
+            html += `<div class="flex items-center space-x-3">`;
+            html += `<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>`;
+            html += `<div>`;
+            html += `<p class="font-medium text-primary">Generating your story...</p>`;
+            html += `<p class="text-sm text-muted-foreground" id="generation-progress">Sending request to AI...</p>`;
+            html += `</div>`;
+            html += `</div>`;
+            html += `</div>`;
+            html += `<div id="generation-form">`;
             html += `<p class="text-xs text-muted-foreground">Default AI prompt based on Media & Branch info:</p>`;
             html += `<pre id="generate-debug" class="p-3 bg-muted rounded text-sm font-mono max-h-32 overflow-auto"></pre>`;
             html += `<label for="generate-model" class="block text-sm font-medium">Model</label>`;
@@ -435,7 +445,8 @@ function escapeHTML(str) {
             html += `<button id="generate-submit" class="btn-primary flex-1" ${aiUnavailable ? 'disabled' : ''}>Generate</button>`;
             html += `<button id="generate-cancel" class="btn-secondary flex-1">Cancel</button>`;
             html += `</div>`;
-            html += `</div></div>`;
+            html += `</div>`;
+            html += `</div>`;
             html += `</div>`;
             
             // Segment reader modal
@@ -997,6 +1008,10 @@ function escapeHTML(str) {
             const descriptionEl = this.container.querySelector('#segment-description');
             const orderEl = this.container.querySelector('#segment-order');
             const submitBtn = modal.querySelector('#generate-submit');
+            const cancelBtn = modal.querySelector('#generate-cancel');
+            const statusDiv = modal.querySelector('#generation-status');
+            const formDiv = modal.querySelector('#generation-form');
+            const progressEl = modal.querySelector('#generation-progress');
             
             const selectedModel = modelSelect.value;
             const title = titleEl?.value?.trim();
@@ -1019,9 +1034,28 @@ function escapeHTML(str) {
                 return;
             }
             
-            // Disable submit button
+            // Show loading state
+            formDiv.classList.add('hidden');
+            statusDiv.classList.remove('hidden');
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Generating...';
+            cancelBtn.disabled = true;
+            
+            // Progress updates
+            const progressSteps = [
+                'Sending request to AI...',
+                'AI is analyzing the context...',
+                'Generating story content...',
+                'Processing and formatting...',
+                'Saving segment...'
+            ];
+            let currentStep = 0;
+            
+            const progressInterval = setInterval(() => {
+                if (currentStep < progressSteps.length - 1) {
+                    currentStep++;
+                    progressEl.textContent = progressSteps[currentStep];
+                }
+            }, 2000);
             
             try {
                 // Enhanced prompt with description
@@ -1044,6 +1078,8 @@ function escapeHTML(str) {
                     requestData.order_index = parseInt(orderEl.value || 1);
                 }
                 
+                progressEl.textContent = progressSteps[4]; // Final step
+                
                 const res = await fetch('/api/ai/generate.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1052,31 +1088,42 @@ function escapeHTML(str) {
                 
                 const data = await res.json();
                 
+                clearInterval(progressInterval);
+                
                 if (data.success) {
-                    alert(`Story generated successfully! Credits used: ${data.credits_used}\nMandatory tags added: ${data.mandatory_tags.join(', ')}`);
+                    progressEl.textContent = 'Generation complete! Redirecting...';
                     
-                    // Clear form and close modal
-                    titleEl.value = '';
-                    descriptionEl.value = '';
-                    if (orderEl) orderEl.value = '1';
-                    this.closeGenerateModal();
-                    
-                    // Update user credits
-                    this.userCredits -= data.credits_used;
-                    
-                    // Refresh page to show new segment
-                    location.reload();
+                    setTimeout(() => {
+                        // Clear form and close modal
+                        titleEl.value = '';
+                        descriptionEl.value = '';
+                        if (orderEl) orderEl.value = '1';
+                        this.closeGenerateModal();
+                        
+                        // Update user credits
+                        this.userCredits -= data.credits_used;
+                        
+                        // Show success message
+                        alert(`Story generated successfully! Credits used: ${data.credits_used}\nMandatory tags added: ${data.mandatory_tags.join(', ')}`);
+                        
+                        // Refresh page to show new segment
+                        location.reload();
+                    }, 1000);
                 } else {
-                    alert('AI generation failed: ' + data.error);
+                    throw new Error(data.error || 'Generation failed');
                 }
                 
             } catch (err) {
+                clearInterval(progressInterval);
                 console.error('AI generation failed:', err);
-                alert('AI generation failed. Please try again.');
-            } finally {
-                // Re-enable submit button
+                
+                // Reset UI
+                statusDiv.classList.add('hidden');
+                formDiv.classList.remove('hidden');
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Generate';
+                cancelBtn.disabled = false;
+                
+                alert('AI generation failed: ' + err.message);
             }
         }
 

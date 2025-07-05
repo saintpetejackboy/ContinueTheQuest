@@ -1,0 +1,50 @@
+<!-- segment.html -->
+<div id="segment-container" class="w-full max-w-4xl mx-auto mt-8"></div>
+
+<script>
+// Dynamically load SegmentPage and CommentThread scripts
+(function() {
+    const scripts = [];
+    if (typeof SegmentPage === 'undefined') {
+        scripts.push('/pages/js/segment.js');
+    }
+    if (typeof CommentThread === 'undefined') {
+        scripts.push('/pages/js/comment-thread.js');
+    }
+    let i = 0;
+    function next() {
+        if (i >= scripts.length) {
+            initSegmentPage();
+            return;
+        }
+        const s = document.createElement('script');
+        s.src = scripts[i++];
+        s.onload = next;
+        s.onerror = () => { console.error('Failed to load', scripts[i-1]); next(); };
+        document.head.appendChild(s);
+    }
+    function initSegmentPage() {
+        if (window.segmentPageManager && typeof window.segmentPageManager.cleanup === 'function') {
+            window.segmentPageManager.cleanup();
+        }
+        if (typeof SegmentPage !== 'undefined') {
+            window.segmentPageManager = new SegmentPage();
+        }
+    }
+    if (scripts.length > 0) {
+        next();
+    } else {
+        initSegmentPage();
+    }
+})();
+
+// Provide cleanup for router
+window.segmentPage = {
+    cleanup: () => {
+        if (window.segmentPageManager && typeof window.segmentPageManager.cleanup === 'function') {
+            window.segmentPageManager.cleanup();
+            window.segmentPageManager = null;
+        }
+    }
+};
+</script>
