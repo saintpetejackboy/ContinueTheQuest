@@ -20,6 +20,7 @@ function escapeHTML(str) {
             this.userIsAdmin = false;
             this.commentThread = null;
             this.pendingFile = null;
+            this.segmentTaggingSystem = null;
 
             if (!this.branchId || !this.container) {
                 console.error('BranchPage: Missing branch ID or container');
@@ -243,6 +244,20 @@ function escapeHTML(str) {
                 </div>
                 <input type="file" id="story-file" accept=".txt,.md" class="hidden">
             </div>`;
+            // Tags section
+            html += `<div>
+                    <label class="block text-sm font-medium text-muted-foreground mb-2">Tags (Optional)</label>
+                    <div class="space-y-2">
+                        <div class="flex space-x-2">
+                            <input type="text" id="segment-tag-input" class="form-input flex-1" placeholder="Add tags (genre, theme, etc.)...">
+                            <button type="button" id="add-segment-tag-btn" class="btn-secondary btn-sm">Add</button>
+                        </div>
+                        <div id="segment-tag-suggestions" class="hidden bg-card border rounded-lg shadow-lg max-h-32 overflow-y-auto"></div>
+                        <div id="segment-selected-tags" class="flex flex-wrap gap-2 min-h-[1rem]"></div>
+                        <p class="text-xs text-muted-foreground">Existing tags are free. New tags cost 1 credit each.</p>
+                    </div>
+                </div>`;
+            
             html += `<div id="story-previews" class="mt-2"></div>`;
             html += `<button id="generate-story-btn" class="btn btn-outline w-full">Generate with AI</button>`;
             html += `</div>`;
@@ -328,14 +343,16 @@ function escapeHTML(str) {
                         html += `</div>`;
                     }
                     
-                    // Comment section for this segment
-                    html += `<div class="mt-4 border-t pt-4">`;
-                    html += `<div class="flex items-center justify-between mb-3">`;
-                    html += `<h4 class="text-sm font-medium">Comments</h4>`;
-                    html += `<button class="btn-ghost btn-sm toggle-segment-comments" data-segment-id="${segment.id}">Show Comments</button>`;
-                    html += `</div>`;
-                    html += `<div id="segment-comments-${segment.id}" class="hidden"></div>`;
-                    html += `</div>`;
+                    // Comment section for this segment (only show if there are comments)
+                    if (segment.comment_count > 0) {
+                        html += `<div class="mt-4 border-t pt-4">`;
+                        html += `<div class="flex items-center justify-between mb-3">`;
+                        html += `<h4 class="text-sm font-medium">Comments (${segment.comment_count})</h4>`;
+                        html += `<button class="btn-ghost btn-sm toggle-segment-comments" data-segment-id="${segment.id}">Show Comments</button>`;
+                        html += `</div>`;
+                        html += `<div id="segment-comments-${segment.id}" class="hidden"></div>`;
+                        html += `</div>`;
+                    }
                     
                     html += `</div>`;
                 });
@@ -345,56 +362,6 @@ function escapeHTML(str) {
             }
             
             html += `<div id="comment-thread" class="mt-8"></div>`;
-            html += `<p class="text-sm text-muted-foreground">Provide a title, description, order, and upload your text or generate automatically. AI-created segments WILL be tagged as "AI-Assisted".</p>`;
-            html += `<div>
-                    <label for="segment-title" class="block text-sm font-medium text-muted-foreground mb-1">Segment Title</label>
-                    <input type="text" id="segment-title" class="form-input w-full mb-2" placeholder="Chapter title...">
-                </div>`;
-            html += `<div>
-                    <label for="segment-description" class="block text-sm font-medium text-muted-foreground mb-1">Description</label>
-                    <textarea id="segment-description" rows="3" class="form-textarea w-full mb-1" placeholder="Brief description of what happens in this segment... (Required for AI generation - 100 characters minimum)"></textarea>
-                    <div class="flex justify-between text-xs text-muted-foreground">
-                        <span id="description-requirement">Required for AI generation: 100 characters minimum</span>
-                        <span id="description-counter">0 characters</span>
-                    </div>
-                </div>`;
-            html += this.canEdit ? `<div>
-                    <label for="segment-order" class="block text-sm font-medium text-muted-foreground mb-1">Order Index</label>
-                    <input type="number" id="segment-order" class="form-input w-full mb-2" value="1" min="1">
-                </div>` : '';
-            
-            // Image upload section
-            html += `<div>
-                    <label class="block text-sm font-medium text-muted-foreground mb-2">Segment Image (Optional)</label>
-                    <div id="image-upload-zone" class="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary mb-2">
-                        <div class="space-y-2">
-                            <svg class="mx-auto h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            <div class="text-sm text-muted-foreground">
-                                <label for="segment-image" class="font-medium text-primary hover:text-primary/80 cursor-pointer">Click to upload image</label> or drag and drop
-                            </div>
-                            <p class="text-xs text-muted-foreground">JPEG, PNG, WebP, GIF; max size 5MB.</p>
-                        </div>
-                        <input type="file" id="segment-image" accept="image/*" class="hidden">
-                    </div>
-                    <div id="image-preview" class="mb-2"></div>
-                </div>`;
-            html += `<div id="story-upload-zone" class="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary">
-                <div class="space-y-2">
-                    <svg class="mx-auto h-12 w-12 text-muted-foreground" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <div class="text-sm text-muted-foreground">
-                        <label for="story-file" class="font-medium text-primary hover:text-primary/80 cursor-pointer">Click to upload text</label> or drag and drop
-                    </div>
-                    <p class="text-xs text-muted-foreground">Supported file types: .txt, .md (Markdown); max size 500 KB.</p>
-                </div>
-                <input type="file" id="story-file" accept=".txt,.md" class="hidden">
-            </div>`;
-            html += `<div id="story-previews" class="mt-2"></div>`;
-            html += `<button id="generate-story-btn" class="btn btn-outline w-full">Generate with AI</button>`;
-            html += `</div>`;
             html += `<div id="generate-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">`;
             html += `<div class="bg-card rounded-lg p-6 w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto">`;
             html += `<h3 class="text-xl font-semibold">Generate Story Segment</h3>`;
@@ -410,15 +377,17 @@ function escapeHTML(str) {
             html += `<span>Cost Estimate: <strong id="generate-cost">---</strong> credits</span>`;
             html += `<span>Your Credits: <strong id="user-credits-gen">${this.userCredits}</strong></span>`;
             html += `</div>`;
-            if (!this.aiStatus.api_key_configured) {
+            // Check AI availability and show appropriate warnings
+            const aiUnavailable = !this.aiStatus.api_key_configured || !this.aiStatus.api_key_valid;
+            if (aiUnavailable) {
                 if (this.userIsAdmin) {
                     html += `<div class="p-3 bg-destructive/10 border border-destructive rounded text-sm">
                         <p class="font-medium text-destructive">⚠️ Admin Notice</p>
-                        <p class="text-destructive text-xs mt-1">${this.aiStatus.admin_message || 'OpenAI API key is not configured.'}</p>
+                        <p class="text-destructive text-xs mt-1">${this.aiStatus.admin_message || 'AI generation is not available.'}</p>
                     </div>`;
                 } else {
                     html += `<div class="p-3 bg-muted border rounded text-sm">
-                        <p class="text-muted-foreground">AI generation is currently unavailable. Please contact an administrator.</p>
+                        <p class="text-muted-foreground">🤖 AI Processing is currently offline. Please contact an administrator.</p>
                     </div>`;
                 }
             }
@@ -434,7 +403,7 @@ function escapeHTML(str) {
             </div>`;
             html += `<p class="text-xs text-muted-foreground">AI-generated segments WILL be automatically tagged with "AI" and model name.</p>`;
             html += `<div class="flex space-x-2">`;
-            html += `<button id="generate-submit" class="btn-primary flex-1" ${!this.aiStatus.api_key_configured ? 'disabled' : ''}>Generate</button>`;
+            html += `<button id="generate-submit" class="btn-primary flex-1" ${aiUnavailable ? 'disabled' : ''}>Generate</button>`;
             html += `<button id="generate-cancel" class="btn-secondary flex-1">Cancel</button>`;
             html += `</div>`;
             html += `</div></div>`;
@@ -491,6 +460,44 @@ function escapeHTML(str) {
             html += `</div>`;
             
             this.container.innerHTML = html;
+            
+            // Initialize tagging system for segments
+            this.initializeSegmentTagging();
+        }
+
+        initializeSegmentTagging() {
+            // Load tagging system script if not already loaded
+            if (typeof TaggingSystem === 'undefined') {
+                const script = document.createElement('script');
+                script.src = '/pages/js/tagging-system.js';
+                script.onload = () => {
+                    this.setupSegmentTagging();
+                };
+                document.head.appendChild(script);
+            } else {
+                this.setupSegmentTagging();
+            }
+        }
+
+        setupSegmentTagging() {
+            if (this.segmentTaggingSystem) {
+                // Clean up existing system
+                this.segmentTaggingSystem = null;
+            }
+            
+            try {
+                this.segmentTaggingSystem = new TaggingSystem({
+                    inputSelector: '#segment-tag-input',
+                    suggestionsSelector: '#segment-tag-suggestions', 
+                    selectedTagsSelector: '#segment-selected-tags',
+                    addButtonSelector: '#add-segment-tag-btn',
+                    onTagsChanged: (tags) => {
+                        this.selectedSegmentTags = tags;
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to initialize segment tagging system:', error);
+            }
         }
 
         bindEvents() {
@@ -733,6 +740,11 @@ function escapeHTML(str) {
                 formData.append('order_index', orderEl.value || 1);
             }
             
+            // Add tags if any are selected
+            if (this.selectedSegmentTags && this.selectedSegmentTags.length > 0) {
+                formData.append('tags', JSON.stringify(this.selectedSegmentTags));
+            }
+            
             try {
                 const res = await fetch('/api/segments/upload.php', {
                     method: 'POST',
@@ -751,6 +763,12 @@ function escapeHTML(str) {
                     this.container.querySelector('#story-previews').innerHTML = '';
                     this.container.querySelector('#story-file').value = '';
                     this.pendingFile = null;
+                    
+                    // Clear tags
+                    if (this.segmentTaggingSystem) {
+                        this.segmentTaggingSystem.clearAllTags();
+                    }
+                    this.selectedSegmentTags = [];
                     
                     // Refresh page or update segments list
                     location.reload();
@@ -789,12 +807,17 @@ function escapeHTML(str) {
             const estimatedSizeEl = modal.querySelector('#estimated-size');
             const submitBtn = modal.querySelector('#generate-submit');
             
-            // Build default prompt
-            const prompt = `You will contribute a short story to the ${this.branch.branch_type} continuation of "${this.branch.media_title}". ` +
-                           `The branch is titled "${this.branch.title}". Keep it concise and professional. ` +
-                           `Here is the user-provided summary: ${this.branch.summary}. ` +
-                           `Respond with only the full story text (no code or JSON), do not reveal you are an AI. ` +
-                           `Write in the style of a Hollywood-caliber fanfic writer.`;
+            // Build default prompt (will be enhanced with title/description later)
+            const titleEl = this.container.querySelector('#segment-title');
+            const descriptionEl = this.container.querySelector('#segment-description');
+            const title = titleEl?.value?.trim() || '[Title Missing]';
+            const description = descriptionEl?.value?.trim() || '[Description Missing]';
+            
+            const prompt = `Write a Hollywood-caliber story segment for "${this.branch.media_title}" - a ${this.branch.branch_type} continuation. ` +
+                           `Branch: "${this.branch.title}". Branch context: ${this.branch.summary}. ` +
+                           `This segment is titled "${title}" and should focus on: ${description}. ` +
+                           `Write compelling, professional prose in the style of the original work. ` +
+                           `Output only the story content - no introduction, commentary, or explanatory text.`;
             debug.textContent = prompt;
             creditsEl.textContent = this.userCredits;
             
@@ -864,7 +887,7 @@ function escapeHTML(str) {
          * Submit the AI generation request.
          */
         async submitGenerate(prompt) {
-            if (!this.aiStatus.api_key_configured) {
+            if (!this.aiStatus.api_key_configured || !this.aiStatus.api_key_valid) {
                 alert('AI generation is not available.');
                 return;
             }
@@ -1597,6 +1620,12 @@ function escapeHTML(str) {
                 if (imagePreviewEl) imagePreviewEl.innerHTML = '';
                 this.pendingFile = null;
                 this.pendingSegmentImage = null;
+                
+                // Clear tags
+                if (this.segmentTaggingSystem) {
+                    this.segmentTaggingSystem.clearAllTags();
+                }
+                this.selectedSegmentTags = [];
             }
         }
 

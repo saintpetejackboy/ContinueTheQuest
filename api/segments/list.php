@@ -13,13 +13,16 @@ if (!$branchId) {
 
 $db = getDB();
 
-// Get segments for this branch
+// Get segments for this branch with comment counts
 $stmt = $db->prepare(
     'SELECT s.id, s.title, s.description, s.file_path, s.image_path, s.created_by, s.vote_score, 
-            s.order_index, s.created_at, u.username AS author, u.avatar AS author_avatar
+            s.order_index, s.created_at, u.username AS author, u.avatar AS author_avatar,
+            COUNT(c.id) AS comment_count
      FROM segments s
      LEFT JOIN users u ON u.id = s.created_by
+     LEFT JOIN comments c ON c.target_type = "segment" AND c.target_id = s.id AND c.hidden = 0
      WHERE s.branch_id = ?
+     GROUP BY s.id
      ORDER BY s.order_index ASC, s.created_at ASC'
 );
 $stmt->execute([$branchId]);
