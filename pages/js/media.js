@@ -41,19 +41,20 @@
             this.renderView();
             this.bindEvents();
             if (!this.userLoggedIn) this.loadJoinButtons();
+
+            // Initialize CommentThread and let it handle its own lifecycle
             if (typeof CommentThread !== 'undefined') {
                 if (this.commentThread?.cleanup) this.commentThread.cleanup();
                 this.commentThread = new CommentThread({
                     containerSelector: '#comment-thread',
                     targetType: 'media',
                     targetId: this.mediaId,
-                    defaultSort: 'new',
                     userLoggedIn: this.userLoggedIn,
                     isAdmin: this.userIsAdmin,
-                    maxDepth: 3,
-                    autoExpandAll: true
+                    autoExpandAll: true // Keep threads expanded
                 });
             }
+            
             this.loadBranches();
         }
 
@@ -113,6 +114,8 @@
         renderView() {
             const m = this.media;
             let html = `<div class="space-y-4">`;
+
+            // Header
             html += `<h1 class="text-3xl font-bold">${escapeHTML(m.title)}</h1>`;
             html += `<div class="flex items-center space-x-2">`;
             if (m.author_avatar) {
@@ -124,19 +127,20 @@
             
             // Tags section
             html += `<div id="media-tags" class="flex flex-wrap gap-2">`;
-            this.renderTagsHtml(m.tags, m.can_edit, html); // Use a helper for tags HTML
+            html += this.renderTagsHtml(m.tags, m.can_edit);
             html += `</div>`;
             if (m.can_edit) {
                 html += `
                 <div id="media-add-tag-area" class="relative mt-2">
                   <input type="text" id="media-new-tag" class="form-input w-full pr-16 text-sm" placeholder="Add tag..." autocomplete="off" />
-            <button id="media-add-tag-btn" class="btn btn-ghost btn-sm absolute top-1 right-1">➕ Add</button>
+                  <button id="media-add-tag-btn" class="btn btn-ghost btn-sm absolute top-1 right-1">➕ Add</button>
                   <div id="media-tag-suggestions" class="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-lg hidden max-h-48 overflow-y-auto"></div>
                   <div id="media-selected-tags" class="mt-2 flex flex-wrap gap-2"></div>
                 </div>
                 `;
             }
             
+            // Vote section
             html += `<div class="flex items-center space-x-4 mt-4">`;
             html += `
                 <button data-vote="1" class="vote-btn btn btn-ghost btn-sm p-2">
@@ -152,18 +156,8 @@
                 </button>
             `;
             html += `</div>`;
-            html += `<div id="media-branches" class="mt-6">`;
-            html += `<h2 class="text-xl font-semibold mb-4">Branches</h2>`;
-            html += `<div id="media-branches-list" class="space-y-4"></div>`;
-            html += `</div>`;
-            html += `<div class="mt-6 flex space-x-2" id="branch-actions">`;
-        if (this.userLoggedIn) {
-            html += `<button id="add-branch-btn" class="btn-primary">🌿 Add Branch</button>`;
-            } else {
-                html += `<div id="join-branch-container"></div>`;
-            }
-            html += `</div>`;
 
+            // Cover Image
             if (m.cover_image) {
                 html += `
                     <div class="mt-4 relative text-center">
@@ -174,71 +168,130 @@
                     </div>
                 `;
             }
+
+            // Description
             html += `<p class="mt-4">${escapeHTML(m.description || '')}</p>`;
+
+            // Image Gallery
             if (m.images && m.images.length) {
                 html += `<div class="card p-4 mt-4"><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">`;
                 m.images.forEach(img => {
                     const src = `/uploads/users/${m.created_by}/images/${img.file_name}`;
-                    html += `<div class="relative group" data-image-id="${img.id}">`; // Added data-image-id for easier targeting
+                    html += `<div class="relative group" data-image-id="${img.id}">`;
                     if (img.hidden) {
                         html += `<div class="absolute inset-0 bg-black/70 flex items-center justify-center text-white z-20 rounded">
                             <span class="text-sm font-medium">Hidden</span>
                         </div>`;
                     }
-                    html += `<img src="${src}" class="w-full rounded">`;
+                    html += `<img src="${src}" class="w-full rounded h-48 object-cover">`;
                     html += `
-                        <div class="absolute top-2 right-2 flex flex-col items-center space-y-1 z-30">
-                            <button data-img-id="${img.id}" data-vote="1" class="img-vote-btn btn btn-ghost btn-xs p-1 bg-white/90 hover:bg-white shadow-sm rounded">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                                </svg>
-                            </button>
-                            <span class="text-xs text-white bg-black/80 px-1.5 py-0.5 rounded font-medium image-vote-score">${img.vote_score}</span>
-                            <button data-img-id="${img.id}" data-vote="-1" class="img-vote-btn btn btn-ghost btn-xs p-1 bg-white/90 hover:bg-white shadow-sm rounded">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                            ${m.can_edit_owner ? `<button data-img-id="${img.id}" class="remove-image-btn btn btn-ghost btn-xs p-1 text-red-600 bg-white/90 hover:bg-white shadow-sm rounded" title="Remove Image">&times;</button>` : ''}
-                            ${this.userIsAdmin ? `<button data-img-id="${img.id}" data-action="${img.hidden ? 'unhide' : 'hide'}" class="toggle-image-visibility-btn btn btn-ghost btn-xs p-1 text-yellow-600 bg-white/90 hover:bg-white shadow-sm rounded" title="${img.hidden ? 'Unhide Image' : 'Unhide Image'}">&#128065;</button>` : ''}
-                        </div>
-                    `;
-                    html += `</div>`;
-                });
-                html += `</div></div>`;
-            }
-            if (m.images && m.images.length) {
-                html += `<div class="card p-4 mt-4"><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">`;
-                m.images.forEach(img => {
-                    const src = `/uploads/users/${m.created_by}/images/${img.file_name}`;
-                    html += `<div class="relative group" data-image-id="${img.id}">`; // Added data-image-id for easier targeting
-                    if (img.hidden) {
-                        html += `<div class="absolute inset-0 bg-black/70 flex items-center justify-center text-white z-20 rounded">
-                            <span class="text-sm font-medium">Hidden</span>
-                        </div>`;
-                    }
-                    html += `<img src="${src}" class="w-full rounded">`;
-                    html += `
-                        <div class="absolute top-2 right-2 flex flex-col items-center space-y-1 z-30">
+                        <div class="absolute top-2 right-2 flex flex-col items-center space-y-1 z-30 text-white" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.7);">
                             <button data-img-id="${img.id}" data-vote="1" class="img-vote-btn btn btn-ghost btn-xs p-1 bg-black/80 hover:bg-black shadow-sm rounded">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
                                 </svg>
                             </button>
-                            <span class="text-xs text-white bg-black/80 px-1.5 py-0.5 rounded font-medium image-vote-score">${img.vote_score}</span>
+                            <span class="text-xs px-1.5 py-0.5 rounded font-medium image-vote-score">${img.vote_score}</span>
                             <button data-img-id="${img.id}" data-vote="-1" class="img-vote-btn btn btn-ghost btn-xs p-1 bg-black/80 hover:bg-black shadow-sm rounded">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
-                            ${m.can_edit_owner ? `<button data-img-id="${img.id}" class="remove-image-btn btn btn-ghost btn-xs p-1 text-red-600 bg-black/80 hover:bg-black shadow-sm rounded" title="Remove Image">&times;</button>` : ''}
-                            ${this.userIsAdmin ? `<button data-img-id="${img.id}" data-action="${img.hidden ? 'unhide' : 'hide'}" class="toggle-image-visibility-btn btn btn-ghost btn-xs p-1 text-yellow-600 bg-black/80 hover:bg-black shadow-sm rounded" title="${img.hidden ? 'Unhide Image' : 'Hide Image'}">&#128065;</button>` : ''}
+                            ${m.can_edit_owner ? `<button data-img-id="${img.id}" class="remove-image-btn btn btn-ghost btn-xs p-1 bg-black/80 hover:bg-black shadow-sm rounded" title="Remove Image">❌</button>` : ''}
+                            ${this.userIsAdmin ? `<button data-img-id="${img.id}" data-action="${img.hidden ? 'unhide' : 'hide'}" class="toggle-image-visibility-btn btn btn-ghost btn-xs p-1 bg-black/80 hover:bg-black shadow-sm rounded" title="${img.hidden ? 'Unhide Image' : 'Hide Image'}">👁️</button>` : ''}
                         </div>
                     `;
                     html += `</div>`;
                 });
                 html += `</div></div>`;
             }
+
+            // Branches section
+            html += `<div id="media-branches" class="mt-6">`;
+            html += `<h2 class="text-xl font-semibold mb-4">Branches</h2>`;
+            html += `<div id="media-branches-list" class="space-y-4">`;
+            html += `</div>`;
+
+            // "Add Branch" button
+            html += `<div class="mt-6 flex space-x-2" id="branch-actions">`;
+            if (this.userLoggedIn) {
+                html += `<button id="add-branch-btn" class="btn-primary">🌿 Add Branch</button>`;
+            } else {
+                html += `<div id="join-branch-container"></div>`;
+            }
+            html += `</div>`;
+
+            // Comments section
+            if (!this.userLoggedIn) {
+                html += `<div id="join-comment-container" class="mb-4"></div>`;
+            }
+            html += `<div id="comment-thread" class="mt-8"></div>`;
+
+            // Branch Modal
+            html += `<div id="branch-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">`;
+            html += `<div class="bg-card rounded-lg p-6 w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto">`;
+            html += `<h3 class="text-xl font-semibold">Add a New Branch</h3>`;
+            html += `<p class="text-sm text-muted-foreground">Choose the type of branch and provide details below. Please check existing branches to avoid duplicates.</p>`;
+            html += `<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">`;
+            html += `
+                <label class="relative flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer bg-card
+                                hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary
+                                has-[:checked]:text-primary-foreground has-[:checked]:ring-2 has-[:checked]:ring-offset-1
+                                has-[:checked]:ring-primary has-[:checked]:shadow-inner transition-all">
+                    <input type="radio" name="branch-type" value="after" class="sr-only" checked>
+                    <span class="text-lg font-medium">🌿 After</span>
+                    <span class="text-xs mt-1">Continue the story after the original ending (most common).</span>
+                </label>
+            `;
+            html += `
+                <label class="relative flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer bg-card
+                                hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary
+                                has-[:checked]:text-primary-foreground has-[:checked]:ring-2 has-[:checked]:ring-offset-1
+                                has-[:checked]:ring-primary has-[:checked]:shadow-inner transition-all">
+                    <input type="radio" name="branch-type" value="before" class="sr-only">
+                    <span class="text-lg font-medium">📜 Before</span>
+                    <span class="text-xs mt-1">Prequel or events leading up to the original story.</span>
+                </label>
+            `;
+            html += `
+                <label class="relative flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer bg-card
+                                hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary
+                                has-[:checked]:text-primary-foreground has-[:checked]:ring-2 has-[:checked]:ring-offset-1
+                                has-[:checked]:ring-primary has-[:checked]:shadow-inner transition-all">
+                    <input type="radio" name="branch-type" value="other" class="sr-only">
+                    <span class="text-lg font-medium">🎭 Alternate</span>
+                    <span class="text-xs mt-1">Non-canon or fan-fiction variations of the original story.</span>
+                </label>
+            `;
+            html += `</div>`;
+            html += `<div>`;
+            html += `<label for="branch-title" class="block text-sm font-medium text-muted-foreground mb-1">Branch Title</label>`;
+            html += `<input type="text" id="branch-title" class="form-input w-full" placeholder="A descriptive title for this branch...">`;
+            html += `</div>`;
+            html += `<div>`;
+            html += `<label for="branch-summary" class="block text-sm font-medium text-muted-foreground mb-1">Summary</label>`;
+            html += `<textarea id="branch-summary" rows="3" class="form-textarea w-full" placeholder="Brief summary of what this branch covers..."></textarea>`;
+            html += `</div>`;
+            html += `<div>`;
+            html += `<label for="branch-source" class="block text-sm font-medium text-muted-foreground mb-1">Source Type</label>`;
+            html += `<select id="branch-source" class="form-select w-full">`;
+            html += `<option value="book">Book</option>`;
+            html += `<option value="movie">Movie</option>`;
+            html += `<option value="tv_show">TV Show</option>`;
+            html += `<option value="game">Game</option>`;
+            html += `<option value="comic_book">Comic Book</option>`;
+            html += `<option value="other">Other</option>`;
+            html += `</select>`;
+            html += `<p class="text-xs text-muted-foreground mt-1">Source types should be managed via a dynamic table in the future (TODO: Admin GUI for source types).</p>`;
+            html += `</div>`;
+            html += `<div class="flex justify-end space-x-2">`;
+            html += `<button id="branch-cancel-btn" class="btn-secondary">Cancel</button>`;
+            html += `<button id="branch-submit-btn" class="btn-primary">Create Branch</button>`;
+            html += `</div>`;
+            html += `</div></div>`;
+
+            html += `</div>`; // Close main div
+            this.container.innerHTML = html;
         }
 
         /**
