@@ -177,6 +177,7 @@ CREATE TABLE `segments` (
   `id` int(11) NOT NULL,
   `branch_id` int(11) DEFAULT NULL,
   `title` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
   `file_path` varchar(255) DEFAULT NULL,
   `image_path` varchar(255) DEFAULT NULL,
   `created_by` int(11) DEFAULT NULL,

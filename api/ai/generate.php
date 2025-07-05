@@ -22,6 +22,7 @@ if (!$apiKey) {
 $input = json_decode(file_get_contents('php://input'), true);
 $branchId = isset($input['branch_id']) ? (int)$input['branch_id'] : 0;
 $title = isset($input['title']) ? trim($input['title']) : '';
+$description = isset($input['description']) ? trim($input['description']) : '';
 $modelName = isset($input['model']) ? trim($input['model']) : '';
 $orderIndex = isset($input['order_index']) ? (int)$input['order_index'] : 1;
 $prompt = isset($input['prompt']) ? trim($input['prompt']) : '';
@@ -75,8 +76,8 @@ if ($user['credits'] < $totalCost) {
     jsonResponse(['success' => false, 'error' => "Insufficient credits. Need $totalCost credits"], 400);
 }
 
-// Check storage quota for generated content (estimate ~2KB per generation)
-$estimatedSize = 2048; // 2KB estimate
+// Check storage quota for generated content (estimate ~3KB per generation, rounded up)
+$estimatedSize = 3072; // 3KB estimate
 $userDir = "/var/www/ctq/uploads/users/" . $user['id'];
 $usedBytes = 0;
 
@@ -117,8 +118,8 @@ try {
     $db->beginTransaction();
     
     // Create segment record
-    $segmentStmt = $db->prepare('INSERT INTO segments (branch_id, title, file_path, created_by, order_index, created_at) VALUES (?, ?, ?, ?, ?, NOW())');
-    $segmentStmt->execute([$branchId, $title, 'segments/' . $filename, $user['id'], $orderIndex]);
+    $segmentStmt = $db->prepare('INSERT INTO segments (branch_id, title, description, file_path, created_by, order_index, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())');
+    $segmentStmt->execute([$branchId, $title, $description, 'segments/' . $filename, $user['id'], $orderIndex]);
     $segmentId = $db->lastInsertId();
     
     // Create mandatory AI tags (non-removable)

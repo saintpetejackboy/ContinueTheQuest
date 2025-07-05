@@ -15,7 +15,7 @@ $db = getDB();
 
 // Get segments for this branch
 $stmt = $db->prepare(
-    'SELECT s.id, s.title, s.file_path, s.image_path, s.created_by, s.vote_score, 
+    'SELECT s.id, s.title, s.description, s.file_path, s.image_path, s.created_by, s.vote_score, 
             s.order_index, s.created_at, u.username AS author, u.avatar AS author_avatar
      FROM segments s
      LEFT JOIN users u ON u.id = s.created_by

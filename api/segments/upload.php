@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $branchId = isset($_POST['branch_id']) ? (int)$_POST['branch_id'] : 0;
 $title = isset($_POST['title']) ? trim($_POST['title']) : '';
+$description = isset($_POST['description']) ? trim($_POST['description']) : '';
 $orderIndex = isset($_POST['order_index']) ? (int)$_POST['order_index'] : 1;
 $tags = isset($_POST['tags']) ? json_decode($_POST['tags'], true) : [];
 $isAiGenerated = isset($_POST['is_ai_generated']) ? (bool)$_POST['is_ai_generated'] : false;
@@ -101,8 +102,8 @@ try {
     $db->beginTransaction();
     
     // Create segment record
-    $segmentStmt = $db->prepare('INSERT INTO segments (branch_id, title, file_path, created_by, order_index, created_at) VALUES (?, ?, ?, ?, ?, NOW())');
-    $segmentStmt->execute([$branchId, $title, 'segments/' . $filename, $user['id'], $orderIndex]);
+    $segmentStmt = $db->prepare('INSERT INTO segments (branch_id, title, description, file_path, created_by, order_index, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())');
+    $segmentStmt->execute([$branchId, $title, $description, 'segments/' . $filename, $user['id'], $orderIndex]);
     $segmentId = $db->lastInsertId();
     
     // Handle tags if provided

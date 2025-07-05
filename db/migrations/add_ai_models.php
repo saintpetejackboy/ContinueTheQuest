@@ -24,15 +24,15 @@ try {
     
     // Insert initial AI models
     $models = [
-        ['name' => 'gpt-4.1', 'description' => 'Latest GPT-4.1 model with enhanced capabilities', 'cost_per_use' => 2],
-        ['name' => 'gpt-4.1-mini', 'description' => 'Smaller, faster version of GPT-4.1', 'cost_per_use' => 1],
-        ['name' => 'gpt-4.1-nano', 'description' => 'Ultra-lightweight GPT-4.1 for quick responses', 'cost_per_use' => 1],
-        ['name' => 'o3', 'description' => 'OpenAI O3 reasoning model', 'cost_per_use' => 3],
-        ['name' => 'o3-mini', 'description' => 'Smaller O3 reasoning model', 'cost_per_use' => 2],
-        ['name' => 'o3-pro', 'description' => 'Professional O3 model with enhanced reasoning', 'cost_per_use' => 5],
-        ['name' => 'o4-mini', 'description' => 'Next-generation O4 mini model', 'cost_per_use' => 2],
-        ['name' => 'gpt-4o', 'description' => 'GPT-4 Optimized for creative writing', 'cost_per_use' => 2],
-        ['name' => 'gpt-4o-mini', 'description' => 'Smaller GPT-4 Optimized model', 'cost_per_use' => 1],
+        ['name' => 'gpt-4.1', 'description' => 'Latest GPT-4.1 model with enhanced capabilities', 'cost_per_use' => 75],
+        ['name' => 'gpt-4.1-mini', 'description' => 'Smaller, faster version of GPT-4.1', 'cost_per_use' => 50],
+        ['name' => 'gpt-4.1-nano', 'description' => 'Ultra-lightweight GPT-4.1 for quick responses', 'cost_per_use' => 25],
+        ['name' => 'o3', 'description' => 'OpenAI O3 reasoning model', 'cost_per_use' => 100],
+        ['name' => 'o3-mini', 'description' => 'Smaller O3 reasoning model', 'cost_per_use' => 60],
+        ['name' => 'o3-pro', 'description' => 'Professional O3 model with enhanced reasoning', 'cost_per_use' => 150],
+        ['name' => 'o4-mini', 'description' => 'Next-generation O4 mini model', 'cost_per_use' => 80],
+        ['name' => 'gpt-4o', 'description' => 'GPT-4 Optimized for creative writing', 'cost_per_use' => 70],
+        ['name' => 'gpt-4o-mini', 'description' => 'Smaller GPT-4 Optimized model', 'cost_per_use' => 50],
     ];
     
     $stmt = $db->prepare('INSERT INTO ai_models (name, description, cost_per_use) VALUES (?, ?, ?)');
