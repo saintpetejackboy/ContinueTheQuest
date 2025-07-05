@@ -8,6 +8,11 @@
         }[tag]));
     }
 
+    function ensureImagePath(path) {
+        if (!path) return '';
+        return path.startsWith('images/') ? path : 'images/' + path;
+    }
+
     class MediaPage {
         constructor() {
             this.mediaId = parseInt(new URLSearchParams(window.location.search).get('id'), 10);
@@ -113,6 +118,9 @@
          */
         renderView() {
             const m = this.media;
+            const contentWrapper = document.getElementById('content-wrapper');
+            if (!contentWrapper) return;
+
             let html = `<div class="space-y-4">`;
 
             // Header
@@ -161,7 +169,7 @@
             if (m.cover_image) {
                 html += `
                     <div class="mt-4 relative text-center">
-                        <img src="/uploads/users/${m.created_by}/images/${m.cover_image}" class="w-full max-w-md mx-auto max-h-40 object-cover rounded">
+                        <img src="/uploads/users/${m.created_by}/${ensureImagePath(m.cover_image)}" class="w-full max-w-md mx-auto max-h-40 object-cover rounded">
                         ${(m.can_edit_owner || this.userIsAdmin)
                             ? `<button id="remove-cover-btn" class="btn btn-ghost btn-xs p-1 absolute top-1 right-1 text-red-600 bg-white/90 hover:bg-white shadow-sm rounded">&times;</button>`
                             : ''}
@@ -176,7 +184,7 @@
             if (m.images && m.images.length) {
                 html += `<div class="card p-4 mt-4"><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">`;
                 m.images.forEach(img => {
-                    const src = `/uploads/users/${m.created_by}/images/${img.file_name}`;
+                    const src = `/uploads/users/${m.created_by}/${ensureImagePath(img.file_name)}`;
                     html += `<div class="relative group" data-image-id="${img.id}">`;
                     if (img.hidden) {
                         html += `<div class="absolute inset-0 bg-black/70 flex items-center justify-center text-white z-20 rounded">
@@ -363,7 +371,11 @@
             html += `</div>`;
             html += `</div></div>`;
 
-            this.container.innerHTML = html;
+            contentWrapper.innerHTML = html;
+
+            // Hide loading indicator and show content
+            document.getElementById('loading-indicator').classList.add('hidden');
+            contentWrapper.classList.remove('hidden');
 
         }
         /**
@@ -664,7 +676,7 @@
             const currentCoverPreview = modal.querySelector('#current-branch-cover-preview');
             if (branch.cover_image) {
                 currentCoverPreview.innerHTML = `
-                    <img src="/uploads/users/${branch.created_by}/images/${branch.cover_image}" class="w-32 h-32 object-cover rounded-lg mb-2">
+                    <img src="/uploads/users/${branch.created_by}/${ensureImagePath(branch.cover_image)}" class="w-32 h-32 object-cover rounded-lg mb-2">
                     <label class="flex items-center text-sm text-muted-foreground">
                         <input type="checkbox" id="remove-current-branch-cover" class="mr-2">
                         Remove current cover image
@@ -792,7 +804,7 @@
                     return;
                 }
                 listEl.innerHTML = data.branches.map(b => {
-                    const coverPath = b.display_image ? `/uploads/users/${b.created_by}/images/${b.display_image}` : '/img/bookie-cartoon.webp';
+                    const coverPath = b.display_image ? `/uploads/users/${b.created_by}/${ensureImagePath(b.display_image)}` : '/img/bookie-cartoon.webp';
                     return `
                 <div class="card flex flex-col md:flex-row gap-4 p-4 hover:border-primary/50 transition-all">
                     <a href="?page=branch&id=${b.id}" class="block md:w-1/3 flex-shrink-0">

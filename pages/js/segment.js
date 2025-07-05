@@ -2,6 +2,11 @@
 // Manages the individual Segment detail page with improved readability
 
 // Utility to escape HTML entities
+function ensureImagePath(path) {
+    if (!path) return '';
+    return path.startsWith('images/') ? path : 'images/' + path;
+}
+
 function escapeHTML(str) {
     if (typeof str !== 'string') return '';
     return str.replace(/[&<>"']/g, ch => ({
@@ -90,7 +95,9 @@ function escapeHTML(str) {
         renderView() {
             const s = this.segment;
             const nav = this.navigation;
-            
+            const contentWrapper = document.getElementById('content-wrapper');
+            if (!contentWrapper) return;
+
             let html = `<div class="space-y-6">`;
             
             // Navigation breadcrumb and controls
@@ -187,7 +194,8 @@ function escapeHTML(str) {
             // Segment image if exists
             if (s.image_path) {
                 html += `<div class="text-center">`;
-                html += `<img src="/uploads/users/${s.created_by}/${s.image_path}" alt="Segment illustration" class="max-w-full max-h-96 mx-auto rounded-lg shadow-lg object-cover">`;
+                const segmentImagePath = ensureImagePath(s.image_path);
+                html += `<img src="/uploads/users/${s.created_by}/${segmentImagePath}" alt="Segment illustration" class="max-w-full max-h-96 mx-auto rounded-lg shadow-lg object-cover">`;
                 html += `</div>`;
             }
             
@@ -268,7 +276,11 @@ function escapeHTML(str) {
             
             html += `</div>`;
             
-            this.container.innerHTML = html;
+            contentWrapper.innerHTML = html;
+
+            // Hide loading indicator and show content
+            document.getElementById('loading-indicator').classList.add('hidden');
+            contentWrapper.classList.remove('hidden');
             
             // Initialize tagging system if user can edit
             if (this.userLoggedIn && (this.userIsAdmin || s.created_by === this.currentUserId)) {
@@ -424,7 +436,7 @@ function escapeHTML(str) {
 
             if (this.segment.image_path) {
                 currentImagePreview.innerHTML = `
-                    <img src="/uploads/users/${this.segment.created_by}/${this.segment.image_path}" class="w-32 h-32 object-cover rounded-lg mb-2">
+                    <img src="/uploads/users/${this.segment.created_by}/${ensureImagePath(this.segment.image_path)}" class="w-32 h-32 object-cover rounded-lg mb-2">
                     <label class="flex items-center text-sm text-muted-foreground">
                         <input type="checkbox" id="remove-current-segment-image" class="mr-2">
                         Remove current image

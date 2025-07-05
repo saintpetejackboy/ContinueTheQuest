@@ -59,7 +59,7 @@ window.mySegmentsPage = {
         
         let coverPath = '/img/bookie-cartoon.webp'; // default
         if (item.image_path) {
-            coverPath = `/uploads/users/${item.created_by}/images/${item.image_path}`;
+            coverPath = `/uploads/users/${item.created_by}/${ensureImagePath(item.image_path)}`;
         }
         
         const url = `?page=segment&id=${item.id}`;
@@ -92,6 +92,11 @@ window.mySegmentsPage = {
 window.mySegmentsPage.init();
 
 // Utility to escape HTML
+function ensureImagePath(path) {
+    if (!path) return '';
+    return path.startsWith('images/') ? path : 'images/' + path;
+}
+
 function escapeHTML(str) {
     return str.replace(/[&<>"']/g, tag => ({
         '&': '&amp;',

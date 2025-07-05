@@ -1,5 +1,10 @@
 // /pages/js/branch.js
 // Manages the Branch detail page: details, comments, and story creation UI.
+function ensureImagePath(path) {
+    if (!path) return '';
+    return path.startsWith('images/') ? path : 'images/' + path;
+}
+
 // Utility to escape HTML entities
 function escapeHTML(str) {
     if (typeof str !== 'string') return '';
@@ -136,6 +141,9 @@ function escapeHTML(str) {
 
         renderView() {
             const b = this.branch;
+            const contentWrapper = document.getElementById('content-wrapper');
+            if (!contentWrapper) return;
+
             let html = `<div class="space-y-4">`;
             html += `<h1 class="text-3xl font-bold">${escapeHTML(b.title)}</h1>`;
             html += `<div class="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -182,7 +190,7 @@ function escapeHTML(str) {
             html += `<div class="mt-4">`;
             if (b.cover_image) {
                 html += `<div class="relative inline-block">`;
-                html += `<img src="/uploads/users/${b.created_by}/images/${b.cover_image}" alt="Branch cover" class="max-w-sm max-h-64 rounded-lg object-cover">`;
+                html += `<img src="/uploads/users/${b.created_by}/${ensureImagePath(b.cover_image)}" alt="Branch cover" class="max-w-sm max-h-64 rounded-lg object-cover">`;
                 if (this.canEdit) {
                     html += `<button id="remove-cover-btn" class="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-destructive/90">×</button>`;
                 }
@@ -329,7 +337,7 @@ function escapeHTML(str) {
                     // Display segment image if exists
                     if (segment.image_path) {
                         html += `<div class="mt-2">`;
-                        html += `<img src="/uploads/users/${segment.created_by}/${segment.image_path}" alt="Segment image" class="max-w-sm max-h-32 rounded object-cover">`;
+                        html += `<img src="/uploads/users/${segment.created_by}/${ensureImagePath(segment.image_path)}" alt="Segment image" class="max-w-sm max-h-32 rounded object-cover">`;
                         html += `</div>`;
                     }
                     html += `<div class="flex items-center space-x-2 text-sm text-muted-foreground mt-1">`;
@@ -519,7 +527,11 @@ function escapeHTML(str) {
             html += `</div>`;
             html += `</div>`;
             
-            this.container.innerHTML = html;
+            contentWrapper.innerHTML = html;
+
+            // Hide loading indicator and show content
+            document.getElementById('loading-indicator').classList.add('hidden');
+            contentWrapper.classList.remove('hidden');
             
             // Initialize tagging systems
             this.initializeSegmentTagging();

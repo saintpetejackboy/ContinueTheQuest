@@ -60,7 +60,7 @@ window.myMediaPage = {
         
         let coverPath = '/img/bookie-cartoon.webp'; // default
         if (item.cover_image) {
-            coverPath = `/uploads/users/${item.created_by}/images/${item.cover_image}`;
+            coverPath = `/uploads/users/${item.created_by}/${ensureImagePath(item.cover_image)}`;
         }
         
         const url = `?page=media&id=${item.id}`;
@@ -101,6 +101,11 @@ window.myMediaPage = {
 window.myMediaPage.init();
 
 // Utility to escape HTML
+function ensureImagePath(path) {
+    if (!path) return '';
+    return path.startsWith('images/') ? path : 'images/' + path;
+}
+
 function escapeHTML(str) {
     return str.replace(/[&<>"']/g, tag => ({
         '&': '&amp;',
