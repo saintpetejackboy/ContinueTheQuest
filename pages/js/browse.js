@@ -99,6 +99,20 @@ window.browsePage = {
           <h3 class="text-lg font-semibold mb-2">${title}</h3>
           <p class="text-muted-foreground text-sm">${desc}</p>
         </a>
+        <div class="flex items-center justify-between mt-4 text-sm text-muted-foreground">
+            <div class="flex items-center gap-2">
+                <span>🌳</span>
+                <span>${item.branch_count}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span>📜</span>
+                <span>${item.segment_count}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span>💬</span>
+                <span>${item.comment_count}</span>
+            </div>
+        </div>
       </div>
     `;
   },

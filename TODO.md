@@ -1,184 +1,60 @@
-# CTQ Project TODO
+# Project TODO
 
-This file tracks remaining changes needed for the branch page and story system improvements.
+This file tracks the remaining tasks and future enhancements for the ContinueThe.Quest platform.
 
-## ✅ COMPLETED
+## 🚀 Up Next: Core Feature Enhancements
 
-### Critical Fixes
-- [x] **Profile Image 404**: Fixed avatar path to use `/avatars/` subdirectory ✅
-- [x] **Storage Quota Error**: Fixed `formatBytes` function variable scope issue ✅  
-- [x] **Mandatory AI Tags**: Implemented non-removable AI tags with `is_mandatory` field ✅
-- [x] **MediaPage Warning**: Changed router warning to debug level ✅
+### 1. Comments for Segments
+- [ ] **API**: Implement API endpoints for creating, reading, updating, and deleting comments on individual segments.
+- [ ] **UI**: Add comment threads to segment cards and the story reader modal.
+- [ ] **Real-time**: Ensure comments appear in real-time without a full page reload.
 
-### Recent Improvements
-- [x] **AI Language Update**: Changed "must be" to "WILL be" for AI tagging ✅
-- [x] **Storage Display**: Added storage usage and AI generation estimates ✅
-- [x] **AI Credit Costs**: Increased costs to realistic levels (25-150 credits) ✅
-- [x] **Segment Descriptions**: Added description field to segments with bold display ✅
-- [x] **Preview Synopsis**: Added file content preview for manual uploads ✅
-- [x] **AI Prompt Enhancement**: Include user descriptions in AI generation prompts ✅
-- [x] **Segment Voting**: Full voting system for individual segments ✅
+### 2. Image Uploads for Branches & Segments
+- [ ] **Branches**: Add functionality to upload, remove, and manage cover images for branches.
+- [ ] **Segments**: Allow a single image upload per segment during creation.
+- [ ] **Storage**: Integrate image uploads with the user storage quota system.
+- [ ] **Optimization**: Implement WebP conversion for all uploaded images to save space and improve performance.
 
-### High Priority Items
-- [x] **Branch Page Permissions**: Hide order index from non-admins and non-creators ✅
-- [x] **Profile Images**: Add miniature user profile images next to branch creator names ✅
-- [x] **AI Models Database**: Create `ai_models` table with descriptions and cost tracking ✅
-- [x] **Dynamic AI Models**: Replace hardcoded models with database-driven system ✅
-- [x] **API Key Validation**: Add OpenAI API key validation from .env file with admin warnings ✅
-- [x] **Storage Quota**: Implement user storage quota checking for story uploads ✅
-- [x] **AI Tagging**: Add mandatory AI tagging system for AI-assisted content ✅
-- [x] **Database Schema**: Remove `markdown_body` from segments table, use file links ✅
-- [x] **AI Generation**: Full OpenAI API integration with content generation ✅
-- [x] **Segment Display**: Show segments on branch pages with tags and metadata ✅
-- [x] **Story Reader**: In-browser story rendering with markdown support ✅
+### 3. Enhanced Story Reader
+- [ ] **Navigation**: Add "next" and "previous" buttons to navigate between segments in order.
+- [ ] **Styling**: Improve Markdown rendering with better CSS for a more polished look.
+- [ ] **Export**: Add options to download or export full stories/branches.
+- [ ] **Fullscreen Mode**: Implement a fullscreen or distraction-free reading mode.
 
-### Database Changes
-- [x] Created `ai_models` table with name, description, cost_per_use, is_active fields
-- [x] Migrated segments table from `markdown_body` to `file_path`
-- [x] Added file storage system in `/uploads/users/{user_id}/segments/`
+### 4. Segment Management
+- [ ] **CRUD**: Allow creators and admins to edit and delete segments.
+- [ ] **Reordering**: Implement drag-and-drop reordering for segments within a branch.
+- [ ] **Duplication**: Add a feature to duplicate a segment for easier variations.
 
-### API Endpoints
-- [x] `/api/ai/models.php` - Get available AI models
-- [x] `/api/ai/status.php` - Check AI system status and API key availability  
-- [x] `/api/ai/generate.php` - Generate AI content with OpenAI integration
-- [x] `/api/users/storage.php` - Get user storage usage and quota
-- [x] `/api/segments/upload.php` - Upload story segments with quota checking
-- [x] `/api/segments/list.php` - Get segments for a branch with tags and metadata
-- [x] `/api/segments/content.php` - Get content of a specific segment for reading
+## 🔧 Future Enhancements
 
----
+### Story & Content Management
+- [ ] **Collaborative Editing**: Allow multiple users to edit a segment with version history.
+- [ ] **Series & Collections**: Group related media or branches into series.
+- [ ] **Advanced Search**: Implement more powerful search and filtering options.
+- [ ] **Progress Tracking**: Allow users to track their reading progress.
+- [ ] **Bookmarking**: Let users bookmark their favorite media, branches, or segments.
 
-## 🔄 REMAINING ITEMS
-
-### Medium Priority Items
-
-#### 1. **Voting System for Segments** ✅
-- [x] Add voting buttons to individual segments ✅
-- [x] Implement segment voting API endpoint ✅
-- [x] Update vote counts in real-time ✅
-- [x] Add voting to segment reader modal ✅
-
-#### 2. **Comments for Segments** 🔄
-- [ ] Add individual comment threads for each segment
-- [ ] Implement segment comment API endpoints
-- [ ] Add comment display in segment cards
-- [ ] Add commenting to segment reader modal
-
-#### 3. **Image Upload for Branches and Segments** 🔄
-- [ ] Add branch cover image upload/remove functionality
-- [ ] Implement single image upload for segments during upload
-- [ ] Create image management UI (similar to media page)
-- [ ] Add image quota checking to storage system
-
-#### 4. **Enhanced Story Reader** 🔄
-- [ ] Add story navigation (next/previous segments in order)
-- [ ] Improve markdown rendering with proper CSS
-- [ ] Add export/download options for full stories
-- [ ] Add fullscreen reading mode
-
-#### 5. **Segment Management** 🔄
-- [ ] Add edit/delete segment functionality for creators/admins
-- [ ] Implement segment reordering (drag & drop)
-- [ ] Add segment duplication feature
-- [ ] Add bulk segment operations
-
----
-
-## 🎯 TECHNICAL REQUIREMENTS
-
-### File Upload System
-- ✅ Quota checking against `users.quota` (bytes)
-- ✅ File validation (size, type)
-- ✅ User directory structure: `/uploads/users/{user_id}/segments/`
-- [ ] Image directory: `/uploads/users/{user_id}/images/`
-- [ ] WebP conversion for uploaded images
-
-### AI Integration
-- ✅ Model selection from database
-- ✅ Cost estimation and credit deduction
-- ✅ API key validation
-- ✅ OpenAI API integration for story generation
-- ✅ AI-generated content tagging enforcement
+### Admin & Moderation
+- [ ] **Content Management**: Build a dashboard for bulk content management (hiding, deleting, etc.).
+- [ ] **User Quotas**: Create a UI for admins to manage individual user storage quotas.
+- [ ] **AI Models**: Develop an interface for managing AI models and their costs.
+- [ ] **Moderation Dashboard**: A centralized dashboard for content moderation and abuse detection.
 
 ### Tagging System
-- ✅ Credit cost for new tags (1 credit each)
-- ✅ Free reuse of existing tags
-- ✅ Mandatory "AI-Assisted" tags for AI content
-- [ ] Tag suggestions and autocomplete
-- [ ] Tag management UI for admins
+- [ ] **Suggestions**: Implement tag suggestions and autocomplete during creation.
+- [ ] **Admin Management**: A UI for admins to manage, merge, and delete tags.
 
-### Comments and Voting
-- ✅ Existing system works for branches
-- ✅ Segment display and metadata
-- [ ] Extend to segments with individual threads
-- [ ] Voting on individual segments
-- [ ] Moderation tools for admins
+## 📋 Testing Checklist
 
----
+- [ ] **File Uploads**: Test quota enforcement, file type validation, and large file handling.
+- [ ] **AI System**: Test with and without an API key, model selection, credit deduction, and error handling.
+- [ ] **Permissions**: Thoroughly test admin, creator, and regular user permissions across all features.
+- [ ] **Storage**: Verify storage calculation accuracy and quota display.
 
-## 🔧 FUTURE ENHANCEMENTS
+## 🐛 Known Issues
 
-### Story Management
-- [ ] Segment reordering (drag & drop)
-- [ ] Collaborative editing permissions
-- [ ] Version history for segments
-- [ ] Story compilation/export features
-
-### Content Organization
-- [ ] Series and collections
-- [ ] Advanced search and filtering
-- [ ] Reading progress tracking
-- [ ] Bookmarking system
-
-### Admin Features
-- [ ] Bulk content management
-- [ ] User quota management UI
-- [ ] AI model management interface
-- [ ] Content moderation dashboard
-
----
-
-## 📋 TESTING CHECKLIST
-
-### File Upload
-- [ ] Test quota enforcement
-- [ ] Test file type validation
-- [ ] Test large file handling
-- [ ] Test concurrent uploads
-
-### AI System
-- [ ] Test with/without API key
-- [ ] Test model selection and cost calculation
-- [ ] Test credit deduction
-- [ ] Test error handling
-
-### Permissions
-- [ ] Test admin vs creator vs regular user permissions
-- [ ] Test order index visibility
-- [ ] Test editing restrictions
-
-### Storage
-- [ ] Test storage calculation accuracy
-- [ ] Test quota display formatting
-- [ ] Test cleanup on upload failure
-
----
-
-## 🐛 KNOWN ISSUES
-
-1. **File Preview**: Upload preview shows storage info but could be more user-friendly
-2. **Error Handling**: Some API endpoints need better error messages
-3. **Mobile UI**: Upload interface may need mobile optimization
-4. **Performance**: Large file uploads might need progress indicators
-
----
-
-## 📝 NOTES
-
-- All high-priority items have been completed successfully
-- Database migrations have been run and schema updated
-- New API endpoints are functional and secured
-- File upload system includes proper validation and quota checking
-- AI system includes admin warnings and proper model management
-
-**Next Steps**: Focus on completing the medium-priority items, starting with segment display and management features.
+- **File Preview**: The upload preview can be made more user-friendly.
+- **Error Handling**: Some API endpoints need more descriptive error messages.
+- **Mobile UI**: The story upload interface needs to be optimized for mobile devices.
+- **Performance**: Large file uploads could benefit from progress indicators.

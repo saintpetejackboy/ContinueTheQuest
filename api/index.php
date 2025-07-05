@@ -109,7 +109,10 @@ function handleSearch($method) {
                        (SELECT b.cover_image FROM branches b WHERE b.media_id = m.id AND b.cover_image IS NOT NULL ORDER BY b.created_at DESC LIMIT 1),
                        (SELECT s.image_path FROM segments s JOIN branches b ON s.branch_id = b.id WHERE b.media_id = m.id AND s.image_path IS NOT NULL ORDER BY s.created_at DESC LIMIT 1),
                        (SELECT mi.file_name FROM media_images mi WHERE mi.media_id = m.id AND mi.hidden = 0 ORDER BY mi.vote_score DESC, mi.created_at DESC LIMIT 1)
-                   ) AS display_image
+                   ) AS display_image,
+                   (SELECT COUNT(*) FROM branches WHERE media_id = m.id) AS branch_count,
+                   (SELECT COUNT(*) FROM segments s JOIN branches b ON s.branch_id = b.id WHERE b.media_id = m.id) AS segment_count,
+                   (SELECT COUNT(*) FROM comments WHERE target_type = 'media' AND target_id = m.id) AS comment_count
             FROM media m
             {$whereSQL}
             ORDER BY {$orderBy}
