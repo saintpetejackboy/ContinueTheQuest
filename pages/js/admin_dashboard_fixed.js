@@ -27,70 +27,156 @@ async function loadAdminDashboard() {
         content.className = '';
         content.style.cssText = 'display: block !important; visibility: visible !important;';
         
-        // Create dashboard HTML
+        // Fetch users for management
+        console.log('Fetching users...');
+        const usersRes = await fetch('/api/admin/users.php');
+        const users = usersRes.ok ? await usersRes.json() : [];
+        
+        console.log('Users loaded:', users.length);
+        
+        // Create dashboard HTML using Tailwind classes
         content.innerHTML = `
-            <div style="padding: 20px; background: #1a1a1a; color: white; border-radius: 8px;">
-                <h1 style="font-size: 32px; margin-bottom: 20px; color: #8b5cf6;">🎉 Admin Dashboard</h1>
+            <div class="w-full max-w-7xl mx-auto py-8 px-4">
+                <h1 class="text-3xl font-bold mb-6 text-primary">📊 Admin Dashboard</h1>
                 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
-                    <div style="background: #2a2a2a; padding: 20px; border-radius: 8px; border: 2px solid #8b5cf6;">
-                        <h3 style="color: #06b6d4; margin-bottom: 10px;">System Info</h3>
-                        <p>Uptime: ${stats.system.uptime}</p>
-                        <p>Files: ${stats.system.total_files_in_uploads}</p>
+                <!-- Overview Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
+                        <h3 class="text-lg font-semibold mb-2 text-primary">System Info</h3>
+                        <p class="text-muted-foreground">Uptime: <span class="text-foreground font-medium">${stats.system.uptime}</span></p>
+                        <p class="text-muted-foreground">Files: <span class="text-foreground font-medium">${stats.system.total_files_in_uploads}</span></p>
                     </div>
                     
-                    <div style="background: #2a2a2a; padding: 20px; border-radius: 8px; border: 2px solid #06b6d4;">
-                        <h3 style="color: #10b981; margin-bottom: 10px;">Users</h3>
-                        <p>Total: ${stats.users.total}</p>
-                        <p>Admins: ${stats.users.admins}</p>
-                        <p>Credits: ${stats.users.total_credits}</p>
+                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
+                        <h3 class="text-lg font-semibold mb-2 text-primary">Users</h3>
+                        <p class="text-muted-foreground">Total: <span class="text-foreground font-medium">${stats.users.total}</span></p>
+                        <p class="text-muted-foreground">Admins: <span class="text-foreground font-medium">${stats.users.admins}</span></p>
+                        <p class="text-muted-foreground">Credits: <span class="text-foreground font-medium">${stats.users.total_credits.toLocaleString()}</span></p>
                     </div>
                     
-                    <div style="background: #2a2a2a; padding: 20px; border-radius: 8px; border: 2px solid #10b981;">
-                        <h3 style="color: #f59e0b; margin-bottom: 10px;">Content</h3>
-                        <p>Media: ${stats.media.total}</p>
-                        <p>Branches: ${stats.branches.total}</p>
-                        <p>Segments: ${stats.segments.total}</p>
-                        <p>Comments: ${stats.comments.total}</p>
+                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
+                        <h3 class="text-lg font-semibold mb-2 text-primary">Content</h3>
+                        <p class="text-muted-foreground">Media: <span class="text-foreground font-medium">${stats.media.total}</span></p>
+                        <p class="text-muted-foreground">Branches: <span class="text-foreground font-medium">${stats.branches.total}</span></p>
+                        <p class="text-muted-foreground">Segments: <span class="text-foreground font-medium">${stats.segments.total}</span></p>
+                        <p class="text-muted-foreground">Comments: <span class="text-foreground font-medium">${stats.comments.total}</span></p>
                     </div>
                     
-                    <div style="background: #2a2a2a; padding: 20px; border-radius: 8px; border: 2px solid #f59e0b;">
-                        <h3 style="color: #ef4444; margin-bottom: 10px;">Engagement</h3>
-                        <p>Total Votes: ${stats.votes.total}</p>
-                        <p>Upvotes: ${stats.votes.upvotes}</p>
-                        <p>Downvotes: ${stats.votes.downvotes}</p>
-                        <p>Tags: ${stats.tags.total}</p>
+                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
+                        <h3 class="text-lg font-semibold mb-2 text-primary">Engagement</h3>
+                        <p class="text-muted-foreground">Total Votes: <span class="text-foreground font-medium">${stats.votes.total}</span></p>
+                        <p class="text-muted-foreground">Upvotes: <span class="text-green-500 font-medium">${stats.votes.upvotes}</span></p>
+                        <p class="text-muted-foreground">Downvotes: <span class="text-red-500 font-medium">${stats.votes.downvotes}</span></p>
+                        <p class="text-muted-foreground">Tags: <span class="text-foreground font-medium">${stats.tags.total}</span></p>
                     </div>
                 </div>
                 
-                <div style="background: #2a2a2a; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <h3 style="color: #8b5cf6; margin-bottom: 15px;">AI Models (${stats.ai_models.length})</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                        ${stats.ai_models.map(model => `
-                            <div style="background: #1a1a1a; padding: 10px; border-radius: 4px;">
-                                <strong>${model.name}</strong> - ${model.cost_per_use} credits
-                                <br><small>${model.description}</small>
+                <!-- Top Content Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
+                        <h3 class="text-xl font-semibold mb-4 text-primary">🏆 Top Rated Content</h3>
+                        
+                        ${topMedia ? `
+                        <div class="mb-4 p-3 bg-muted rounded-lg border-l-4 border-l-primary">
+                            <h4 class="font-medium text-foreground">📺 Top Media</h4>
+                            <p class="text-sm text-muted-foreground">${topMedia.title || 'Untitled'}</p>
+                            <p class="text-xs text-primary">Score: ${topMedia.vote_score} | Type: ${topMedia.type}</p>
+                        </div>
+                        ` : '<p class="text-muted-foreground mb-4">No media found</p>'}
+                        
+                        ${topBranch ? `
+                        <div class="mb-4 p-3 bg-muted rounded-lg border-l-4 border-l-secondary">
+                            <h4 class="font-medium text-foreground">🌳 Top Branch</h4>
+                            <p class="text-sm text-muted-foreground">${topBranch.title || 'Untitled'}</p>
+                            <p class="text-xs text-primary">Score: ${topBranch.vote_score} | Type: ${topBranch.branch_type}</p>
+                        </div>
+                        ` : '<p class="text-muted-foreground mb-4">No branches found</p>'}
+                        
+                        ${topSegment ? `
+                        <div class="mb-4 p-3 bg-muted rounded-lg border-l-4 border-l-accent">
+                            <h4 class="font-medium text-foreground">📝 Top Segment</h4>
+                            <p class="text-sm text-muted-foreground">${topSegment.title || 'Untitled'}</p>
+                            <p class="text-xs text-primary">Score: ${topSegment.vote_score}</p>
+                        </div>
+                        ` : '<p class="text-muted-foreground mb-4">No segments found</p>'}
+                        
+                        ${topComment ? `
+                        <div class="p-3 bg-muted rounded-lg border-l-4 border-l-green-500">
+                            <h4 class="font-medium text-foreground">💬 Top Comment</h4>
+                            <p class="text-sm text-muted-foreground">${topComment.content ? topComment.content.substring(0, 100) + (topComment.content.length > 100 ? '...' : '') : 'No content'}</p>
+                            <p class="text-xs text-primary">Score: ${topComment.vote_score}</p>
+                        </div>
+                        ` : '<p class="text-muted-foreground">No comments found</p>'}
+                    </div>
+                    
+                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
+                        <h3 class="text-xl font-semibold mb-4 text-primary">🤖 AI Models (${stats.ai_models.length})</h3>
+                        <div class="space-y-3 max-h-80 overflow-y-auto">
+                            ${stats.ai_models.map(model => `
+                                <div class="p-3 bg-muted rounded-lg">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <strong class="text-foreground">${model.name}</strong>
+                                        <span class="text-primary font-medium">${model.cost_per_use} credits</span>
+                                    </div>
+                                    <p class="text-sm text-muted-foreground">${model.description}</p>
+                                    <span class="inline-block mt-1 px-2 py-1 text-xs rounded ${model.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}">
+                                        ${model.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Storage & Tags -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
+                        <h3 class="text-xl font-semibold mb-4 text-primary">💾 Storage Usage</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-muted-foreground">Total Allocated:</span>
+                                <span class="text-foreground font-medium">${formatBytes(stats.storage.total_allocated_bytes)}</span>
                             </div>
-                        `).join('')}
+                            <div class="flex justify-between">
+                                <span class="text-muted-foreground">Used:</span>
+                                <span class="text-foreground font-medium">${formatBytes(stats.storage.total_used_bytes)}</span>
+                            </div>
+                            <div class="w-full bg-muted rounded-full h-2">
+                                <div class="bg-primary h-2 rounded-full" style="width: ${Math.min(100, (stats.storage.total_used_bytes / stats.storage.total_allocated_bytes) * 100)}%"></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                <div class="text-muted-foreground">Images: <span class="text-foreground">${formatBytes(stats.storage.breakdown.images)}</span></div>
+                                <div class="text-muted-foreground">Avatars: <span class="text-foreground">${formatBytes(stats.storage.breakdown.avatars)}</span></div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                
-                <div style="background: #2a2a2a; padding: 20px; border-radius: 8px;">
-                    <h3 style="color: #06b6d4; margin-bottom: 15px;">Top Tags</h3>
-                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                        ${stats.tags.top_10.map(tag => `
-                            <span style="background: #8b5cf6; color: white; padding: 5px 10px; border-radius: 20px; font-size: 14px;">
-                                ${tag.name} (${tag.count})
-                            </span>
-                        `).join('')}
+                    
+                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
+                        <h3 class="text-xl font-semibold mb-4 text-primary">🏷️ Popular Tags</h3>
+                        <div class="flex flex-wrap gap-2">
+                            ${stats.tags.top_10.map(tag => `
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary text-primary-foreground">
+                                    ${tag.name} <span class="ml-1 bg-primary-foreground/20 px-1.5 py-0.5 rounded-full text-xs">${tag.count}</span>
+                                </span>
+                            `).join('')}
+                        </div>
+                        <div class="mt-4 text-sm text-muted-foreground">
+                            <span class="text-foreground font-medium">${stats.tags.genres}</span> genre tags out of <span class="text-foreground font-medium">${stats.tags.total}</span> total
+                        </div>
                     </div>
-                </div>
-                
-                <div style="margin-top: 20px; text-align: center; color: #10b981; font-size: 18px;">
-                    ✅ Admin Dashboard Successfully Loaded! ✅
                 </div>
             </div>
         `;
+        
+        function formatBytes(bytes) {
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let i = 0;
+            while (bytes > 1024 && i < units.length - 1) {
+                bytes /= 1024;
+                i++;
+            }
+            return bytes.toFixed(1) + ' ' + units[i];
+        }
         
         console.log('Dashboard rendered successfully!');
         
