@@ -1874,9 +1874,8 @@ function escapeHTML(str) {
         }
 
         async saveBranchTags() {
-            if (!this.selectedBranchTags) {
-                this.selectedBranchTags = [];
-            }
+            // Get tags from the tagging system
+            const tags = this.branchTaggingSystem ? Array.from(this.branchTaggingSystem.selectedTags) : [];
             
             try {
                 const response = await fetch('/api/branches/update-tags.php', {
@@ -1884,7 +1883,7 @@ function escapeHTML(str) {
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         branch_id: this.branchId,
-                        tags: this.selectedBranchTags
+                        tags: tags
                     })
                 });
                 

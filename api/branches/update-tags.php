@@ -24,6 +24,10 @@ $input = json_decode(file_get_contents('php://input'), true);
 $branchId = intval($input['branch_id'] ?? 0);
 $tags = isset($input['tags']) ? (array)$input['tags'] : [];
 
+// Clean and validate tags
+$tags = array_filter(array_map('trim', $tags));
+$tags = array_unique($tags);
+
 if ($branchId <= 0) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid branch ID']);
@@ -59,7 +63,7 @@ try {
         // Check which user tags are new
         $placeholders = str_repeat('?,', count($tags) - 1) . '?';
         $tagCheckStmt = $db->prepare("SELECT name FROM tags WHERE name IN ($placeholders)");
-        $tagCheckStmt->execute($tags);
+        $tagCheckStmt->execute(array_values($tags)); // Ensure array values are sequential
         $existingTags = $tagCheckStmt->fetchAll(PDO::FETCH_COLUMN);
         
         $newUserTags = array_diff($tags, $existingTags);
@@ -120,9 +124,11 @@ try {
     ]);
     
 } catch (Exception $e) {
-    $db->rollBack();
-    error_log('Branch tag update error: ' . $e->getMessage());
+    if ($db->inTransaction()) {
+        $db->rollBack();
+    }
+    error_log('Branch tag update error: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine());
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to update tags']);
+    echo json_encode(['error' => 'Failed to update tags: ' . $e->getMessage()]);
 }
 ?>
