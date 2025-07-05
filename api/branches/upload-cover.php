@@ -12,7 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$user = requireAuth();
+$user = getCurrentUser();
+if (!$user) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized']);
+    exit;
+}
 $branchId = intval($_POST['branch_id'] ?? 0);
 
 if ($branchId <= 0) {
@@ -75,7 +80,12 @@ try {
     $storageStmt->execute([$user['id']]);
     $quota = $storageStmt->fetchColumn();
     
-    $currentUsage = getUserStorageUsage($user['id']);
+    // Calculate current usage
+    $userDir = "/var/www/ctq/uploads/users/{$user['id']}";
+    $currentUsage = 0;
+    if (is_dir($userDir)) {
+        $currentUsage = calculateDirectorySize($userDir);
+    }
     
     if ($currentUsage + $file['size'] > $quota) {
         http_response_code(400);
@@ -141,4 +151,21 @@ try {
     error_log('Branch cover upload error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => 'Failed to upload cover image']);
+}
+
+function calculateDirectorySize($directory) {
+    $size = 0;
+    if (is_dir($directory)) {
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+        
+        foreach ($files as $file) {
+            if ($file->isFile()) {
+                $size += $file->getSize();
+            }
+        }
+    }
+    return $size;
 }

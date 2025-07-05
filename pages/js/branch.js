@@ -192,6 +192,61 @@ function escapeHTML(str) {
             }
             html += `</div>`;
             
+            // Add Segment form (hidden by default, right under button)
+            html += `<div id="add-segment-form" class="mt-4 border rounded-lg p-4 space-y-4 hidden">`;
+            html += `<h2 class="text-xl font-semibold">Add Story Segment</h2>`;
+            html += `<p class="text-sm text-muted-foreground">Provide a title, description, order, and upload your text or generate automatically. AI-created segments WILL be tagged as "AI-Assisted".</p>`;
+            html += `<div>
+                    <label for="segment-title" class="block text-sm font-medium text-muted-foreground mb-1">Segment Title</label>
+                    <input type="text" id="segment-title" class="form-input w-full mb-2" placeholder="Chapter title...">
+                </div>`;
+            html += `<div>
+                    <label for="segment-description" class="block text-sm font-medium text-muted-foreground mb-1">Description</label>
+                    <textarea id="segment-description" rows="3" class="form-textarea w-full mb-1" placeholder="Brief description of what happens in this segment... (Required for AI generation - 100 characters minimum)"></textarea>
+                    <div class="flex justify-between text-xs text-muted-foreground">
+                        <span id="description-requirement">Required for AI generation: 100 characters minimum</span>
+                        <span id="description-counter">0 characters</span>
+                    </div>
+                </div>`;
+            html += this.canEdit ? `<div>
+                    <label for="segment-order" class="block text-sm font-medium text-muted-foreground mb-1">Order Index</label>
+                    <input type="number" id="segment-order" class="form-input w-full mb-2" value="1" min="1">
+                </div>` : '';
+            
+            // Image upload section
+            html += `<div>
+                    <label class="block text-sm font-medium text-muted-foreground mb-2">Segment Image (Optional)</label>
+                    <div id="image-upload-zone" class="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary mb-2">
+                        <div class="space-y-2">
+                            <svg class="mx-auto h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <div class="text-sm text-muted-foreground">
+                                <label for="segment-image" class="font-medium text-primary hover:text-primary/80 cursor-pointer">Click to upload image</label> or drag and drop
+                            </div>
+                            <p class="text-xs text-muted-foreground">JPEG, PNG, WebP, GIF; max size 5MB.</p>
+                        </div>
+                        <input type="file" id="segment-image" accept="image/*" class="hidden">
+                    </div>
+                    <div id="image-preview" class="mb-2"></div>
+                </div>`;
+            
+            html += `<div id="story-upload-zone" class="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary">
+                <div class="space-y-2">
+                    <svg class="mx-auto h-12 w-12 text-muted-foreground" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="text-sm text-muted-foreground">
+                        <label for="story-file" class="font-medium text-primary hover:text-primary/80 cursor-pointer">Click to upload text</label> or drag and drop
+                    </div>
+                    <p class="text-xs text-muted-foreground">Supported file types: .txt, .md (Markdown); max size 500 KB.</p>
+                </div>
+                <input type="file" id="story-file" accept=".txt,.md" class="hidden">
+            </div>`;
+            html += `<div id="story-previews" class="mt-2"></div>`;
+            html += `<button id="generate-story-btn" class="btn btn-outline w-full">Generate with AI</button>`;
+            html += `</div>`;
+            
             // Segments section (moved here to be right under the Add button)
             if (this.segments && this.segments.length > 0) {
                 html += `<div class="mt-6">`;
@@ -290,10 +345,6 @@ function escapeHTML(str) {
             }
             
             html += `<div id="comment-thread" class="mt-8"></div>`;
-            
-            // Add Segment form (hidden by default)
-            html += `<div id="add-segment-form" class="mt-6 border-t pt-4 space-y-4 hidden">`;
-            html += `<h2 class="text-xl font-semibold">Add Story Segment</h2>`;
             html += `<p class="text-sm text-muted-foreground">Provide a title, description, order, and upload your text or generate automatically. AI-created segments WILL be tagged as "AI-Assisted".</p>`;
             html += `<div>
                     <label for="segment-title" class="block text-sm font-medium text-muted-foreground mb-1">Segment Title</label>
