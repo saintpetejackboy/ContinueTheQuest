@@ -223,33 +223,33 @@
             html += `<p class="text-sm text-muted-foreground">Choose the type of branch and provide details below. Please check existing branches to avoid duplicates.</p>`;
             html += `<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">`;
             html += `
-                <label class="peer flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer bg-card
-                                hover:border-primary peer-checked:border-primary peer-checked:bg-primary
-                                peer-checked:text-primary-foreground peer-checked:ring-2 peer-checked:ring-offset-1
-                                peer-checked:ring-primary peer-checked:shadow-inner peer-checked:scale-95 transition-all">
-                    <input type="radio" name="branch-type" value="after" class="sr-only peer" checked>
+                <label class="relative flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer bg-card
+                                hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary
+                                has-[:checked]:text-primary-foreground has-[:checked]:ring-2 has-[:checked]:ring-offset-1
+                                has-[:checked]:ring-primary has-[:checked]:shadow-inner transition-all">
+                    <input type="radio" name="branch-type" value="after" class="sr-only" checked>
                     <span class="text-lg font-medium">🌿 After</span>
-                    <span class="text-xs peer-checked:text-primary-foreground mt-1">Continue the story after the original ending (most common).</span>
+                    <span class="text-xs mt-1">Continue the story after the original ending (most common).</span>
                 </label>
             `;
             html += `
-                <label class="peer flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer bg-card
-                                hover:border-primary peer-checked:border-primary peer-checked:bg-primary
-                                peer-checked:text-primary-foreground peer-checked:ring-2 peer-checked:ring-offset-1
-                                peer-checked:ring-primary peer-checked:shadow-inner peer-checked:scale-95 transition-all">
-                    <input type="radio" name="branch-type" value="before" class="sr-only peer">
+                <label class="relative flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer bg-card
+                                hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary
+                                has-[:checked]:text-primary-foreground has-[:checked]:ring-2 has-[:checked]:ring-offset-1
+                                has-[:checked]:ring-primary has-[:checked]:shadow-inner transition-all">
+                    <input type="radio" name="branch-type" value="before" class="sr-only">
                     <span class="text-lg font-medium">📜 Before</span>
-                    <span class="text-xs peer-checked:text-primary-foreground mt-1">Prequel or events leading up to the original story.</span>
+                    <span class="text-xs mt-1">Prequel or events leading up to the original story.</span>
                 </label>
             `;
             html += `
-                <label class="peer flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer bg-card
-                                hover:border-primary peer-checked:border-primary peer-checked:bg-primary
-                                peer-checked:text-primary-foreground peer-checked:ring-2 peer-checked:ring-offset-1
-                                peer-checked:ring-primary peer-checked:shadow-inner peer-checked:scale-95 transition-all">
-                    <input type="radio" name="branch-type" value="other" class="sr-only peer">
+                <label class="relative flex flex-col items-center p-4 border border-border rounded-lg cursor-pointer bg-card
+                                hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary
+                                has-[:checked]:text-primary-foreground has-[:checked]:ring-2 has-[:checked]:ring-offset-1
+                                has-[:checked]:ring-primary has-[:checked]:shadow-inner transition-all">
+                    <input type="radio" name="branch-type" value="other" class="sr-only">
                     <span class="text-lg font-medium">🎭 Alternate</span>
-                    <span class="text-xs peer-checked:text-primary-foreground mt-1">Non-canon or fan-fiction variations of the original story.</span>
+                    <span class="text-xs mt-1">Non-canon or fan-fiction variations of the original story.</span>
                 </label>
             `;
             html += `</div>`;
