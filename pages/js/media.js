@@ -159,6 +159,12 @@
                 html += `<div id="join-branch-container"></div>`;
             }
             html += `</div>`;
+            
+            // List existing branches for this media (moved here from bottom)
+            html += `<div id="media-branches" class="mt-6">`;
+            html += `<h2 class="text-xl font-semibold mb-4">Branches</h2>`;
+            html += `<div id="media-branches-list" class="space-y-4"></div>`;
+            html += `</div>`;
 
             if (m.cover_image) {
                 html += `
@@ -210,12 +216,6 @@
             html += `<div id="join-comment-container" class="mb-4"></div>`;
         }
         html += `<div id="comment-thread" class="mt-8"></div>`;
-
-        // List existing branches for this media
-        html += `<div id="media-branches" class="mt-8">`;
-        html += `<h2 class="text-xl font-semibold mb-2">Branches</h2>`;
-        html += `<div id="media-branches-list" class="space-y-4"></div>`;
-        html += `</div>`;
     
             html += `<div id="branch-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">`;
             html += `<div class="bg-card rounded-lg p-6 w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto">`;

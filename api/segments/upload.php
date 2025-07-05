@@ -97,13 +97,76 @@ if (!move_uploaded_file($file['tmp_name'], $filepath)) {
     jsonResponse(['success' => false, 'error' => 'Failed to save file'], 500);
 }
 
+// Handle optional image upload
+$imagePath = null;
+if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+    $imageFile = $_FILES['image'];
+    
+    // Validate image type
+    $allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $imageMimeType = finfo_file($finfo, $imageFile['tmp_name']);
+    finfo_close($finfo);
+    
+    if (!in_array($imageMimeType, $allowedImageTypes)) {
+        unlink($filepath); // Clean up text file
+        jsonResponse(['success' => false, 'error' => 'Invalid image type. Only JPEG, PNG, WebP, and GIF images are allowed'], 400);
+    }
+    
+    // Validate image size (5MB max)
+    $maxImageSize = 5 * 1024 * 1024; // 5MB
+    if ($imageFile['size'] > $maxImageSize) {
+        unlink($filepath); // Clean up text file
+        jsonResponse(['success' => false, 'error' => 'Image too large. Maximum size is 5MB'], 400);
+    }
+    
+    // Check if image fits in quota (in addition to text file)
+    if (($file['size'] + $imageFile['size']) > $availableBytes) {
+        unlink($filepath); // Clean up text file
+        jsonResponse(['success' => false, 'error' => 'Insufficient storage space for both files'], 400);
+    }
+    
+    // Create images directory if needed
+    $imagesDir = $userDir . '/images';
+    if (!is_dir($imagesDir)) {
+        if (!mkdir($imagesDir, 0755, true)) {
+            unlink($filepath); // Clean up text file
+            jsonResponse(['success' => false, 'error' => 'Failed to create images directory'], 500);
+        }
+    }
+    
+    // Generate unique image filename
+    $imageExtension = pathinfo($imageFile['name'], PATHINFO_EXTENSION);
+    if (empty($imageExtension)) {
+        // Determine extension from mime type
+        $imageExtension = match($imageMimeType) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'image/gif' => 'gif',
+            default => 'jpg'
+        };
+    }
+    
+    $imageFilename = uniqid('segment_') . '.' . $imageExtension;
+    $imageFilepath = $imagesDir . '/' . $imageFilename;
+    
+    // Move uploaded image
+    if (!move_uploaded_file($imageFile['tmp_name'], $imageFilepath)) {
+        unlink($filepath); // Clean up text file
+        jsonResponse(['success' => false, 'error' => 'Failed to save image'], 500);
+    }
+    
+    $imagePath = 'images/' . $imageFilename;
+}
+
 try {
     // Start transaction
     $db->beginTransaction();
     
     // Create segment record
-    $segmentStmt = $db->prepare('INSERT INTO segments (branch_id, title, description, file_path, created_by, order_index, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())');
-    $segmentStmt->execute([$branchId, $title, $description, 'segments/' . $filename, $user['id'], $orderIndex]);
+    $segmentStmt = $db->prepare('INSERT INTO segments (branch_id, title, description, file_path, image_path, created_by, order_index, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())');
+    $segmentStmt->execute([$branchId, $title, $description, 'segments/' . $filename, $imagePath, $user['id'], $orderIndex]);
     $segmentId = $db->lastInsertId();
     
     // Handle tags if provided
@@ -202,7 +265,10 @@ try {
     
 } catch (Exception $e) {
     $db->rollBack();
-    unlink($filepath); // Clean up uploaded file
+    unlink($filepath); // Clean up uploaded text file
+    if ($imagePath && file_exists($userDir . '/' . $imagePath)) {
+        unlink($userDir . '/' . $imagePath); // Clean up uploaded image file
+    }
     jsonResponse(['success' => false, 'error' => 'Database error: ' . $e->getMessage()], 500);
 }
 

@@ -79,6 +79,7 @@ function escapeHTML(str) {
                     this.userLoggedIn = true;
                     this.userIsAdmin = Boolean(d.is_admin);
                     this.userCredits = d.credits || 0;
+                    this.currentUserId = d.id;
                 }
             } catch (e) {
                 console.error('BranchPage: user profile error', e);
@@ -143,9 +144,30 @@ function escapeHTML(str) {
             </div>`;
             html += `<div class="flex flex-wrap gap-2">`;
             this.tags.forEach(t => {
-                html += `<a href="?page=genre&id=${t.id}" class="px-2 py-1 bg-muted rounded text-xs">${h(t.name)}</a>`;
+                html += `<a href="?page=genre&id=${t.id}" class="px-2 py-1 bg-muted rounded text-xs">${escapeHTML(t.name)}</a>`;
             });
             html += `</div>`;
+            
+            // Branch cover image section
+            html += `<div class="mt-4">`;
+            if (b.cover_image) {
+                html += `<div class="relative inline-block">`;
+                html += `<img src="/uploads/users/${b.created_by}/images/${b.cover_image}" alt="Branch cover" class="max-w-sm max-h-64 rounded-lg object-cover">`;
+                if (this.canEdit) {
+                    html += `<button id="remove-cover-btn" class="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-destructive/90">×</button>`;
+                }
+                html += `</div>`;
+            } else if (this.canEdit) {
+                html += `<div class="border-2 border-dashed border-border rounded-lg p-4 w-64 h-40 flex flex-col items-center justify-center cursor-pointer hover:border-primary" id="upload-cover-zone">`;
+                html += `<svg class="w-8 h-8 text-muted-foreground mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">`;
+                html += `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>`;
+                html += `</svg>`;
+                html += `<span class="text-sm text-muted-foreground">Add cover image</span>`;
+                html += `<input type="file" id="cover-upload" accept="image/*" class="hidden">`;
+                html += `</div>`;
+            }
+            html += `</div>`;
+            
             html += `<p class="mt-4">${escapeHTML(b.summary)}</p>`;
             html += `<div class="flex items-center space-x-2 mt-4">`;
             html += `<button data-vote="1" class="vote-btn btn btn-ghost btn-sm p-2">
@@ -161,9 +183,18 @@ function escapeHTML(str) {
             </button>`;
             html += `</div>`;
             
-            // Segments section
+            // Add Segment button (consistent with Media page layout)
+            html += `<div class="mt-6 flex space-x-2" id="segment-actions">`;
+            if (this.userLoggedIn) {
+                html += `<button id="add-segment-btn" class="btn-primary">📝 Add Story Segment</button>`;
+            } else {
+                html += `<div id="join-segment-container"></div>`;
+            }
+            html += `</div>`;
+            
+            // Segments section (moved here to be right under the Add button)
             if (this.segments && this.segments.length > 0) {
-                html += `<div class="mt-8 border-t pt-8">`;
+                html += `<div class="mt-6">`;
                 html += `<h2 class="text-2xl font-semibold mb-4">Story Segments</h2>`;
                 html += `<div class="space-y-4">`;
                 
@@ -174,6 +205,13 @@ function escapeHTML(str) {
                     html += `<h3 class="text-lg font-medium">${escapeHTML(segment.title)}</h3>`;
                     if (segment.description) {
                         html += `<p class="text-sm mt-1"><strong>${escapeHTML(segment.description)}</strong></p>`;
+                    }
+                    
+                    // Display segment image if exists
+                    if (segment.image_path) {
+                        html += `<div class="mt-2">`;
+                        html += `<img src="/uploads/users/${segment.created_by}/${segment.image_path}" alt="Segment image" class="max-w-sm max-h-32 rounded object-cover">`;
+                        html += `</div>`;
                     }
                     html += `<div class="flex items-center space-x-2 text-sm text-muted-foreground mt-1">`;
                     html += `<span>by</span>`;
@@ -203,7 +241,24 @@ function escapeHTML(str) {
                         </svg>
                     </button>`;
                     html += `</div>`;
+                    html += `<div class="flex items-center space-x-2">`;
                     html += `<button class="btn-ghost btn-sm" onclick="window.branchPage.readSegment(${segment.id})">Read</button>`;
+                    
+                    // Add edit/delete buttons for creators and admins
+                    if (this.userLoggedIn && (this.userIsAdmin || segment.created_by === this.currentUserId)) {
+                        html += `<button class="btn-ghost btn-sm text-muted-foreground hover:text-foreground" onclick="window.branchPage.editSegment(${segment.id})" title="Edit segment">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </button>`;
+                        html += `<button class="btn-ghost btn-sm text-muted-foreground hover:text-destructive" onclick="window.branchPage.deleteSegment(${segment.id})" title="Delete segment">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>`;
+                    }
+                    
+                    html += `</div>`;
                     html += `</div>`;
                     html += `</div>`;
                     
@@ -218,6 +273,15 @@ function escapeHTML(str) {
                         html += `</div>`;
                     }
                     
+                    // Comment section for this segment
+                    html += `<div class="mt-4 border-t pt-4">`;
+                    html += `<div class="flex items-center justify-between mb-3">`;
+                    html += `<h4 class="text-sm font-medium">Comments</h4>`;
+                    html += `<button class="btn-ghost btn-sm toggle-segment-comments" data-segment-id="${segment.id}">Show Comments</button>`;
+                    html += `</div>`;
+                    html += `<div id="segment-comments-${segment.id}" class="hidden"></div>`;
+                    html += `</div>`;
+                    
                     html += `</div>`;
                 });
                 
@@ -226,7 +290,9 @@ function escapeHTML(str) {
             }
             
             html += `<div id="comment-thread" class="mt-8"></div>`;
-            html += `<div class="mt-8 border-t pt-4 space-y-4">`;
+            
+            // Add Segment form (hidden by default)
+            html += `<div id="add-segment-form" class="mt-6 border-t pt-4 space-y-4 hidden">`;
             html += `<h2 class="text-xl font-semibold">Add Story Segment</h2>`;
             html += `<p class="text-sm text-muted-foreground">Provide a title, description, order, and upload your text or generate automatically. AI-created segments WILL be tagged as "AI-Assisted".</p>`;
             html += `<div>
@@ -235,12 +301,34 @@ function escapeHTML(str) {
                 </div>`;
             html += `<div>
                     <label for="segment-description" class="block text-sm font-medium text-muted-foreground mb-1">Description</label>
-                    <textarea id="segment-description" rows="2" class="form-textarea w-full mb-2" placeholder="Brief description of what happens in this segment..."></textarea>
+                    <textarea id="segment-description" rows="3" class="form-textarea w-full mb-1" placeholder="Brief description of what happens in this segment... (Required for AI generation - 100 characters minimum)"></textarea>
+                    <div class="flex justify-between text-xs text-muted-foreground">
+                        <span id="description-requirement">Required for AI generation: 100 characters minimum</span>
+                        <span id="description-counter">0 characters</span>
+                    </div>
                 </div>`;
             html += this.canEdit ? `<div>
                     <label for="segment-order" class="block text-sm font-medium text-muted-foreground mb-1">Order Index</label>
                     <input type="number" id="segment-order" class="form-input w-full mb-2" value="1" min="1">
                 </div>` : '';
+            
+            // Image upload section
+            html += `<div>
+                    <label class="block text-sm font-medium text-muted-foreground mb-2">Segment Image (Optional)</label>
+                    <div id="image-upload-zone" class="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary mb-2">
+                        <div class="space-y-2">
+                            <svg class="mx-auto h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <div class="text-sm text-muted-foreground">
+                                <label for="segment-image" class="font-medium text-primary hover:text-primary/80 cursor-pointer">Click to upload image</label> or drag and drop
+                            </div>
+                            <p class="text-xs text-muted-foreground">JPEG, PNG, WebP, GIF; max size 5MB.</p>
+                        </div>
+                        <input type="file" id="segment-image" accept="image/*" class="hidden">
+                    </div>
+                    <div id="image-preview" class="mb-2"></div>
+                </div>`;
             html += `<div id="story-upload-zone" class="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary">
                 <div class="space-y-2">
                     <svg class="mx-auto h-12 w-12 text-muted-foreground" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -305,7 +393,22 @@ function escapeHTML(str) {
             html += `<div id="segment-reader-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">`;
             html += `<div class="bg-card rounded-lg w-full max-w-4xl h-[90vh] flex flex-col">`;
             html += `<div class="flex items-center justify-between p-4 border-b">`;
+            html += `<div class="flex items-center space-x-4">`;
             html += `<h3 id="segment-title-modal" class="text-xl font-semibold">Loading...</h3>`;
+            html += `<div class="flex items-center space-x-2">`;
+            html += `<button id="prev-segment-btn" class="btn-ghost btn-sm" title="Previous segment">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>`;
+            html += `<span id="segment-position" class="text-sm text-muted-foreground">1 of 1</span>`;
+            html += `<button id="next-segment-btn" class="btn-ghost btn-sm" title="Next segment">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>`;
+            html += `</div>`;
+            html += `</div>`;
             html += `<div class="flex items-center space-x-2">`;
             html += `<div class="flex items-center space-x-1">`;
             html += `<button id="reader-vote-up" class="btn-ghost btn-sm p-1">
@@ -325,6 +428,13 @@ function escapeHTML(str) {
             html += `</div>`;
             html += `<div class="flex-1 overflow-auto p-6">`;
             html += `<div id="segment-content" class="prose max-w-none">Loading content...</div>`;
+            html += `<div class="mt-8 pt-8 border-t">`;
+            html += `<div class="flex items-center justify-between mb-4">`;
+            html += `<h4 class="text-lg font-semibold">Comments</h4>`;
+            html += `<button id="toggle-reader-comments" class="btn-ghost btn-sm">Show Comments</button>`;
+            html += `</div>`;
+            html += `<div id="reader-comments" class="hidden"></div>`;
+            html += `</div>`;
             html += `</div>`;
             html += `</div>`;
             html += `</div>`;
@@ -363,13 +473,74 @@ function escapeHTML(str) {
                 });
                 fileInput.addEventListener('change', e => this.handleStoryFile(e));
             }
+            // Add Segment button
+            const addSegmentBtn = this.container.querySelector('#add-segment-btn');
+            if (addSegmentBtn) addSegmentBtn.addEventListener('click', () => this.toggleAddSegmentForm());
+            
+            // Description character counter
+            const descriptionEl = this.container.querySelector('#segment-description');
+            if (descriptionEl) {
+                descriptionEl.addEventListener('input', (e) => this.updateDescriptionCounter(e.target.value));
+            }
+            
             // AI generation modal
             const genOpen = this.container.querySelector('#generate-story-btn');
-            if (genOpen) genOpen.addEventListener('click', () => this.openGenerateModal());
+            if (genOpen) genOpen.addEventListener('click', () => this.validateAndOpenGenerateModal());
             
             // Segment reader modal
             const closeReader = this.container.querySelector('#close-segment-reader');
             if (closeReader) closeReader.addEventListener('click', () => this.closeSegmentReader());
+            
+            // Reader comments toggle
+            const toggleReaderComments = this.container.querySelector('#toggle-reader-comments');
+            if (toggleReaderComments) toggleReaderComments.addEventListener('click', () => this.toggleReaderComments());
+            
+            // Navigation buttons
+            const prevBtn = this.container.querySelector('#prev-segment-btn');
+            const nextBtn = this.container.querySelector('#next-segment-btn');
+            if (prevBtn) prevBtn.addEventListener('click', () => this.navigateSegment(-1));
+            if (nextBtn) nextBtn.addEventListener('click', () => this.navigateSegment(1));
+            
+            // Keyboard navigation for segment reader
+            this.setupKeyboardNavigation();
+            
+            // Segment comment toggle buttons
+            this.container.querySelectorAll('.toggle-segment-comments').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    const segmentId = parseInt(btn.dataset.segmentId, 10);
+                    this.toggleSegmentComments(segmentId);
+                });
+            });
+            
+            // Cover image upload
+            const coverUploadZone = this.container.querySelector('#upload-cover-zone');
+            const coverInput = this.container.querySelector('#cover-upload');
+            if (coverUploadZone && coverInput) {
+                coverUploadZone.addEventListener('click', () => coverInput.click());
+                coverInput.addEventListener('change', e => this.handleCoverUpload(e));
+            }
+            
+            // Cover image remove
+            const removeCoverBtn = this.container.querySelector('#remove-cover-btn');
+            if (removeCoverBtn) {
+                removeCoverBtn.addEventListener('click', () => this.removeCoverImage());
+            }
+            
+            // Segment image upload
+            const segmentImageZone = this.container.querySelector('#image-upload-zone');
+            const segmentImageInput = this.container.querySelector('#segment-image');
+            if (segmentImageZone && segmentImageInput) {
+                segmentImageZone.addEventListener('click', () => segmentImageInput.click());
+                segmentImageZone.addEventListener('dragover', e => { e.preventDefault(); segmentImageZone.classList.add('border-primary'); });
+                segmentImageZone.addEventListener('dragleave', e => { e.preventDefault(); segmentImageZone.classList.remove('border-primary'); });
+                segmentImageZone.addEventListener('drop', e => {
+                    e.preventDefault(); 
+                    segmentImageZone.classList.remove('border-primary');
+                    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                    if (files.length) this.handleSegmentImageUpload({ target: { files } });
+                });
+                segmentImageInput.addEventListener('change', e => this.handleSegmentImageUpload(e));
+            }
         }
 
         async handleVote(value) {
@@ -501,6 +672,11 @@ function escapeHTML(str) {
             formData.append('branch_id', this.branchId);
             formData.append('title', title);
             formData.append('description', description);
+            
+            // Add segment image if selected
+            if (this.pendingSegmentImage) {
+                formData.append('image', this.pendingSegmentImage);
+            }
             
             if (orderEl && this.canEdit) {
                 formData.append('order_index', orderEl.value || 1);
@@ -739,8 +915,13 @@ function escapeHTML(str) {
             const voteUpBtn = modal.querySelector('#reader-vote-up');
             const voteDownBtn = modal.querySelector('#reader-vote-down');
             
-            // Store current segment ID for voting
+            // Store current segment ID for voting and comments
             this.currentSegmentId = segmentId;
+            this.currentReaderSegmentId = segmentId;
+            
+            // Find current segment index for navigation
+            this.currentSegmentIndex = this.segments.findIndex(s => s.id == segmentId);
+            this.updateNavigationState();
             
             // Show modal with loading state
             modal.classList.remove('hidden');
@@ -751,6 +932,15 @@ function escapeHTML(str) {
             // Set up vote button handlers
             voteUpBtn.onclick = () => this.handleSegmentVoteInReader(segmentId, 1);
             voteDownBtn.onclick = () => this.handleSegmentVoteInReader(segmentId, -1);
+            
+            // Reset reader comments
+            const readerComments = modal.querySelector('#reader-comments');
+            const toggleBtn = modal.querySelector('#toggle-reader-comments');
+            if (readerComments && toggleBtn) {
+                readerComments.classList.add('hidden');
+                readerComments.removeAttribute('data-loaded');
+                toggleBtn.textContent = 'Show Comments';
+            }
             
             try {
                 const res = await fetch(`/api/segments/content.php?id=${segmentId}`);
@@ -826,8 +1016,669 @@ function escapeHTML(str) {
             if (modal) modal.classList.add('hidden');
         }
 
+        async toggleSegmentComments(segmentId) {
+            const commentsContainer = this.container.querySelector(`#segment-comments-${segmentId}`);
+            const toggleBtn = this.container.querySelector(`.toggle-segment-comments[data-segment-id="${segmentId}"]`);
+            
+            if (!commentsContainer || !toggleBtn) return;
+            
+            if (commentsContainer.classList.contains('hidden')) {
+                // Show comments - load them if not already loaded
+                commentsContainer.classList.remove('hidden');
+                toggleBtn.textContent = 'Hide Comments';
+                
+                if (!commentsContainer.hasAttribute('data-loaded')) {
+                    await this.loadSegmentComments(segmentId);
+                    commentsContainer.setAttribute('data-loaded', 'true');
+                }
+            } else {
+                // Hide comments
+                commentsContainer.classList.add('hidden');
+                toggleBtn.textContent = 'Show Comments';
+            }
+        }
+
+        async loadSegmentComments(segmentId) {
+            const commentsContainer = this.container.querySelector(`#segment-comments-${segmentId}`);
+            if (!commentsContainer) return;
+            
+            try {
+                commentsContainer.innerHTML = '<div class="text-sm text-muted-foreground">Loading comments...</div>';
+                
+                const response = await fetch(`/api/comments/get.php?target_type=segment&target_id=${segmentId}&sort=new`);
+                const data = await response.json();
+                
+                if (data.comments && data.comments.length > 0) {
+                    let html = '<div class="space-y-3">';
+                    
+                    data.comments.forEach(comment => {
+                        const avatarUrl = comment.avatar_url || '/img/default-avatar.png';
+                        const username = comment.is_anonymous ? 'Anonymous' : (comment.username || 'User');
+                        const timeAgo = this.formatTimeAgo(comment.created_at);
+                        
+                        html += `<div class="border-l-2 border-muted pl-4 py-2">`;
+                        html += `<div class="flex items-center space-x-2 mb-1">`;
+                        if (!comment.is_anonymous) {
+                            html += `<img src="${avatarUrl}" alt="${username}" class="w-6 h-6 rounded-full">`;
+                        }
+                        html += `<span class="text-sm font-medium">${escapeHTML(username)}</span>`;
+                        html += `<span class="text-xs text-muted-foreground">${timeAgo}</span>`;
+                        html += `<span class="text-xs text-muted-foreground">${comment.vote_score} points</span>`;
+                        html += `</div>`;
+                        html += `<div class="text-sm">${escapeHTML(comment.body)}</div>`;
+                        html += `</div>`;
+                    });
+                    
+                    html += '</div>';
+                    
+                    // Add comment form if user is logged in
+                    if (this.userLoggedIn) {
+                        html += `<div class="mt-4 pt-4 border-t">`;
+                        html += `<textarea id="new-comment-${segmentId}" class="form-textarea w-full mb-2" rows="3" placeholder="Add a comment..."></textarea>`;
+                        html += `<button class="btn-primary btn-sm" onclick="window.branchPage.submitSegmentComment(${segmentId})">Post Comment</button>`;
+                        html += `</div>`;
+                    }
+                    
+                    commentsContainer.innerHTML = html;
+                } else {
+                    let html = '<div class="text-sm text-muted-foreground">No comments yet.</div>';
+                    
+                    // Add comment form if user is logged in
+                    if (this.userLoggedIn) {
+                        html += `<div class="mt-4 pt-4 border-t">`;
+                        html += `<textarea id="new-comment-${segmentId}" class="form-textarea w-full mb-2" rows="3" placeholder="Be the first to comment..."></textarea>`;
+                        html += `<button class="btn-primary btn-sm" onclick="window.branchPage.submitSegmentComment(${segmentId})">Post Comment</button>`;
+                        html += `</div>`;
+                    }
+                    
+                    commentsContainer.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Failed to load segment comments:', error);
+                commentsContainer.innerHTML = '<div class="text-sm text-destructive">Failed to load comments.</div>';
+            }
+        }
+
+        async submitSegmentComment(segmentId) {
+            const commentEl = this.container.querySelector(`#new-comment-${segmentId}`);
+            if (!commentEl) return;
+            
+            const body = commentEl.value.trim();
+            if (!body) {
+                alert('Please enter a comment.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/comments/create.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        target_type: 'segment',
+                        target_id: segmentId,
+                        body: body
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // Clear the comment form
+                    commentEl.value = '';
+                    
+                    // Reload the comments to show the new one
+                    const commentsContainer = this.container.querySelector(`#segment-comments-${segmentId}`);
+                    if (commentsContainer) {
+                        commentsContainer.removeAttribute('data-loaded');
+                        await this.loadSegmentComments(segmentId);
+                    }
+                } else {
+                    alert('Failed to post comment: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Failed to submit comment:', error);
+                alert('Failed to post comment. Please try again.');
+            }
+        }
+
+        async toggleReaderComments() {
+            if (!this.currentReaderSegmentId) return;
+            
+            const modal = this.container.querySelector('#segment-reader-modal');
+            const commentsContainer = modal.querySelector('#reader-comments');
+            const toggleBtn = modal.querySelector('#toggle-reader-comments');
+            
+            if (!commentsContainer || !toggleBtn) return;
+            
+            if (commentsContainer.classList.contains('hidden')) {
+                // Show comments - load them if not already loaded
+                commentsContainer.classList.remove('hidden');
+                toggleBtn.textContent = 'Hide Comments';
+                
+                if (!commentsContainer.hasAttribute('data-loaded')) {
+                    await this.loadReaderComments();
+                    commentsContainer.setAttribute('data-loaded', 'true');
+                }
+            } else {
+                // Hide comments
+                commentsContainer.classList.add('hidden');
+                toggleBtn.textContent = 'Show Comments';
+            }
+        }
+
+        async loadReaderComments() {
+            if (!this.currentReaderSegmentId) return;
+            
+            const modal = this.container.querySelector('#segment-reader-modal');
+            const commentsContainer = modal.querySelector('#reader-comments');
+            if (!commentsContainer) return;
+            
+            try {
+                commentsContainer.innerHTML = '<div class="text-sm text-muted-foreground">Loading comments...</div>';
+                
+                const response = await fetch(`/api/comments/get.php?target_type=segment&target_id=${this.currentReaderSegmentId}&sort=new`);
+                const data = await response.json();
+                
+                if (data.comments && data.comments.length > 0) {
+                    let html = '<div class="space-y-4">';
+                    
+                    data.comments.forEach(comment => {
+                        const avatarUrl = comment.avatar_url || '/img/default-avatar.png';
+                        const username = comment.is_anonymous ? 'Anonymous' : (comment.username || 'User');
+                        const timeAgo = this.formatTimeAgo(comment.created_at);
+                        
+                        html += `<div class="border rounded-lg p-4 bg-card">`;
+                        html += `<div class="flex items-center space-x-3 mb-2">`;
+                        if (!comment.is_anonymous) {
+                            html += `<img src="${avatarUrl}" alt="${username}" class="w-8 h-8 rounded-full">`;
+                        }
+                        html += `<div class="flex-1">`;
+                        html += `<div class="flex items-center space-x-2">`;
+                        html += `<span class="font-medium">${escapeHTML(username)}</span>`;
+                        html += `<span class="text-xs text-muted-foreground">${timeAgo}</span>`;
+                        html += `<span class="text-xs text-muted-foreground">${comment.vote_score} points</span>`;
+                        html += `</div>`;
+                        html += `</div>`;
+                        html += `</div>`;
+                        html += `<div class="text-sm">${escapeHTML(comment.body)}</div>`;
+                        html += `</div>`;
+                    });
+                    
+                    html += '</div>';
+                    
+                    // Add comment form if user is logged in
+                    if (this.userLoggedIn) {
+                        html += `<div class="mt-6 p-4 border rounded-lg bg-muted/50">`;
+                        html += `<h5 class="font-medium mb-3">Add a comment</h5>`;
+                        html += `<textarea id="new-reader-comment" class="form-textarea w-full mb-3" rows="3" placeholder="Share your thoughts..."></textarea>`;
+                        html += `<button class="btn-primary btn-sm" onclick="window.branchPage.submitReaderComment()">Post Comment</button>`;
+                        html += `</div>`;
+                    }
+                    
+                    commentsContainer.innerHTML = html;
+                } else {
+                    let html = '<div class="text-center text-muted-foreground py-8">No comments yet.</div>';
+                    
+                    // Add comment form if user is logged in
+                    if (this.userLoggedIn) {
+                        html += `<div class="mt-6 p-4 border rounded-lg bg-muted/50">`;
+                        html += `<h5 class="font-medium mb-3">Be the first to comment</h5>`;
+                        html += `<textarea id="new-reader-comment" class="form-textarea w-full mb-3" rows="3" placeholder="Share your thoughts..."></textarea>`;
+                        html += `<button class="btn-primary btn-sm" onclick="window.branchPage.submitReaderComment()">Post Comment</button>`;
+                        html += `</div>`;
+                    }
+                    
+                    commentsContainer.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Failed to load reader comments:', error);
+                commentsContainer.innerHTML = '<div class="text-sm text-destructive">Failed to load comments.</div>';
+            }
+        }
+
+        async submitReaderComment() {
+            if (!this.currentReaderSegmentId) return;
+            
+            const commentEl = this.container.querySelector('#new-reader-comment');
+            if (!commentEl) return;
+            
+            const body = commentEl.value.trim();
+            if (!body) {
+                alert('Please enter a comment.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/comments/create.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        target_type: 'segment',
+                        target_id: this.currentReaderSegmentId,
+                        body: body
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // Clear the comment form
+                    commentEl.value = '';
+                    
+                    // Reload the comments to show the new one
+                    const modal = this.container.querySelector('#segment-reader-modal');
+                    const commentsContainer = modal.querySelector('#reader-comments');
+                    if (commentsContainer) {
+                        commentsContainer.removeAttribute('data-loaded');
+                        await this.loadReaderComments();
+                    }
+                } else {
+                    alert('Failed to post comment: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Failed to submit reader comment:', error);
+                alert('Failed to post comment. Please try again.');
+            }
+        }
+
+        async handleCoverUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Invalid file type. Please upload a JPEG, PNG, WebP, or GIF image.');
+                return;
+            }
+            
+            // Validate file size (5MB max)
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                alert('File too large. Maximum size is 5MB.');
+                return;
+            }
+            
+            try {
+                // Check storage quota
+                const storageRes = await fetch('/api/users/storage.php');
+                const storageData = await storageRes.json();
+                
+                if (file.size > storageData.available_bytes) {
+                    alert(`Insufficient storage space. File requires ${this.formatBytes(file.size)} but only ${storageData.formatted.available} available.`);
+                    return;
+                }
+                
+                // Upload the image
+                const formData = new FormData();
+                formData.append('image', file);
+                formData.append('branch_id', this.branchId);
+                
+                const uploadRes = await fetch('/api/branches/upload-cover.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const uploadData = await uploadRes.json();
+                if (uploadData.success) {
+                    // Refresh the page to show the new cover
+                    location.reload();
+                } else {
+                    alert('Failed to upload cover image: ' + (uploadData.error || 'Unknown error'));
+                }
+                
+            } catch (err) {
+                console.error('Cover upload failed:', err);
+                alert('Failed to upload cover image. Please try again.');
+            }
+        }
+
+        async removeCoverImage() {
+            if (!confirm('Are you sure you want to remove the cover image?')) {
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/branches/remove-cover.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ branch_id: this.branchId })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    // Refresh the page to show the change
+                    location.reload();
+                } else {
+                    alert('Failed to remove cover image: ' + (data.error || 'Unknown error'));
+                }
+                
+            } catch (err) {
+                console.error('Remove cover failed:', err);
+                alert('Failed to remove cover image. Please try again.');
+            }
+        }
+
+        async handleSegmentImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Invalid file type. Please upload a JPEG, PNG, WebP, or GIF image.');
+                return;
+            }
+            
+            // Validate file size (5MB max)
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                alert('File too large. Maximum size is 5MB.');
+                return;
+            }
+            
+            try {
+                // Check storage quota
+                const storageRes = await fetch('/api/users/storage.php');
+                const storageData = await storageRes.json();
+                
+                if (file.size > storageData.available_bytes) {
+                    alert(`Insufficient storage space. File requires ${this.formatBytes(file.size)} but only ${storageData.formatted.available} available.`);
+                    return;
+                }
+                
+                // Store the pending image for upload with segment
+                this.pendingSegmentImage = file;
+                
+                // Show image preview
+                this.showSegmentImagePreview(file);
+                
+            } catch (err) {
+                console.error('Image processing failed:', err);
+                alert('Failed to process image. Please try again.');
+            }
+        }
+
+        showSegmentImagePreview(file) {
+            const previewEl = this.container.querySelector('#image-preview');
+            if (!previewEl) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewEl.innerHTML = `
+                    <div class="border rounded p-3 bg-muted/50">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium">${escapeHTML(file.name)}</span>
+                            <button class="btn-ghost btn-sm" onclick="this.parentElement.parentElement.parentElement.remove(); window.branchPage.pendingSegmentImage = null;">×</button>
+                        </div>
+                        <div class="text-xs text-muted-foreground mb-2">
+                            Size: ${this.formatBytes(file.size)}
+                        </div>
+                        <img src="${e.target.result}" alt="Preview" class="max-w-full max-h-32 rounded">
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        updateNavigationState() {
+            const modal = this.container.querySelector('#segment-reader-modal');
+            const prevBtn = modal.querySelector('#prev-segment-btn');
+            const nextBtn = modal.querySelector('#next-segment-btn');
+            const positionEl = modal.querySelector('#segment-position');
+            
+            if (!this.segments || this.segments.length === 0) return;
+            
+            const currentPos = this.currentSegmentIndex + 1;
+            const totalSegments = this.segments.length;
+            
+            // Update position indicator
+            if (positionEl) {
+                positionEl.textContent = `${currentPos} of ${totalSegments}`;
+            }
+            
+            // Enable/disable navigation buttons
+            if (prevBtn) {
+                prevBtn.disabled = this.currentSegmentIndex <= 0;
+                prevBtn.classList.toggle('opacity-50', this.currentSegmentIndex <= 0);
+            }
+            
+            if (nextBtn) {
+                nextBtn.disabled = this.currentSegmentIndex >= totalSegments - 1;
+                nextBtn.classList.toggle('opacity-50', this.currentSegmentIndex >= totalSegments - 1);
+            }
+        }
+
+        navigateSegment(direction) {
+            if (!this.segments || this.segments.length === 0) return;
+            
+            const newIndex = this.currentSegmentIndex + direction;
+            
+            // Check bounds
+            if (newIndex < 0 || newIndex >= this.segments.length) return;
+            
+            // Get the new segment
+            const newSegment = this.segments[newIndex];
+            if (!newSegment) return;
+            
+            // Load the new segment
+            this.readSegment(newSegment.id);
+        }
+
+        setupKeyboardNavigation() {
+            // Remove existing keyboard handler if it exists
+            if (this.keyboardHandler) {
+                document.removeEventListener('keydown', this.keyboardHandler);
+            }
+            
+            this.keyboardHandler = (e) => {
+                const modal = this.container.querySelector('#segment-reader-modal');
+                
+                // Only handle keyboard navigation when segment reader is open
+                if (!modal || modal.classList.contains('hidden')) return;
+                
+                // Don't interfere with typing in comment boxes
+                if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+                
+                switch (e.key) {
+                    case 'ArrowLeft':
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        this.navigateSegment(-1);
+                        break;
+                    case 'ArrowRight':
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        this.navigateSegment(1);
+                        break;
+                    case 'Escape':
+                        e.preventDefault();
+                        this.closeSegmentReader();
+                        break;
+                }
+            };
+            
+            document.addEventListener('keydown', this.keyboardHandler);
+        }
+
+        formatTimeAgo(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return date.toLocaleDateString();
+        }
+
+        toggleAddSegmentForm() {
+            const form = this.container.querySelector('#add-segment-form');
+            const btn = this.container.querySelector('#add-segment-btn');
+            
+            if (form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+                btn.textContent = '❌ Cancel';
+            } else {
+                form.classList.add('hidden');
+                btn.textContent = '📝 Add Story Segment';
+                
+                // Clear form fields
+                const titleEl = this.container.querySelector('#segment-title');
+                const descEl = this.container.querySelector('#segment-description');
+                const orderEl = this.container.querySelector('#segment-order');
+                const previewEl = this.container.querySelector('#story-previews');
+                const fileEl = this.container.querySelector('#story-file');
+                const imageEl = this.container.querySelector('#segment-image');
+                const imagePreviewEl = this.container.querySelector('#image-preview');
+                
+                if (titleEl) titleEl.value = '';
+                if (descEl) {
+                    descEl.value = '';
+                    this.updateDescriptionCounter('');
+                }
+                if (orderEl) orderEl.value = '1';
+                if (previewEl) previewEl.innerHTML = '';
+                if (fileEl) fileEl.value = '';
+                if (imageEl) imageEl.value = '';
+                if (imagePreviewEl) imagePreviewEl.innerHTML = '';
+                this.pendingFile = null;
+                this.pendingSegmentImage = null;
+            }
+        }
+
+        updateDescriptionCounter(text) {
+            const counter = this.container.querySelector('#description-counter');
+            const requirement = this.container.querySelector('#description-requirement');
+            
+            if (!counter) return;
+            
+            const length = text.length;
+            counter.textContent = `${length} characters`;
+            
+            if (length >= 100) {
+                counter.classList.remove('text-destructive');
+                counter.classList.add('text-success');
+                requirement.textContent = 'Ready for AI generation ✓';
+                requirement.classList.remove('text-muted-foreground');
+                requirement.classList.add('text-success');
+            } else {
+                counter.classList.remove('text-success');
+                counter.classList.add('text-destructive');
+                requirement.textContent = `Required for AI generation: ${100 - length} more characters needed`;
+                requirement.classList.remove('text-success');
+                requirement.classList.add('text-muted-foreground');
+            }
+        }
+
+        validateAndOpenGenerateModal() {
+            const titleEl = this.container.querySelector('#segment-title');
+            const descriptionEl = this.container.querySelector('#segment-description');
+            
+            const title = titleEl?.value?.trim() || '';
+            const description = descriptionEl?.value?.trim() || '';
+            
+            if (!title) {
+                alert('Please enter a segment title before generating AI content.');
+                titleEl?.focus();
+                return;
+            }
+            
+            if (description.length < 100) {
+                alert(`Description must be at least 100 characters for AI generation. Current length: ${description.length} characters.`);
+                descriptionEl?.focus();
+                return;
+            }
+            
+            this.openGenerateModal();
+        }
+
+        async editSegment(segmentId) {
+            // Find the segment data
+            const segment = this.segments.find(s => s.id == segmentId);
+            if (!segment) {
+                alert('Segment not found.');
+                return;
+            }
+            
+            // Simple edit functionality - prompt for new title and description
+            const newTitle = prompt('Edit segment title:', segment.title);
+            if (newTitle === null) return; // User cancelled
+            
+            if (!newTitle.trim()) {
+                alert('Title cannot be empty.');
+                return;
+            }
+            
+            const newDescription = prompt('Edit segment description:', segment.description || '');
+            if (newDescription === null) return; // User cancelled
+            
+            try {
+                const response = await fetch('/api/segments/update.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        segment_id: segmentId,
+                        title: newTitle.trim(),
+                        description: newDescription.trim()
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // Refresh the page to show updates
+                    location.reload();
+                } else {
+                    alert('Failed to update segment: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Failed to update segment:', error);
+                alert('Failed to update segment. Please try again.');
+            }
+        }
+
+        async deleteSegment(segmentId) {
+            // Find the segment data
+            const segment = this.segments.find(s => s.id == segmentId);
+            if (!segment) {
+                alert('Segment not found.');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete the segment "${segment.title}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/segments/delete.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        segment_id: segmentId
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // Refresh the page to show updates
+                    location.reload();
+                } else {
+                    alert('Failed to delete segment: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Failed to delete segment:', error);
+                alert('Failed to delete segment. Please try again.');
+            }
+        }
+
         cleanup() {
-            // Placeholder for cleanup logic if needed
+            // Remove keyboard event handler
+            if (this.keyboardHandler) {
+                document.removeEventListener('keydown', this.keyboardHandler);
+                this.keyboardHandler = null;
+            }
         }
     }
 

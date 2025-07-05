@@ -76,15 +76,25 @@ window.browsePage = {
     const title = escapeHTML(item.title || '');
     const descRaw = item.description || '';
     const desc = escapeHTML(descRaw).substring(0, 100) + (descRaw.length > 100 ? '...' : '');
-    const coverPath = item.cover_image
-      ? `/uploads/users/${item.created_by}/images/${item.cover_image}`
-      : '/img/bookie-cartoon.webp';
+    
+    // Use display_image with fallback logic
+    let coverPath = '/img/bookie-cartoon.webp'; // default
+    if (item.display_image) {
+      if (item.display_image.startsWith('images/')) {
+        // Already includes images/ prefix (from segments or properly stored paths)
+        coverPath = `/uploads/users/${item.created_by}/${item.display_image}`;
+      } else {
+        // Media cover image or media_images (older format)
+        coverPath = `/uploads/users/${item.created_by}/images/${item.display_image}`;
+      }
+    }
+    
     const url = `?page=media&id=${item.id}`;
     return `
       <div class="card">
         <a href="${url}">
           <div class="h-48 bg-background rounded-lg mb-4 overflow-hidden">
-            <img src="${coverPath}" alt="${title}" class="w-full h-full object-cover">
+            <img src="${coverPath}" alt="${title}" class="w-full h-full object-cover" onerror="this.src='/img/bookie-cartoon.webp'">
           </div>
           <h3 class="text-lg font-semibold mb-2">${title}</h3>
           <p class="text-muted-foreground text-sm">${desc}</p>
