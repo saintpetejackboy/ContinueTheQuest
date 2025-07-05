@@ -1263,55 +1263,20 @@ function escapeHTML(str) {
             if (!commentsContainer) return;
             
             try {
-                commentsContainer.innerHTML = '<div class="text-sm text-muted-foreground">Loading comments...</div>';
-                
-                const response = await fetch(`/api/comments/get.php?target_type=segment&target_id=${segmentId}&sort=new`);
-                const data = await response.json();
-                
-                if (data.comments && data.comments.length > 0) {
-                    let html = '<div class="space-y-3">';
-                    
-                    data.comments.forEach(comment => {
-                        const avatarUrl = comment.avatar_url || '/img/default-avatar.png';
-                        const username = comment.is_anonymous ? 'Anonymous' : (comment.username || 'User');
-                        const timeAgo = this.formatTimeAgo(comment.created_at);
-                        
-                        html += `<div class="border-l-2 border-muted pl-4 py-2">`;
-                        html += `<div class="flex items-center space-x-2 mb-1">`;
-                        if (!comment.is_anonymous) {
-                            html += `<img src="${avatarUrl}" alt="${username}" class="w-6 h-6 rounded-full">`;
-                        }
-                        html += `<span class="text-sm font-medium">${escapeHTML(username)}</span>`;
-                        html += `<span class="text-xs text-muted-foreground">${timeAgo}</span>`;
-                        html += `<span class="text-xs text-muted-foreground">${comment.vote_score} points</span>`;
-                        html += `</div>`;
-                        html += `<div class="text-sm">${escapeHTML(comment.body)}</div>`;
-                        html += `</div>`;
+                // Initialize a full CommentThread for this segment
+                if (typeof CommentThread !== 'undefined') {
+                    const segmentCommentThread = new CommentThread({
+                        containerSelector: `#segment-comments-${segmentId}`,
+                        targetType: 'segment',
+                        targetId: segmentId,
+                        defaultSort: 'new',
+                        userLoggedIn: this.userLoggedIn,
+                        isAdmin: this.userIsAdmin,
+                        maxDepth: 3,
+                        autoExpandAll: false // Don't auto-expand to keep it compact
                     });
-                    
-                    html += '</div>';
-                    
-                    // Add comment form if user is logged in
-                    if (this.userLoggedIn) {
-                        html += `<div class="mt-4 pt-4 border-t">`;
-                        html += `<textarea id="new-comment-${segmentId}" class="form-textarea w-full mb-2" rows="3" placeholder="Add a comment..."></textarea>`;
-                        html += `<button class="btn-primary btn-sm" onclick="window.branchPageManager.submitSegmentComment(${segmentId})">Post Comment</button>`;
-                        html += `</div>`;
-                    }
-                    
-                    commentsContainer.innerHTML = html;
                 } else {
-                    let html = '<div class="text-sm text-muted-foreground">No comments yet.</div>';
-                    
-                    // Add comment form if user is logged in
-                    if (this.userLoggedIn) {
-                        html += `<div class="mt-4 pt-4 border-t">`;
-                        html += `<textarea id="new-comment-${segmentId}" class="form-textarea w-full mb-2" rows="3" placeholder="Be the first to comment..."></textarea>`;
-                        html += `<button class="btn-primary btn-sm" onclick="window.branchPageManager.submitSegmentComment(${segmentId})">Post Comment</button>`;
-                        html += `</div>`;
-                    }
-                    
-                    commentsContainer.innerHTML = html;
+                    commentsContainer.innerHTML = '<div class="text-sm text-muted-foreground">Loading comment system...</div>';
                 }
             } catch (error) {
                 console.error('Failed to load segment comments:', error);
@@ -1319,46 +1284,6 @@ function escapeHTML(str) {
             }
         }
 
-        async submitSegmentComment(segmentId) {
-            const commentEl = this.container.querySelector(`#new-comment-${segmentId}`);
-            if (!commentEl) return;
-            
-            const body = commentEl.value.trim();
-            if (!body) {
-                alert('Please enter a comment.');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/comments/create.php', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        target_type: 'segment',
-                        target_id: segmentId,
-                        body: body
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    // Clear the comment form
-                    commentEl.value = '';
-                    
-                    // Reload the comments to show the new one
-                    const commentsContainer = this.container.querySelector(`#segment-comments-${segmentId}`);
-                    if (commentsContainer) {
-                        commentsContainer.removeAttribute('data-loaded');
-                        await this.loadSegmentComments(segmentId);
-                    }
-                } else {
-                    alert('Failed to post comment: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Failed to submit comment:', error);
-                alert('Failed to post comment. Please try again.');
-            }
-        }
 
         async toggleReaderComments() {
             if (!this.currentReaderSegmentId) return;
@@ -1821,48 +1746,9 @@ function escapeHTML(str) {
             this.openGenerateModal();
         }
 
-        async editSegment(segmentId) {
-            // Find the segment data
-            const segment = this.segments.find(s => s.id == segmentId);
-            if (!segment) {
-                alert('Segment not found.');
-                return;
-            }
-            
-            // Simple edit functionality - prompt for new title and description
-            const newTitle = prompt('Edit segment title:', segment.title);
-            if (newTitle === null) return; // User cancelled
-            
-            if (!newTitle.trim()) {
-                alert('Title cannot be empty.');
-                return;
-            }
-            
-            const newDescription = prompt('Edit segment description:', segment.description || '');
-            if (newDescription === null) return; // User cancelled
-            
-            try {
-                const response = await fetch('/api/segments/update.php', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        segment_id: segmentId,
-                        title: newTitle.trim(),
-                        description: newDescription.trim()
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    // Refresh the page to show updates
-                    location.reload();
-                } else {
-                    alert('Failed to update segment: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Failed to update segment:', error);
-                alert('Failed to update segment. Please try again.');
-            }
+        editSegment(segmentId) {
+            // Redirect to the segment page for editing
+            window.location.href = `?page=segment&id=${segmentId}`;
         }
 
         async deleteSegment(segmentId) {

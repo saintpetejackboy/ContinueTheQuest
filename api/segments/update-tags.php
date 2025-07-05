@@ -3,7 +3,6 @@
 // Update tags for a specific segment
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../includes/auth.php';
-require_once __DIR__ . '/../../includes/coin.php';
 
 // Ensure user is logged in
 $currentUser = getCurrentUser();
@@ -90,7 +89,8 @@ try {
         $stmt->execute([$creditsNeeded, $currentUser['id']]);
         
         // Log credit transaction
-        logCreditTransaction($currentUser['id'], -$creditsNeeded, 'tag_creation', "Created {$creditsNeeded} new tags for segment {$segmentId}");
+        $logStmt = $db->prepare('INSERT INTO credits_log (user_id, change_amount, reason, related_id, created_at) VALUES (?, ?, ?, ?, NOW())');
+        $logStmt->execute([$currentUser['id'], -$creditsNeeded, "Segment tag update - new tags", $segmentId]);
     }
     
     // Remove all existing tag links for this segment (except mandatory ones)
