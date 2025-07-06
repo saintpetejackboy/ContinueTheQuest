@@ -256,10 +256,10 @@ class AdminLogsManager {
                     </span>
                 </td>
                 <td class="px-4 py-3">
-                    <div class="text-sm text-foreground">${this.escapeHtml(truncatedMessage)}</div>
+                    <div class="text-sm text-foreground">${escapeHtml(truncatedMessage)}</div>
                 </td>
                 <td class="px-4 py-3 text-sm text-muted-foreground">
-                    ${this.escapeHtml(log.source || 'unknown')}
+                    ${escapeHtml(log.source || 'unknown')}
                 </td>
                 <td class="px-4 py-3">
                     <button onclick="showLogDetails(${log.id || 0})" 
@@ -347,7 +347,7 @@ class AdminLogsManager {
                     <div>
                         <label class="block text-sm font-medium text-muted-foreground mb-1">Message</label>
                         <div class="bg-muted p-3 rounded-lg">
-                            <pre class="text-sm text-foreground whitespace-pre-wrap">${this.escapeHtml(log.message || 'No message')}</pre>
+                            <pre class="text-sm text-foreground whitespace-pre-wrap">${escapeHtml(log.message || 'No message')}</pre>
                         </div>
                     </div>
                     
@@ -355,7 +355,7 @@ class AdminLogsManager {
                         <div>
                             <label class="block text-sm font-medium text-muted-foreground mb-1">Stack Trace</label>
                             <div class="bg-muted p-3 rounded-lg">
-                                <pre class="text-sm text-foreground whitespace-pre-wrap">${this.escapeHtml(log.stack_trace)}</pre>
+                                <pre class="text-sm text-foreground whitespace-pre-wrap">${escapeHtml(log.stack_trace)}</pre>
                             </div>
                         </div>
                     ` : ''}
@@ -364,7 +364,7 @@ class AdminLogsManager {
                         <div>
                             <label class="block text-sm font-medium text-muted-foreground mb-1">Context</label>
                             <div class="bg-muted p-3 rounded-lg">
-                                <pre class="text-sm text-foreground whitespace-pre-wrap">${this.escapeHtml(JSON.stringify(log.context, null, 2))}</pre>
+                                <pre class="text-sm text-foreground whitespace-pre-wrap">${escapeHtml(JSON.stringify(log.context, null, 2))}</pre>
                             </div>
                         </div>
                     ` : ''}
@@ -462,11 +462,6 @@ class AdminLogsManager {
     }
     
     // Helper methods
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
     
     truncateText(text, maxLength) {
         if (text.length <= maxLength) return text;

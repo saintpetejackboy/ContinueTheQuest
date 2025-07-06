@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/csrf.php';
 
 // Ensure only admins can access
 $user = getCurrentUser();
@@ -48,6 +49,9 @@ if ($method === 'GET') {
     }
     
 } elseif ($method === 'POST') {
+    // Validate CSRF token for state-changing operations
+    requireCSRFToken();
+    
     // Create new backup
     $data = json_decode(file_get_contents('php://input'), true);
     $backupType = $data['type'] ?? 'database';

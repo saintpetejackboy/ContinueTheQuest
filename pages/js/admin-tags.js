@@ -260,7 +260,7 @@ class AdminTagsManager {
                            onchange="toggleTagSelection(${tag.id}, this.checked)">
                 </td>
                 <td class="px-4 py-3">
-                    <div class="font-medium text-foreground">${this.escapeHtml(tag.name || 'Unnamed Tag')}</div>
+                    <div class="font-medium text-foreground">${escapeHtml(tag.name || 'Unnamed Tag')}</div>
                     <div class="text-sm text-muted-foreground">ID: ${tag.id}</div>
                 </td>
                 <td class="px-4 py-3">
@@ -295,7 +295,7 @@ class AdminTagsManager {
                                 class="btn-ghost btn-xs" title="${tag.is_genre ? 'Remove from Genre' : 'Mark as Genre'}">
                             ${tag.is_genre ? '📌' : '🏷️'}
                         </button>
-                        <button onclick="deleteTag(${tag.id}, '${this.escapeHtml(tag.name || 'Unnamed Tag')}')" 
+                        <button onclick="deleteTag(${tag.id}, '${escapeHtml(tag.name || 'Unnamed Tag')}')" 
                                 class="btn-ghost btn-xs text-destructive hover:text-destructive" title="Delete Tag">
                             🗑️
                         </button>
@@ -626,11 +626,6 @@ class AdminTagsManager {
     }
     
     // Helper methods
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
     
     cleanup() {
         if (this.searchTimeout) {

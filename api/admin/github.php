@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/csrf.php';
 
 // Ensure only admins can access
 $user = getCurrentUser();
@@ -95,6 +96,9 @@ function handleRefresh() {
         echo json_encode(['error' => 'Method not allowed']);
         return;
     }
+    
+    // Validate CSRF token for state-changing operations
+    requireCSRFToken();
     
     $scriptPath = __DIR__ . '/../../scripts/update_git_log.sh';
     

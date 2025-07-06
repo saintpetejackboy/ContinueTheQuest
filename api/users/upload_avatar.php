@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../includes/utils.php';
+require_once __DIR__ . '/../../includes/csrf.php';
 
 header('Content-Type: application/json');
 
@@ -18,6 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['error' => 'Method Not Allowed']);
     exit;
 }
+
+// Validate CSRF token for file uploads
+requireCSRFToken();
 
 // Check if file was uploaded properly
 if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {

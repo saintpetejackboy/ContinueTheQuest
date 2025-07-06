@@ -3,6 +3,7 @@
 // Upload story segment file with quota checking
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/csrf.php';
 
 $user = getCurrentUser();
 if (!$user) {
@@ -12,6 +13,9 @@ if (!$user) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(['success' => false, 'error' => 'Method not allowed'], 405);
 }
+
+// Validate CSRF token for file uploads
+requireCSRFToken();
 
 $branchId = isset($_POST['branch_id']) ? (int)$_POST['branch_id'] : 0;
 $title = isset($_POST['title']) ? trim($_POST['title']) : '';

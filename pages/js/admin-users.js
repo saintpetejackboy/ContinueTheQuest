@@ -227,19 +227,19 @@ class AdminUserManager {
                 <td class="px-4 py-3">
                     <div class="flex items-center space-x-3">
                         ${user.avatar ? 
-                            `<img src="/uploads/users/${user.id}/avatars/${user.avatar}" class="w-8 h-8 rounded-full object-cover" alt="${this.escapeHtml(user.username)}">` :
+                            `<img src="/uploads/users/${user.id}/avatars/${user.avatar}" class="w-8 h-8 rounded-full object-cover" alt="${escapeHtml(user.username)}">` :
                             `<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
                                 ${(user.username || 'U').charAt(0).toUpperCase()}
                             </div>`
                         }
                         <div>
-                            <div class="font-medium text-foreground">${this.escapeHtml(user.username || 'Unknown')}</div>
-                            ${user.display_name ? `<div class="text-sm text-muted-foreground">${this.escapeHtml(user.display_name)}</div>` : ''}
+                            <div class="font-medium text-foreground">${escapeHtml(user.username || 'Unknown')}</div>
+                            ${user.display_name ? `<div class="text-sm text-muted-foreground">${escapeHtml(user.display_name)}</div>` : ''}
                         </div>
                     </div>
                 </td>
                 <td class="px-4 py-3">
-                    <div class="text-sm text-foreground">${this.escapeHtml(user.email || 'No email')}</div>
+                    <div class="text-sm text-foreground">${escapeHtml(user.email || 'No email')}</div>
                 </td>
                 <td class="px-4 py-3">
                     <div class="flex items-center space-x-2">
@@ -255,7 +255,7 @@ class AdminUserManager {
                 <td class="px-4 py-3">
                     <div class="flex items-center space-x-2">
                         <span class="text-sm font-medium text-foreground">${user.credits || 0}</span>
-                        <button onclick="showCreditModal(${user.id}, '${this.escapeHtml(user.username || 'Unknown')}')" 
+                        <button onclick="showCreditModal(${user.id}, '${escapeHtml(user.username || 'Unknown')}')" 
                                 class="btn-ghost btn-xs">
                             ⚙️
                         </button>
@@ -295,7 +295,7 @@ class AdminUserManager {
                             ✏️
                         </button>
                         ${user.id !== 42 ? `
-                            <button onclick="toggleAdmin(${user.id}, '${this.escapeHtml(user.username || 'Unknown')}', ${user.is_admin})" 
+                            <button onclick="toggleAdmin(${user.id}, '${escapeHtml(user.username || 'Unknown')}', ${user.is_admin})" 
                                     class="btn-ghost btn-xs" title="${user.is_admin ? 'Remove Admin' : 'Make Admin'}">
                                 ${user.is_admin ? '👤' : '👑'}
                             </button>
@@ -409,11 +409,6 @@ class AdminUserManager {
         return `${Math.floor(diffDays / 365)} years ago`;
     }
     
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
     
     cleanup() {
         if (this.searchTimeout) {

@@ -41,7 +41,7 @@ class AnalyticsDashboard {
                     <div class="flex items-center justify-between p-2 rounded hover:bg-accent">
                         <div class="flex items-center space-x-2">
                             <div class="text-sm font-medium">${index + 1}.</div>
-                            <div class="text-sm">${this.escapeHtml(creator.username)}</div>
+                            <div class="text-sm">${escapeHtml(creator.username)}</div>
                         </div>
                         <div class="text-sm text-muted-foreground">${creator.content_count} items</div>
                     </div>
@@ -68,7 +68,7 @@ class AnalyticsDashboard {
                         <div class="flex items-center space-x-2 mb-1">
                             <div class="text-sm font-medium">${index + 1}.</div>
                             <div class="text-sm">${this.getContentIcon(item.type)}</div>
-                            <div class="text-sm font-medium">${this.escapeHtml(item.title)}</div>
+                            <div class="text-sm font-medium">${escapeHtml(item.title)}</div>
                         </div>
                         <div class="text-xs text-muted-foreground ml-6">
                             ${item.views || 0} views • ${item.comments || 0} comments
@@ -96,7 +96,7 @@ class AnalyticsDashboard {
                     <div class="p-2 rounded hover:bg-accent">
                         <div class="flex items-center space-x-2 mb-1">
                             <div class="text-sm">${this.getActivityIcon(item.action)}</div>
-                            <div class="text-sm">${this.escapeHtml(item.username)}</div>
+                            <div class="text-sm">${escapeHtml(item.username)}</div>
                         </div>
                         <div class="text-xs text-muted-foreground ml-6">
                             ${item.action} • ${this.formatDate(item.created_at)}
@@ -192,7 +192,7 @@ class AnalyticsDashboard {
         return `
             <div class="text-center py-8 text-red-500">
                 <div class="text-2xl mb-2">❌</div>
-                <p class="text-sm">${this.escapeHtml(message)}</p>
+                <p class="text-sm">${escapeHtml(message)}</p>
             </div>
         `;
     }

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/csrf.php';
 
 // Ensure only admins can access
 $user = getCurrentUser();
@@ -41,15 +42,19 @@ try {
             handleBanned($db);
             break;
         case 'approve':
+            requireCSRFToken();
             handleApprove($db, $id);
             break;
         case 'remove':
+            requireCSRFToken();
             handleRemove($db, $id);
             break;
         case 'resolve':
+            requireCSRFToken();
             handleResolve($db, $id);
             break;
         case 'unban':
+            requireCSRFToken();
             handleUnban($db, $id);
             break;
         default:

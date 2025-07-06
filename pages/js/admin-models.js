@@ -201,13 +201,13 @@ class AdminModelsManager {
             <tr class="hover:bg-muted/50 transition-colors">
                 <td class="px-4 py-3">
                     <div>
-                        <div class="font-medium text-foreground">${this.escapeHtml(model.name || 'Unnamed Model')}</div>
+                        <div class="font-medium text-foreground">${escapeHtml(model.name || 'Unnamed Model')}</div>
                         <div class="text-sm text-muted-foreground">ID: ${model.id}</div>
                     </div>
                 </td>
                 <td class="px-4 py-3">
                     <div class="text-sm text-foreground max-w-xs">
-                        ${model.description ? this.escapeHtml(model.description) : '<span class="text-muted-foreground italic">No description</span>'}
+                        ${model.description ? escapeHtml(model.description) : '<span class="text-muted-foreground italic">No description</span>'}
                     </div>
                 </td>
                 <td class="px-4 py-3">
@@ -236,7 +236,7 @@ class AdminModelsManager {
                                 class="btn-ghost btn-xs" title="${model.is_active ? 'Deactivate' : 'Activate'} Model">
                             ${model.is_active ? '🚫' : '✅'}
                         </button>
-                        <button onclick="deleteModel(${model.id}, '${this.escapeHtml(model.name || 'Unnamed Model')}')" 
+                        <button onclick="deleteModel(${model.id}, '${escapeHtml(model.name || 'Unnamed Model')}')" 
                                 class="btn-ghost btn-xs text-destructive hover:text-destructive" title="Delete Model">
                             🗑️
                         </button>
@@ -507,11 +507,6 @@ class AdminModelsManager {
     }
     
     // Helper methods
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
     
     cleanup() {
         if (this.searchTimeout) {
