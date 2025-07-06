@@ -231,7 +231,7 @@ function escapeHTML(str) {
             html += `</div>`;
             
             // Add Segment form (hidden by default, right under button)
-            html += `<div id="add-segment-form" class="mt-4 border rounded-lg p-4 space-y-4 hidden">`;
+            html += `<div id="add-segment-form" class="mt-4 border rounded-lg p-6 space-y-4 hidden bg-card">`;
             html += `<h2 class="text-xl font-semibold">Add Story Segment</h2>`;
             html += `<p class="text-sm text-muted-foreground">Provide a title, description, order, and upload your text or generate automatically. AI-created segments WILL be tagged as "AI-Assisted".</p>`;
             html += `<div>
@@ -271,24 +271,6 @@ function escapeHTML(str) {
             
             html += `</div>`;
             
-            // Image upload section
-            html += `<div>
-                    <label class="block text-sm font-medium text-muted-foreground mb-2">Segment Image (Optional)</label>
-                    <div id="image-upload-zone" class="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary mb-2">
-                        <div class="space-y-2">
-                            <svg class="mx-auto h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            <div class="text-sm text-muted-foreground">
-                                <label for="segment-image" class="font-medium text-primary hover:text-primary/80 cursor-pointer">Click to upload image</label> or drag and drop
-                            </div>
-                            <p class="text-xs text-muted-foreground">JPEG, PNG, WebP, GIF; max size 5MB.</p>
-                        </div>
-                        <input type="file" id="segment-image" accept="image/*" class="hidden">
-                    </div>
-                    <div id="image-preview" class="mb-2"></div>
-                </div>`;
-            
             html += `<div id="story-upload-zone" class="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary">
                 <div class="space-y-2">
                     <svg class="mx-auto h-12 w-12 text-muted-foreground" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -316,7 +298,13 @@ function escapeHTML(str) {
                 </div>`;
             
             html += `<div id="story-previews" class="mt-2"></div>`;
-            html += `<button id="generate-story-btn" class="btn btn-outline w-full">Generate with AI</button>`;
+            
+            // Action buttons
+            html += `<div class="flex gap-3 pt-4 border-t border-border">`;
+            html += `<button id="submit-segment-btn" class="btn-primary flex-1">📝 Submit Segment</button>`;
+            html += `<button id="generate-story-btn" class="btn-secondary flex-1">🤖 Generate with AI</button>`;
+            html += `<button id="cancel-segment-btn" class="btn-ghost">✕ Cancel</button>`;
+            html += `</div>`;
             html += `</div>`;
             
             // Segments section (moved here to be right under the Add button)
@@ -666,6 +654,13 @@ function escapeHTML(str) {
             if (descriptionEl) {
                 descriptionEl.addEventListener('input', (e) => this.updateDescriptionCounter(e.target.value));
             }
+            
+            // Segment form buttons
+            const submitSegmentBtn = this.container.querySelector('#submit-segment-btn');
+            if (submitSegmentBtn) submitSegmentBtn.addEventListener('click', () => this.handleSegmentSubmit());
+            
+            const cancelSegmentBtn = this.container.querySelector('#cancel-segment-btn');
+            if (cancelSegmentBtn) cancelSegmentBtn.addEventListener('click', () => this.toggleAddSegmentForm());
             
             // AI generation modal
             const genOpen = this.container.querySelector('#generate-story-btn');
@@ -1753,6 +1748,75 @@ function escapeHTML(str) {
                 requirement.textContent = `Required for AI generation: ${100 - length} more characters needed`;
                 requirement.classList.remove('text-success');
                 requirement.classList.add('text-muted-foreground');
+            }
+        }
+
+        handleSegmentSubmit() {
+            const titleEl = this.container.querySelector('#segment-title');
+            const descriptionEl = this.container.querySelector('#segment-description');
+            const orderEl = this.container.querySelector('#segment-order');
+            const imageInput = this.container.querySelector('#segment-image');
+            const storyInput = this.container.querySelector('#story-file');
+            
+            const title = titleEl?.value?.trim() || '';
+            const description = descriptionEl?.value?.trim() || '';
+            const order = orderEl?.value || 1;
+            
+            if (!title) {
+                alert('Please enter a segment title.');
+                titleEl?.focus();
+                return;
+            }
+            
+            if (!storyInput?.files?.length && !document.querySelector('#story-previews')?.children?.length) {
+                alert('Please upload a text file or generate content with AI.');
+                return;
+            }
+            
+            // Create form data for submission
+            const formData = new FormData();
+            formData.append('branch_id', this.branchId);
+            formData.append('title', title);
+            formData.append('description', description);
+            formData.append('order_index', order);
+            
+            if (imageInput?.files?.length) {
+                formData.append('image', imageInput.files[0]);
+            }
+            
+            if (storyInput?.files?.length) {
+                formData.append('story_file', storyInput.files[0]);
+            }
+            
+            // Collect selected tags
+            const selectedTags = Array.from(this.container.querySelectorAll('#segment-selected-tags .tag')).map(tag => tag.textContent);
+            if (selectedTags.length > 0) {
+                formData.append('tags', JSON.stringify(selectedTags));
+            }
+            
+            // Submit to API
+            this.submitSegment(formData);
+        }
+        
+        async submitSegment(formData) {
+            try {
+                const response = await fetch('/api/segments/create.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('Segment created successfully!');
+                    this.toggleAddSegmentForm(); // Hide form
+                    this.loadBranch(); // Reload to show new segment
+                } else {
+                    const error = await response.json();
+                    alert('Error creating segment: ' + (error.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error submitting segment:', error);
+                alert('Error submitting segment. Please try again.');
             }
         }
 

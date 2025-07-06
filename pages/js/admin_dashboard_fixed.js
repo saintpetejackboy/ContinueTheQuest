@@ -178,6 +178,32 @@ async function loadAdminDashboard() {
                     </div>
                 </div>
                 
+                <!-- Submissions Section -->
+                <div class="bg-card p-6 rounded-lg shadow-md border border-border mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold text-primary">📧 Form Submissions</h3>
+                        <button onclick="loadSubmissions()" class="px-3 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/80">🔄 Refresh</button>
+                    </div>
+                    <div class="mb-4 flex gap-4">
+                        <input type="text" id="submissions-search" placeholder="Search submissions..." class="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        <select id="submissions-type" class="px-3 py-2 border border-border rounded-md bg-background text-foreground">
+                            <option value="">All Types</option>
+                            <option value="notify">Launch Notifications</option>
+                            <option value="contact">Contact Forms</option>
+                        </select>
+                    </div>
+                    <div id="submissions-list" class="space-y-3 max-h-96 overflow-y-auto">
+                        <p class="text-muted-foreground">Loading submissions...</p>
+                    </div>
+                    <div id="submissions-pagination" class="mt-4 flex justify-between items-center">
+                        <span id="submissions-info" class="text-sm text-muted-foreground"></span>
+                        <div class="flex gap-2">
+                            <button id="submissions-prev" onclick="changeSubmissionsPage(-1)" class="px-3 py-1 text-xs border border-border rounded hover:bg-muted">Previous</button>
+                            <button id="submissions-next" onclick="changeSubmissionsPage(1)" class="px-3 py-1 text-xs border border-border rounded hover:bg-muted">Next</button>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Storage & Tags -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-card p-6 rounded-lg shadow-md border border-border">
@@ -229,6 +255,13 @@ async function loadAdminDashboard() {
         }
         
         console.log('Dashboard rendered successfully!');
+        
+        // Load submissions after dashboard is rendered
+        loadSubmissions();
+        
+        // Set up search functionality
+        document.getElementById('submissions-search').addEventListener('input', debounce(loadSubmissions, 300));
+        document.getElementById('submissions-type').addEventListener('change', loadSubmissions);
         
     } catch (error) {
         console.error('Error:', error);
@@ -394,6 +427,138 @@ window.toggleBan = async function(userId, username, currentlyBanned) {
         alert(`Error ${action}ning user: ` + error.message);
     }
 };
+
+// Submissions management
+let submissionsCurrentPage = 1;
+let submissionsData = null;
+
+window.loadSubmissions = async function() {
+    const search = document.getElementById('submissions-search')?.value || '';
+    const type = document.getElementById('submissions-type')?.value || '';
+    
+    try {
+        const params = new URLSearchParams({
+            page: submissionsCurrentPage,
+            limit: 20,
+            q: search,
+            type: type
+        });
+        
+        const response = await fetch(`/api/admin/submissions.php?${params}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        submissionsData = await response.json();
+        renderSubmissions();
+        
+    } catch (error) {
+        console.error('Error loading submissions:', error);
+        const listElement = document.getElementById('submissions-list');
+        if (listElement) {
+            listElement.innerHTML = '<p class="text-red-500">Error loading submissions: ' + error.message + '</p>';
+        }
+    }
+};
+
+function renderSubmissions() {
+    const listElement = document.getElementById('submissions-list');
+    const infoElement = document.getElementById('submissions-info');
+    const prevButton = document.getElementById('submissions-prev');
+    const nextButton = document.getElementById('submissions-next');
+    
+    if (!submissionsData || !listElement) return;
+    
+    if (submissionsData.submissions.length === 0) {
+        listElement.innerHTML = '<p class="text-muted-foreground">No submissions found.</p>';
+        if (infoElement) infoElement.textContent = 'No submissions';
+        return;
+    }
+    
+    listElement.innerHTML = submissionsData.submissions.map(submission => `
+        <div class="p-4 bg-muted rounded-lg border border-border">
+            <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-1 text-xs rounded font-medium ${submission.type === 'notify' ? 'bg-blue-500 text-white' : 'bg-green-500 text-white'}">
+                        ${submission.type === 'notify' ? '🔔 Launch Notification' : '📧 Contact Form'}
+                    </span>
+                    <span class="text-sm text-muted-foreground">${submission.created_at_formatted}</span>
+                </div>
+                <button onclick="deleteSubmission(${submission.id})" class="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600">🗑️ Delete</button>
+            </div>
+            
+            <div class="space-y-1">
+                ${submission.name ? `<p class="text-sm"><span class="text-muted-foreground">Name:</span> <span class="text-foreground">${escapeHtml(submission.name)}</span></p>` : ''}
+                <p class="text-sm"><span class="text-muted-foreground">Email:</span> <span class="text-foreground">${escapeHtml(submission.email)}</span></p>
+                ${submission.subject ? `<p class="text-sm"><span class="text-muted-foreground">Subject:</span> <span class="text-foreground">${escapeHtml(submission.subject)}</span></p>` : ''}
+                ${submission.message ? `<p class="text-sm"><span class="text-muted-foreground">Message:</span> <span class="text-foreground">${escapeHtml(submission.message)}</span></p>` : ''}
+            </div>
+        </div>
+    `).join('');
+    
+    // Update pagination info
+    if (infoElement) {
+        const start = (submissionsCurrentPage - 1) * submissionsData.limit + 1;
+        const end = Math.min(submissionsCurrentPage * submissionsData.limit, submissionsData.total);
+        infoElement.textContent = `Showing ${start}-${end} of ${submissionsData.total} submissions`;
+    }
+    
+    // Update pagination buttons
+    if (prevButton) {
+        prevButton.disabled = submissionsCurrentPage <= 1;
+        prevButton.style.opacity = submissionsCurrentPage <= 1 ? '0.5' : '1';
+    }
+    if (nextButton) {
+        const hasNext = submissionsCurrentPage * submissionsData.limit < submissionsData.total;
+        nextButton.disabled = !hasNext;
+        nextButton.style.opacity = hasNext ? '1' : '0.5';
+    }
+}
+
+window.changeSubmissionsPage = function(direction) {
+    const newPage = submissionsCurrentPage + direction;
+    if (newPage >= 1 && (newPage - 1) * 20 < submissionsData.total) {
+        submissionsCurrentPage = newPage;
+        loadSubmissions();
+    }
+};
+
+window.deleteSubmission = async function(submissionId) {
+    if (!confirm('Are you sure you want to delete this submission?')) return;
+    
+    try {
+        const response = await fetch('/api/admin/submissions.php', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: submissionId })
+        });
+        
+        if (response.ok) {
+            showSuccessNotification('Submission deleted successfully');
+            loadSubmissions(); // Refresh
+        } else {
+            showErrorNotification('Failed to delete submission');
+        }
+    } catch (error) {
+        showErrorNotification('Error deleting submission: ' + error.message);
+    }
+};
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
 
 window.toggleAdmin = async function(userId, username, currentlyAdmin) {
     const action = currentlyAdmin ? 'remove admin privileges from' : 'grant admin privileges to';

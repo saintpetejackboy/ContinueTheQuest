@@ -293,9 +293,26 @@
             html += `<p class="text-xs text-muted-foreground mt-1">Source types should be managed via a dynamic table in the future (TODO: Admin GUI for source types).</p>`;
             html += `</div>`;
             html += `<div>`;
-            html += `<label for="branch-cover-image" class="block text-sm font-medium text-muted-foreground mb-1">Cover Image (Optional)</label>`;
-            html += `<input type="file" id="branch-cover-image" class="form-input w-full" accept="image/*">`;
-            html += `<p class="text-xs text-muted-foreground mt-1">Upload a cover image for this branch.</p>`;
+            html += `<label class="block text-sm font-medium text-muted-foreground mb-2">Cover Image (Optional)</label>`;
+            html += `<div class="border-2 border-dashed border-border rounded-lg p-4 text-center" id="branch-upload-zone">`;
+            html += `<div class="space-y-2">`;
+            html += `<svg class="mx-auto h-8 w-8 text-muted-foreground" stroke="currentColor" fill="none" viewBox="0 0 48 48">`;
+            html += `<path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+            html += `</svg>`;
+            html += `<div class="text-sm text-muted-foreground">`;
+            html += `<label for="branch-cover-image" class="font-medium text-primary hover:text-primary/80 cursor-pointer">`;
+            html += `Click to upload image`;
+            html += `</label>`;
+            html += ` or drag and drop`;
+            html += `</div>`;
+            html += `<p class="text-xs text-muted-foreground">PNG, JPG, GIF, WebP up to 10MB</p>`;
+            html += `</div>`;
+            html += `</div>`;
+            html += `<input type="file" id="branch-cover-image" class="hidden" accept="image/*">`;
+            html += `<div id="branch-image-preview" class="mt-2 hidden">`;
+            html += `<img id="branch-preview-img" class="w-full h-32 object-cover rounded-lg border border-border">`;
+            html += `<button type="button" id="branch-remove-image" class="mt-2 text-xs text-red-500 hover:text-red-700">Remove Image</button>`;
+            html += `</div>`;
             html += `</div>`;
             html += `<div class="flex justify-end space-x-2">`;
             html += `<button id="branch-cancel-btn" class="btn-secondary">Cancel</button>`;
@@ -433,6 +450,9 @@
             if (cancelBranch) cancelBranch.addEventListener('click', () => this.container.querySelector('#branch-modal').classList.add('hidden'));
             const submitBranch = this.container.querySelector('#branch-submit-btn');
             if (submitBranch) submitBranch.addEventListener('click', () => this.handleBranchSubmit());
+            
+            // Branch upload zone drag & drop
+            this.setupBranchUploadZone();
 
             // Edit branch modal buttons
             const editBranchCancelBtn = this.container.querySelector('#edit-branch-cancel-btn');
@@ -743,6 +763,98 @@
             } catch (err) {
                 alert(err.message || 'Error updating branch');
             }
+        }
+
+        /**
+         * Setup drag & drop functionality for branch upload zone.
+         */
+        setupBranchUploadZone() {
+            const uploadZone = this.container.querySelector('#branch-upload-zone');
+            const fileInput = this.container.querySelector('#branch-cover-image');
+            const previewDiv = this.container.querySelector('#branch-image-preview');
+            const previewImg = this.container.querySelector('#branch-preview-img');
+            const removeBtn = this.container.querySelector('#branch-remove-image');
+            
+            if (!uploadZone || !fileInput) return;
+            
+            // File input change handler
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    this.handleBranchImageSelect(e.target.files[0]);
+                }
+            });
+            
+            // Click to upload
+            uploadZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            // Drag and drop events
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('border-primary', 'bg-primary/5');
+            });
+            
+            uploadZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('border-primary', 'bg-primary/5');
+            });
+            
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('border-primary', 'bg-primary/5');
+                
+                const files = Array.from(e.dataTransfer.files).filter(file => 
+                    file.type.startsWith('image/')
+                );
+                
+                if (files.length > 0) {
+                    this.handleBranchImageSelect(files[0]);
+                }
+            });
+            
+            // Remove image button
+            if (removeBtn) {
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    fileInput.value = '';
+                    previewDiv.classList.add('hidden');
+                    uploadZone.classList.remove('hidden');
+                });
+            }
+        }
+        
+        /**
+         * Handle branch image selection and preview.
+         */
+        handleBranchImageSelect(file) {
+            const uploadZone = this.container.querySelector('#branch-upload-zone');
+            const previewDiv = this.container.querySelector('#branch-image-preview');
+            const previewImg = this.container.querySelector('#branch-preview-img');
+            
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                return;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                alert('File size must be less than 10MB.');
+                return;
+            }
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                uploadZone.classList.add('hidden');
+                previewDiv.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+            
+            // Update file input
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            this.container.querySelector('#branch-cover-image').files = dt.files;
         }
 
         /**
