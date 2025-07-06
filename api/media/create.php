@@ -85,7 +85,7 @@ try {
     
     if (isset($_FILES['images']) && is_array($_FILES['images']['tmp_name'])) {
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $userDir = getUserUploadDir($user['id']);
+        $userDir = getSafeUserDir($user['id']);
         $imagesDir = $userDir . '/images';
         
         if (!is_dir($imagesDir)) {
@@ -93,7 +93,7 @@ try {
         }
         
         // Get current user space usage
-        $currentUsage = getUserSpaceUsage($user['id']);
+        $currentUsage = getUserDiskUsage($user['id']);
         
         for ($i = 0; $i < count($_FILES['images']['tmp_name']); $i++) {
             if ($_FILES['images']['error'][$i] === UPLOAD_ERR_OK) {
@@ -139,7 +139,7 @@ try {
         $targetPath = $imagesDir . '/' . $filename;
         
         // Convert to WebP format
-        if (convertImageToWebP($file['tmp_name'], $targetPath)) {
+        if (convertToWebP($file['tmp_name'], $targetPath)) {
             // Insert into media_images table
             $stmt = $db->prepare('INSERT INTO media_images (media_id, file_name, order_index) VALUES (?, ?, ?)');
             $stmt->execute([$mediaId, $filename, $file['index']]);
@@ -199,55 +199,4 @@ try {
     echo json_encode(['error' => $e->getMessage()]);
 }
 
-function convertImageToWebP($source, $destination) {
-    $imageInfo = getimagesize($source);
-    if (!$imageInfo) return false;
-    
-    $mime = $imageInfo['mime'];
-    $image = null;
-    
-    switch ($mime) {
-        case 'image/jpeg':
-            $image = imagecreatefromjpeg($source);
-            break;
-        case 'image/png':
-            $image = imagecreatefrompng($source);
-            break;
-        case 'image/gif':
-            $image = imagecreatefromgif($source);
-            break;
-        case 'image/webp':
-            $image = imagecreatefromwebp($source);
-            break;
-        default:
-            return false;
-    }
-    
-    if (!$image) return false;
-
-    if (!imageistruecolor($image)) {
-        imagepalettetotruecolor($image);
-    }
-
-    // Convert to WebP with quality 85
-    $result = imagewebp($image, $destination, 85);
-    imagedestroy($image);
-    
-    return $result;
-}
-
-function getUserSpaceUsage($userId) {
-    $userDir = getUserUploadDir($userId);
-    if (!is_dir($userDir)) return 0;
-    
-    $size = 0;
-    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($userDir));
-    
-    foreach ($iterator as $file) {
-        if ($file->isFile()) {
-            $size += $file->getSize();
-        }
-    }
-    
-    return $size;
-}
+// Duplicate functions removed - now using versions from includes/utils.php
