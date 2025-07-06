@@ -1,6 +1,21 @@
 console.log('STARTING ADMIN DASHBOARD - DIRECT APPROACH');
 
-// escapeHTML function is now provided by utils.js
+// escapeHTML function fallback (in case utils.js isn't loaded yet)
+if (typeof escapeHTML === 'undefined') {
+    function escapeHTML(str) {
+        if (typeof str !== 'string') return str;
+        return str.replace(/[&<>"']/g, function(match) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[match];
+        });
+    }
+    window.escapeHTML = escapeHTML;
+}
 
 // Direct execution - no classes, no router dependencies
 async function loadAdminDashboard() {
@@ -261,6 +276,7 @@ async function loadAdminDashboard() {
             </div>
         `;
         
+        // formatBytes function (duplicated here for reliability)
         function formatBytes(bytes) {
             const units = ['B', 'KB', 'MB', 'GB'];
             let i = 0;
@@ -564,16 +580,20 @@ window.deleteSubmission = async function(submissionId) {
 };
 
 
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
+// Debounce function fallback
+if (typeof debounce === 'undefined') {
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
             clearTimeout(timeout);
-            func(...args);
+            timeout = setTimeout(later, wait);
         };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
+    }
+    window.debounce = debounce;
 }
 
 window.toggleAdmin = async function(userId, username, currentlyAdmin) {
@@ -598,14 +618,18 @@ window.toggleAdmin = async function(userId, username, currentlyAdmin) {
     }
 };
 
-function formatBytes(bytes) {
-    const units = ['B', 'KB', 'MB', 'GB'];
-    let i = 0;
-    while (bytes > 1024 && i < units.length - 1) {
-        bytes /= 1024;
-        i++;
+// Global formatBytes function
+if (typeof formatBytes === 'undefined') {
+    function formatBytes(bytes) {
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let i = 0;
+        while (bytes > 1024 && i < units.length - 1) {
+            bytes /= 1024;
+            i++;
+        }
+        return bytes.toFixed(1) + ' ' + units[i];
     }
-    return bytes.toFixed(1) + ' ' + units[i];
+    window.formatBytes = formatBytes;
 }
 
 // Execute immediately when DOM is ready
