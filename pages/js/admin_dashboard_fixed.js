@@ -438,9 +438,13 @@ window.toggleBan = async function(userId, username, currentlyBanned) {
     }
 };
 
-// Submissions management
-let submissionsCurrentPage = 1;
-let submissionsData = null;
+// Submissions management - use conditional initialization to prevent redeclaration errors
+if (typeof window.submissionsCurrentPage === 'undefined') {
+    window.submissionsCurrentPage = 1;
+}
+if (typeof window.submissionsData === 'undefined') {
+    window.submissionsData = null;
+}
 
 window.loadSubmissions = async function() {
     const search = document.getElementById('submissions-search')?.value || '';
@@ -448,7 +452,7 @@ window.loadSubmissions = async function() {
     
     try {
         const params = new URLSearchParams({
-            page: submissionsCurrentPage,
+            page: window.submissionsCurrentPage,
             limit: 20,
             q: search,
             type: type
@@ -457,7 +461,7 @@ window.loadSubmissions = async function() {
         const response = await fetch(`/api/admin/submissions.php?${params}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
-        submissionsData = await response.json();
+        window.submissionsData = await response.json();
         renderSubmissions();
         
     } catch (error) {
@@ -475,15 +479,15 @@ function renderSubmissions() {
     const prevButton = document.getElementById('submissions-prev');
     const nextButton = document.getElementById('submissions-next');
     
-    if (!submissionsData || !listElement) return;
+    if (!window.submissionsData || !listElement) return;
     
-    if (submissionsData.submissions.length === 0) {
+    if (window.submissionsData.submissions.length === 0) {
         listElement.innerHTML = '<p class="text-muted-foreground">No submissions found.</p>';
         if (infoElement) infoElement.textContent = 'No submissions';
         return;
     }
     
-    listElement.innerHTML = submissionsData.submissions.map(submission => `
+    listElement.innerHTML = window.submissionsData.submissions.map(submission => `
         <div class="p-4 bg-muted rounded-lg border border-border">
             <div class="flex justify-between items-start mb-2">
                 <div class="flex items-center gap-2">
@@ -506,27 +510,27 @@ function renderSubmissions() {
     
     // Update pagination info
     if (infoElement) {
-        const start = (submissionsCurrentPage - 1) * submissionsData.limit + 1;
-        const end = Math.min(submissionsCurrentPage * submissionsData.limit, submissionsData.total);
-        infoElement.textContent = `Showing ${start}-${end} of ${submissionsData.total} submissions`;
+        const start = (window.submissionsCurrentPage - 1) * window.submissionsData.limit + 1;
+        const end = Math.min(window.submissionsCurrentPage * window.submissionsData.limit, window.submissionsData.total);
+        infoElement.textContent = `Showing ${start}-${end} of ${window.submissionsData.total} submissions`;
     }
     
     // Update pagination buttons
     if (prevButton) {
-        prevButton.disabled = submissionsCurrentPage <= 1;
-        prevButton.style.opacity = submissionsCurrentPage <= 1 ? '0.5' : '1';
+        prevButton.disabled = window.submissionsCurrentPage <= 1;
+        prevButton.style.opacity = window.submissionsCurrentPage <= 1 ? '0.5' : '1';
     }
     if (nextButton) {
-        const hasNext = submissionsCurrentPage * submissionsData.limit < submissionsData.total;
+        const hasNext = window.submissionsCurrentPage * window.submissionsData.limit < window.submissionsData.total;
         nextButton.disabled = !hasNext;
         nextButton.style.opacity = hasNext ? '1' : '0.5';
     }
 }
 
 window.changeSubmissionsPage = function(direction) {
-    const newPage = submissionsCurrentPage + direction;
-    if (newPage >= 1 && (newPage - 1) * 20 < submissionsData.total) {
-        submissionsCurrentPage = newPage;
+    const newPage = window.submissionsCurrentPage + direction;
+    if (newPage >= 1 && (newPage - 1) * 20 < window.submissionsData.total) {
+        window.submissionsCurrentPage = newPage;
         loadSubmissions();
     }
 };
