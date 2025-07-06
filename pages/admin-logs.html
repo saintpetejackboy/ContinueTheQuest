@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - System Logs | Continue The Quest</title>
+    <link rel="stylesheet" href="../output.css">
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
+</head>
+<body class="bg-background text-foreground">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center space-x-4">
+                <a href="?page=admin-dashboard" class="btn-ghost">
+                    ← Back to Dashboard
+                </a>
+                <h1 class="text-3xl font-bold text-primary">📋 System Logs</h1>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="refreshLogs()" class="btn-primary btn-sm">
+                    🔄 Refresh
+                </button>
+                <button onclick="exportLogs()" class="btn-secondary btn-sm">
+                    📄 Export
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading-indicator" class="text-center py-8">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p class="mt-2 text-muted-foreground">Loading logs...</p>
+        </div>
+
+        <!-- Logs Content -->
+        <div id="logs-content" class="space-y-6 hidden">
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-card p-4 rounded-lg border border-border">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <span class="text-xl">📊</span>
+                        <h3 class="font-semibold text-primary">Total Logs</h3>
+                    </div>
+                    <p class="text-2xl font-bold text-foreground" id="total-logs">0</p>
+                </div>
+                <div class="bg-card p-4 rounded-lg border border-border">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <span class="text-xl">🔴</span>
+                        <h3 class="font-semibold text-primary">Errors</h3>
+                    </div>
+                    <p class="text-2xl font-bold text-red-500" id="error-count">0</p>
+                </div>
+                <div class="bg-card p-4 rounded-lg border border-border">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <span class="text-xl">⚠️</span>
+                        <h3 class="font-semibold text-primary">Warnings</h3>
+                    </div>
+                    <p class="text-2xl font-bold text-yellow-500" id="warning-count">0</p>
+                </div>
+                <div class="bg-card p-4 rounded-lg border border-border">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <span class="text-xl">💾</span>
+                        <h3 class="font-semibold text-primary">Backups</h3>
+                    </div>
+                    <p class="text-2xl font-bold text-green-500" id="backup-count">0</p>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-card p-4 rounded-lg border border-border">
+                <h3 class="font-semibold text-primary mb-4">📝 Log Filters</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-muted-foreground mb-2">Log Type</label>
+                        <select id="log-type-filter" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="backup">Backup Logs</option>
+                            <option value="error">Error Logs</option>
+                            <option value="deploy">Deploy Logs</option>
+                            <option value="credits">Credits Logs</option>
+                            <option value="moderation">Moderation Logs</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-muted-foreground mb-2">Level</label>
+                        <select id="log-level-filter" class="form-select">
+                            <option value="">All Levels</option>
+                            <option value="error">Error</option>
+                            <option value="warning">Warning</option>
+                            <option value="info">Info</option>
+                            <option value="debug">Debug</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-muted-foreground mb-2">Date Range</label>
+                        <select id="date-range-filter" class="form-select">
+                            <option value="">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-muted-foreground mb-2">Search</label>
+                        <input type="text" id="search-filter" placeholder="Search logs..." class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log Entries -->
+            <div class="bg-card rounded-lg border border-border">
+                <div class="p-4 border-b border-border">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-semibold text-primary">📑 Log Entries</h3>
+                        <div class="flex items-center space-x-2">
+                            <span id="results-info" class="text-sm text-muted-foreground">0 logs</span>
+                            <button onclick="clearLogs()" class="btn-ghost btn-xs text-destructive">
+                                🗑️ Clear Old Logs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="logs-table-container" class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-muted">
+                            <tr class="border-b border-border">
+                                <th class="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Timestamp</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Level</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Type</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Message</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Source</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body">
+                            <!-- Log entries will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div id="logs-pagination" class="p-4 border-t border-border">
+                    <div class="flex items-center justify-between">
+                        <span id="pagination-info" class="text-sm text-muted-foreground">
+                            Showing 0-0 of 0 logs
+                        </span>
+                        <div class="flex items-center space-x-2">
+                            <button id="prev-page" onclick="changePage(-1)" 
+                                    class="btn-ghost btn-sm" disabled>
+                                ← Previous
+                            </button>
+                            <span id="page-info" class="text-sm text-muted-foreground px-3">
+                                Page 1 of 1
+                            </span>
+                            <button id="next-page" onclick="changePage(1)" 
+                                    class="btn-ghost btn-sm" disabled>
+                                Next →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="text-center py-12 hidden">
+                <div class="text-6xl mb-4">📋</div>
+                <h3 class="text-xl font-semibold mb-2">No logs found</h3>
+                <p class="text-muted-foreground">No log entries match your current filters.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Details Modal -->
+    <div id="log-details-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-card p-6 rounded-lg shadow-xl border border-border max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold text-primary">Log Entry Details</h3>
+                <button onclick="closeLogDetailsModal()" class="btn-ghost btn-sm">
+                    ✕
+                </button>
+            </div>
+            
+            <div id="log-details-content" class="space-y-4">
+                <!-- Log details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin-logs.js"></script>
+</body>
+</html>

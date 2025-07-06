@@ -238,7 +238,12 @@ async function loadAdminDashboard() {
                     </div>
                     
                     <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h3 class="text-xl font-semibold mb-4 text-primary">🏷️ Popular Tags</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold text-primary">🏷️ Popular Tags</h3>
+                            <a href="?page=admin-tags" class="btn-primary btn-sm">
+                                🏷️ Manage Tags
+                            </a>
+                        </div>
                         <div class="flex flex-wrap gap-2">
                             ${stats.tags.top_10.map(tag => `
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary text-primary-foreground">
