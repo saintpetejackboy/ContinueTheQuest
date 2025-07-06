@@ -1,5 +1,64 @@
 # Project TODO
 
+## 🚨 URGENT SECURITY FIXES (Fix Immediately)
+
+☐ **XSS Vulnerability Fix** - Replace innerHTML with textContent in admin dashboard
+    - Location: `pages/js/admin_dashboard_fixed.js:289, 288-296`
+    - Risk: HIGH - Allows malicious script execution
+    - Fix: Replace innerHTML with textContent and use proper event listeners
+
+☐ **File Upload Security** - Implement proper MIME type validation
+    - Location: `api/segments/upload.php:52-53`, `api/branches/upload-cover.php:108-118`
+    - Risk: HIGH - Allows malicious file uploads
+    - Fix: Use finfo_file() for server-side MIME validation
+
+☐ **Path Traversal Protection** - Sanitize file paths
+    - Location: `api/branches/upload-cover.php:84,97-98`, `api/users/storage.php:12`
+    - Risk: HIGH - Directory traversal attacks
+    - Fix: Implement proper path sanitization and validation
+
+☐ **CSRF Protection** - Add CSRF tokens to all API endpoints
+    - Location: All API endpoints in `api/` directory
+    - Risk: HIGH - Cross-site request forgery
+    - Fix: Implement CSRF tokens using existing functions in `includes/utils.php:84-96`
+
+☐ **Missing Function Implementations** - Add missing functions referenced in code
+    - Location: `api/segments/create.php:44-45`
+    - Issue: `getUserQuota()` and `getUserDiskUsage()` functions not defined
+    - Fix: Implement these functions in `includes/utils.php`
+
+## 📊 DATABASE PERFORMANCE FIXES
+
+☐ **Add Critical Database Indexes** - Improve query performance
+    - Tables: admin_moderation, branches, comments, segments, tag_links
+    - Execute SQL script to add missing indexes
+    - Impact: Significant performance improvement for large datasets
+
+☐ **Add Missing Foreign Key Constraints** - Ensure data integrity
+    - Tables: All major tables missing FK constraints
+    - Prevents orphaned records and maintains referential integrity
+    - Execute SQL script to add missing constraints
+
+☐ **Fix N+1 Query Problems** - Optimize database queries
+    - Location: `api/comments/get.php:81-83`, `api/segments/list.php:33-41`
+    - Replace individual queries with proper JOINs
+    - Impact: Major performance improvement
+
+## 🧹 CLEANUP TASKS
+
+☐ **Remove Dead Code Files**
+    - `includes/coin.php` - Contains only HTML img tag, unclear purpose
+    - `pages/api` - Unnecessary symlink that could cause confusion
+    - `pages/js/admin_dashboard.js` - Duplicate of admin_dashboard_fixed.js
+
+☐ **Consolidate Duplicate Functions**
+    - `convertToWebP()` functions in multiple files
+    - `getUserSpaceUsage()` functions in multiple files
+    - `calculateDirectorySize()` functions in multiple files
+    - HTML escaping functions duplicated across 6+ JavaScript files
+
+## 📋 ORIGINAL TODOS
+
 ☐ Add logs viewing section to admin panel
      ☐ Remove existing backup_ tables and simplify backup system
      ☐ Create new simplified backup tracking table
