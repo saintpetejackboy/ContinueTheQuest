@@ -15,7 +15,10 @@
                 <ul class="space-y-2">
                     <li><a href="?page=browse" class="text-muted-foreground hover:text-primary transition-colors">Browse Stories</a></li>
                     <li><a href="?page=home" class="text-muted-foreground hover:text-primary transition-colors">Home</a></li>
-                    <li><?php include('includes/coin.php'); ?></li>
+                    <li class="flex items-center gap-1 text-muted-foreground">
+                        <span class="text-lg">💰</span>
+                        <span>Credits System</span>
+                    </li>
                 </ul>
             </div>
             <div>

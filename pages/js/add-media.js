@@ -25,7 +25,7 @@ class AddMediaManager {
                 this.userCredits = data.credits || 0;
                 this.userStorageUsed = data.space_used || 0;
                 this.userStorageAvailable = data.space_available || 0;
-                document.getElementById('user-credits').textContent = this.userCredits;
+                document.getElementById('user-credits').textContent = this.userCredits.toLocaleString();
                 document.getElementById('storage-used').textContent = this.formatFileSize(this.userStorageUsed);
                 document.getElementById('storage-available').textContent = this.formatFileSize(this.userStorageAvailable);
                 this.updateCostEstimate();
@@ -459,20 +459,28 @@ class AddMediaManager {
 
     showError(message) {
         const errorEl = document.getElementById('add-media-error');
-        errorEl.textContent = message;
+        const messageContainer = errorEl.querySelector('.flex-1') || errorEl;
+        messageContainer.textContent = message;
         errorEl.classList.remove('hidden');
         
         // Hide success message
         document.getElementById('add-media-success').classList.add('hidden');
+        
+        // Scroll error into view
+        errorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     showSuccess(message) {
         const successEl = document.getElementById('add-media-success');
-        successEl.textContent = message;
+        const messageContainer = successEl.querySelector('.flex-1') || successEl;
+        messageContainer.textContent = message;
         successEl.classList.remove('hidden');
         
         // Hide error message
         document.getElementById('add-media-error').classList.add('hidden');
+        
+        // Scroll success into view
+        successEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     hideMessages() {

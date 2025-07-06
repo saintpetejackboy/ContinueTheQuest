@@ -1,1 +1,0 @@
-<img src="https://continuethe.quest/img/credit.gif" style="width: 20px;">
