@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Project History | Continue The Quest</title>
+    <link rel="stylesheet" href="../output.css">
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
+</head>
+<body class="bg-background text-foreground">
+    <div class="min-h-screen p-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="flex items-center space-x-3 mb-2">
+                        <div class="text-4xl">🐙</div>
+                        <h1 class="text-3xl font-bold">GitHub Project History</h1>
+                    </div>
+                    <p class="text-muted-foreground">Complete commit history and project activity</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="https://github.com/saintpetejackboy/ContinueTheQuest" 
+                       target="_blank" rel="noopener noreferrer"
+                       class="btn btn-primary flex items-center space-x-2">
+                        <img src="../img/github-color.svg" alt="GitHub" class="h-5 w-5"/>
+                        <span>View on GitHub</span>
+                    </a>
+                    <button onclick="github.refreshLog()" class="btn btn-secondary">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats & Controls -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-muted-foreground">Total Commits</p>
+                        <p class="text-2xl font-bold" id="total-commits">0</p>
+                    </div>
+                    <div class="text-2xl">📝</div>
+                </div>
+            </div>
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-muted-foreground">Recent Activity</p>
+                        <p class="text-2xl font-bold" id="recent-days">0d</p>
+                    </div>
+                    <div class="text-2xl">🕒</div>
+                </div>
+            </div>
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-muted-foreground">Contributors</p>
+                        <p class="text-2xl font-bold" id="contributors">0</p>
+                    </div>
+                    <div class="text-2xl">👥</div>
+                </div>
+            </div>
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-muted-foreground">Last Update</p>
+                        <p class="text-sm font-bold" id="last-update">-</p>
+                    </div>
+                    <div class="text-2xl">⏰</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Controls -->
+        <div class="bg-card rounded-lg border border-border p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">🔍 Search Commits</label>
+                    <input type="text" id="search-input" placeholder="Search commit messages..." 
+                           class="w-full p-2 border border-border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">👤 Filter by Author</label>
+                    <select id="author-filter" class="w-full p-2 border border-border rounded">
+                        <option value="">All Authors</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">📅 Sort Order</label>
+                    <select id="sort-order" class="w-full p-2 border border-border rounded">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Commits List -->
+        <div class="bg-card rounded-lg border border-border">
+            <div class="p-6 border-b border-border">
+                <h2 class="text-xl font-semibold">📋 Commit History</h2>
+            </div>
+            
+            <div id="commits-container" class="divide-y divide-border">
+                <div class="p-8 text-center text-muted-foreground">
+                    <div class="text-3xl mb-2">⏳</div>
+                    <p>Loading commit history...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-6 flex justify-center">
+            <div class="flex items-center space-x-2">
+                <button id="prev-page" onclick="github.previousPage()" 
+                        class="btn btn-secondary" disabled>← Previous</button>
+                <span id="page-info" class="px-4 py-2">Page 1 of 1</span>
+                <button id="next-page" onclick="github.nextPage()" 
+                        class="btn btn-secondary" disabled>Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/admin-github.js"></script>
+</body>
+</html>

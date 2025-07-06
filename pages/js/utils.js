@@ -176,6 +176,56 @@ async function copyToClipboard(text) {
     }
 }
 
+/**
+ * CSRF Token Management
+ */
+let csrfToken = null;
+
+/**
+ * Get CSRF token from server
+ * @returns {Promise<string>} - The CSRF token
+ */
+async function getCSRFToken() {
+    if (csrfToken) return csrfToken;
+    
+    try {
+        const response = await fetch('/api/csrf-token');
+        const data = await response.json();
+        csrfToken = data.csrf_token;
+        return csrfToken;
+    } catch (error) {
+        console.error('Failed to get CSRF token:', error);
+        return null;
+    }
+}
+
+/**
+ * Make API request with CSRF protection
+ * @param {string} url - The API endpoint URL
+ * @param {Object} options - Fetch options
+ * @returns {Promise<Response>} - The fetch response
+ */
+async function secureAPIRequest(url, options = {}) {
+    // Get CSRF token for state-changing requests
+    if (!options.method || ['POST', 'PUT', 'DELETE', 'PATCH'].includes(options.method.toUpperCase())) {
+        const token = await getCSRFToken();
+        if (token) {
+            // Add token to headers
+            options.headers = options.headers || {};
+            options.headers['X-CSRF-Token'] = token;
+            
+            // Also add to body if it's JSON
+            if (options.body && options.headers['Content-Type'] === 'application/json') {
+                const bodyData = JSON.parse(options.body);
+                bodyData.csrf_token = token;
+                options.body = JSON.stringify(bodyData);
+            }
+        }
+    }
+    
+    return fetch(url, options);
+}
+
 // Make functions available globally
 window.escapeHtml = escapeHtml;
 window.escapeHTML = escapeHTML;
@@ -184,3 +234,5 @@ window.formatFileSize = formatFileSize;
 window.debounce = debounce;
 window.showToast = showToast;
 window.copyToClipboard = copyToClipboard;
+window.getCSRFToken = getCSRFToken;
+window.secureAPIRequest = secureAPIRequest;
