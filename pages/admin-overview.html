@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Overview - ContinueThe.Quest</title>
+    <link href="/output.css" rel="stylesheet">
+    <script src="js/utils.js"></script>
+</head>
+<body class="bg-background text-foreground">
+    <div class="container mx-auto p-6">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-2">🎮 ContinueThe.Quest Admin Overview</h1>
+            <p class="text-muted-foreground">Complete administrative control panel with integrated security and monitoring</p>
+        </div>
+
+        <!-- System Status Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-card p-4 rounded-lg border border-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-medium text-muted-foreground">System Status</h3>
+                        <p id="system-status" class="text-2xl font-bold text-green-500">Loading...</p>
+                    </div>
+                    <div class="text-3xl">🟢</div>
+                </div>
+            </div>
+            
+            <div class="bg-card p-4 rounded-lg border border-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-medium text-muted-foreground">Security Events</h3>
+                        <p id="security-events" class="text-2xl font-bold">Loading...</p>
+                    </div>
+                    <div class="text-3xl">🛡️</div>
+                </div>
+            </div>
+            
+            <div class="bg-card p-4 rounded-lg border border-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-medium text-muted-foreground">Active Users</h3>
+                        <p id="active-users" class="text-2xl font-bold">Loading...</p>
+                    </div>
+                    <div class="text-3xl">👥</div>
+                </div>
+            </div>
+            
+            <div class="bg-card p-4 rounded-lg border border-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-medium text-muted-foreground">Cache Hit Rate</h3>
+                        <p id="cache-hit-rate" class="text-2xl font-bold">Loading...</p>
+                    </div>
+                    <div class="text-3xl">⚡</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Modules Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Security & Monitoring -->
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    🛡️ Security & Monitoring
+                </h2>
+                <div class="space-y-3">
+                    <a href="admin-moderation.html" class="flex items-center justify-between p-3 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
+                        <span>Content Moderation</span>
+                        <span class="text-muted-foreground">→</span>
+                    </a>
+                    <a href="/api/health.php" target="_blank" class="flex items-center justify-between p-3 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
+                        <span>System Health</span>
+                        <span class="text-muted-foreground">→</span>
+                    </a>
+                    <a href="/logs/security.log" target="_blank" class="flex items-center justify-between p-3 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
+                        <span>Security Logs</span>
+                        <span class="text-muted-foreground">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- User Management -->
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    👥 User Management
+                </h2>
+                <div class="space-y-3">
+                    <a href="admin-users.html" class="flex items-center justify-between p-3 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
+                        <span>User Accounts</span>
+                        <span class="text-muted-foreground">→</span>
+                    </a>
+                    <a href="admin-analytics.html" class="flex items-center justify-between p-3 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
+                        <span>User Analytics</span>
+                        <span class="text-muted-foreground">→</span>
+                    </a>
+                    <div class="p-3 bg-accent/50 rounded-lg text-muted-foreground">
+                        <span>Rate Limiting: Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content & Media -->
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    📝 Content & Media
+                </h2>
+                <div class="space-y-3">
+                    <a href="admin-tags.html" class="flex items-center justify-between p-3 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
+                        <span>Tag Management</span>
+                        <span class="text-muted-foreground">→</span>
+                    </a>
+                    <a href="admin-models.html" class="flex items-center justify-between p-3 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
+                        <span>AI Models</span>
+                        <span class="text-muted-foreground">→</span>
+                    </a>
+                    <div class="p-3 bg-accent/50 rounded-lg text-muted-foreground">
+                        <span>Upload Security: Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Tools -->
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    🔧 System Tools
+                </h2>
+                <div class="space-y-3">
+                    <a href="admin-backup.html" class="flex items-center justify-between p-3 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
+                        <span>Backup Manager</span>
+                        <span class="text-muted-foreground">→</span>
+                    </a>
+                    <a href="admin-logs.html" class="flex items-center justify-between p-3 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
+                        <span>System Logs</span>
+                        <span class="text-muted-foreground">→</span>
+                    </a>
+                    <button onclick="clearCache()" class="w-full flex items-center justify-between p-3 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
+                        <span>Clear Cache</span>
+                        <span class="text-muted-foreground">🗑️</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Development & GitHub -->
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    🐙 Development
+                </h2>
+                <div class="space-y-3">
+                    <a href="admin-github.html" class="flex items-center justify-between p-3 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
+                        <span>GitHub Activity</span>
+                        <span class="text-muted-foreground">→</span>
+                    </a>
+                    <a href="https://github.com/saintpetejackboy/ContinueTheQuest" target="_blank" class="flex items-center justify-between p-3 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
+                        <span>GitHub Repository</span>
+                        <span class="text-muted-foreground">↗</span>
+                    </a>
+                    <div class="p-3 bg-accent/50 rounded-lg text-muted-foreground">
+                        <span>CSRF Protection: Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    ⚡ Quick Actions
+                </h2>
+                <div class="space-y-3">
+                    <button onclick="runBackup()" class="w-full flex items-center justify-between p-3 bg-green-100 dark:bg-green-900 rounded-lg hover:bg-green-200 dark:hover:bg-green-800 transition-colors">
+                        <span>Create Backup</span>
+                        <span>💾</span>
+                    </button>
+                    <button onclick="refreshGitLog()" class="w-full flex items-center justify-between p-3 bg-blue-100 dark:bg-blue-900 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors">
+                        <span>Refresh Git Log</span>
+                        <span>🔄</span>
+                    </button>
+                    <button onclick="viewSecurityLog()" class="w-full flex items-center justify-between p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg hover:bg-yellow-200 dark:hover:bg-yellow-800 transition-colors">
+                        <span>Security Report</span>
+                        <span>📊</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-card p-6 rounded-lg border border-border">
+            <h2 class="text-xl font-semibold mb-4">📈 Recent System Activity</h2>
+            <div id="recent-activity" class="space-y-2">
+                <div class="text-center py-8 text-muted-foreground">
+                    <div class="text-2xl mb-2">⏳</div>
+                    <p>Loading recent activity...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin-overview.js"></script>
+</body>
+</html>
