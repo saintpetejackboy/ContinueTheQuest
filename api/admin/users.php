@@ -39,6 +39,7 @@ try {
                 u.email,
                 u.avatar,
                 u.quota,
+                u.credits,
                 u.is_admin,
                 u.is_banned,
                 u.created_at,
@@ -96,6 +97,16 @@ try {
         if (isset($data['is_banned'])) {
             $stmt = $db->prepare("UPDATE Users SET is_banned = ? WHERE id = ?");
             $stmt->execute([intval($data['is_banned']), $targetId]);
+        }
+        if (isset($data['action']) && $data['action'] === 'adjust_credits') {
+            $amount = intval($data['amount'] ?? 0);
+            $stmt = $db->prepare("UPDATE Users SET credits = credits + ? WHERE id = ?");
+            $stmt->execute([$amount, $targetId]);
+        }
+        if (isset($data['action']) && $data['action'] === 'adjust_quota') {
+            $quota = intval($data['quota'] ?? 0);
+            $stmt = $db->prepare("UPDATE Users SET quota = ? WHERE id = ?");
+            $stmt->execute([$quota, $targetId]);
         }
         echo json_encode(['success' => true]);
         exit;

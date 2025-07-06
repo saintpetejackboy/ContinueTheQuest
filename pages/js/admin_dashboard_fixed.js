@@ -56,31 +56,43 @@ async function loadAdminDashboard() {
                 
                 <!-- Overview Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h3 class="text-lg font-semibold mb-2 text-primary">System Info</h3>
-                        <p class="text-muted-foreground">Uptime: <span class="text-foreground font-medium">${stats.system.uptime}</span></p>
-                        <p class="text-muted-foreground">Files: <span class="text-foreground font-medium">${stats.system.total_files_in_uploads}</span></p>
+                    <div class="bg-gradient-to-br from-card to-card/50 p-6 rounded-lg shadow-md border border-border hover:shadow-lg transition-all duration-200">
+                        <div class="flex items-center mb-3">
+                            <div class="text-2xl mr-3">🖥️</div>
+                            <h3 class="text-lg font-semibold text-primary">System Info</h3>
+                        </div>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>⏱️</span> Uptime: <span class="text-foreground font-medium">${stats.system.uptime}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>📁</span> Files: <span class="text-foreground font-medium">${stats.system.total_files_in_uploads}</span></p>
                     </div>
                     
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h3 class="text-lg font-semibold mb-2 text-primary">Users</h3>
-                        <p class="text-muted-foreground">Total: <span class="text-foreground font-medium">${stats.users.total}</span></p>
-                        <p class="text-muted-foreground">Admins: <span class="text-foreground font-medium">${stats.users.admins}</span></p>
-                        <p class="text-muted-foreground">Credits: <span class="text-foreground font-medium">${stats.users.total_credits.toLocaleString()}</span></p>
+                    <div class="bg-gradient-to-br from-card to-card/50 p-6 rounded-lg shadow-md border border-border hover:shadow-lg transition-all duration-200">
+                        <div class="flex items-center mb-3">
+                            <div class="text-2xl mr-3">👥</div>
+                            <h3 class="text-lg font-semibold text-primary">Users</h3>
+                        </div>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>👤</span> Total: <span class="text-foreground font-medium">${stats.users.total}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>🛡️</span> Admins: <span class="text-foreground font-medium">${stats.users.admins}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>💰</span> Credits: <span class="text-foreground font-medium">${stats.users.total_credits.toLocaleString()}</span></p>
                     </div>
                     
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h3 class="text-lg font-semibold mb-2 text-primary">Content</h3>
-                        <p class="text-muted-foreground">Media: <span class="text-foreground font-medium">${stats.media.total}</span></p>
-                        <p class="text-muted-foreground">Branches: <span class="text-foreground font-medium">${stats.branches.total}</span></p>
-                        <p class="text-muted-foreground">Segments: <span class="text-foreground font-medium">${stats.segments.total}</span></p>
-                        <p class="text-muted-foreground">Comments: <span class="text-foreground font-medium">${stats.comments.total}</span></p>
+                    <div class="bg-gradient-to-br from-card to-card/50 p-6 rounded-lg shadow-md border border-border hover:shadow-lg transition-all duration-200">
+                        <div class="flex items-center mb-3">
+                            <div class="text-2xl mr-3">📚</div>
+                            <h3 class="text-lg font-semibold text-primary">Content</h3>
+                        </div>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>🎬</span> Media: <span class="text-foreground font-medium">${stats.media.total}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>🌳</span> Branches: <span class="text-foreground font-medium">${stats.branches.total}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>📝</span> Segments: <span class="text-foreground font-medium">${stats.segments.total}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>💬</span> Comments: <span class="text-foreground font-medium">${stats.comments.total}</span></p>
                     </div>
                     
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h3 class="text-lg font-semibold mb-2 text-primary">Engagement</h3>
-                        <p class="text-muted-foreground">Total Votes: <span class="text-foreground font-medium">${stats.votes.total}</span></p>
-                        <p class="text-muted-foreground">Upvotes: <span class="text-green-500 font-medium">${stats.votes.upvotes}</span></p>
+                    <div class="bg-gradient-to-br from-card to-card/50 p-6 rounded-lg shadow-md border border-border hover:shadow-lg transition-all duration-200">
+                        <div class="flex items-center mb-3">
+                            <div class="text-2xl mr-3">📊</div>
+                            <h3 class="text-lg font-semibold text-primary">Engagement</h3>
+                        </div>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>🗳️</span> Total Votes: <span class="text-foreground font-medium">${stats.votes.total}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>👍</span> Upvotes: <span class="text-green-500 font-medium">${stats.votes.upvotes}</span></p>
                         <p class="text-muted-foreground">Downvotes: <span class="text-red-500 font-medium">${stats.votes.downvotes}</span></p>
                         <p class="text-muted-foreground">Tags: <span class="text-foreground font-medium">${stats.tags.total}</span></p>
                     </div>
@@ -112,11 +124,11 @@ async function loadAdminDashboard() {
                                 <div class="mb-3">
                                     <div class="flex justify-between text-sm mb-1">
                                         <span class="text-muted-foreground">Storage Used</span>
-                                        <span class="text-foreground">${formatBytes(user.storage_used || 0)} / ${formatBytes(user.quota || 1048576)}</span>
+                                        <span class="text-foreground">${formatBytes(user.space_used || 0)} / ${formatBytes(user.quota || 1048576)}</span>
                                     </div>
-                                    <div class="w-full bg-border rounded-full h-2">
-                                        <div class="h-2 rounded-full ${(user.storage_used || 0) / (user.quota || 1048576) > 0.8 ? 'bg-red-500' : (user.storage_used || 0) / (user.quota || 1048576) > 0.6 ? 'bg-yellow-500' : 'bg-green-500'}" 
-                                             style="width: ${Math.min(100, ((user.storage_used || 0) / (user.quota || 1048576)) * 100)}%"></div>
+                                    <div class="w-full bg-border rounded-full h-3 shadow-inner">
+                                        <div class="h-3 rounded-full transition-all duration-300 ${(user.space_used || 0) / (user.quota || 1048576) > 0.8 ? 'bg-gradient-to-r from-red-500 to-red-600 shadow-red-500/50' : (user.space_used || 0) / (user.quota || 1048576) > 0.6 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 shadow-yellow-500/50' : 'bg-gradient-to-r from-green-500 to-green-600 shadow-green-500/50'}" 
+                                             style="width: ${Math.min(100, ((user.space_used || 0) / (user.quota || 1048576)) * 100)}%; box-shadow: 0 0 8px ${(user.space_used || 0) / (user.quota || 1048576) > 0.8 ? 'rgba(239, 68, 68, 0.6)' : (user.space_used || 0) / (user.quota || 1048576) > 0.6 ? 'rgba(245, 158, 11, 0.6)' : 'rgba(16, 185, 129, 0.6)'}"></div>
                                     </div>
                                 </div>
                                 
@@ -157,7 +169,7 @@ async function loadAdminDashboard() {
                                         <span class="text-primary font-medium">${model.cost_per_use} credits</span>
                                     </div>
                                     <p class="text-sm text-muted-foreground">${model.description}</p>
-                                    <span class="inline-block mt-1 px-2 py-1 text-xs rounded ${model.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}">
+                                    <span class="inline-block mt-1 px-2 py-1 text-xs rounded font-medium ${model.is_active ? 'bg-green-500 text-white dark:bg-green-600 dark:text-white' : 'bg-red-500 text-white dark:bg-red-600 dark:text-white'}">
                                         ${model.is_active ? 'Active' : 'Inactive'}
                                     </span>
                                 </div>
@@ -227,9 +239,71 @@ async function loadAdminDashboard() {
 }
 
 // User management functions
-window.adjustCredits = async function(userId, username) {
-    const amount = prompt(`Adjust credits for ${username}.\nEnter amount (positive to add, negative to subtract):`);
-    if (amount === null || amount === '') return;
+window.adjustCredits = function(userId, username) {
+    showCreditModal(userId, username);
+};
+
+function showCreditModal(userId, username) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('credit-modal');
+    if (existingModal) existingModal.remove();
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.id = 'credit-modal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-card p-6 rounded-lg shadow-xl border border-border max-w-md w-full mx-4">
+            <h3 class="text-xl font-semibold mb-4 text-foreground">💰 Adjust Credits for ${username}</h3>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-muted-foreground mb-2">Amount (positive to add, negative to subtract)</label>
+                <input type="number" id="credit-amount" class="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Enter amount..." autofocus>
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeCreditModal()" class="px-4 py-2 text-sm border border-border rounded-md text-muted-foreground hover:bg-muted">Cancel</button>
+                <button onclick="applyCreditChange(${userId}, '${username}')" class="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/80">Update Credits</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Focus on input
+    document.getElementById('credit-amount').focus();
+    
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeCreditModal();
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', handleCreditModalKeydown);
+}
+
+function closeCreditModal() {
+    const modal = document.getElementById('credit-modal');
+    if (modal) {
+        modal.remove();
+        document.removeEventListener('keydown', handleCreditModalKeydown);
+    }
+}
+
+function handleCreditModalKeydown(e) {
+    if (e.key === 'Escape') {
+        closeCreditModal();
+    } else if (e.key === 'Enter') {
+        const userId = document.querySelector('#credit-modal button[onclick*="applyCreditChange"]').onclick.toString().match(/applyCreditChange\((\d+)/)[1];
+        const username = document.querySelector('#credit-modal button[onclick*="applyCreditChange"]').onclick.toString().match(/applyCreditChange\(\d+, '([^']+)'/)[1];
+        applyCreditChange(parseInt(userId), username);
+    }
+}
+
+async function applyCreditChange(userId, username) {
+    const amount = document.getElementById('credit-amount').value;
+    if (!amount || amount === '') {
+        document.getElementById('credit-amount').focus();
+        return;
+    }
     
     try {
         const response = await fetch('/api/admin/users.php', {
@@ -239,15 +313,43 @@ window.adjustCredits = async function(userId, username) {
         });
         
         if (response.ok) {
-            alert(`Credits updated for ${username}`);
+            closeCreditModal();
+            showSuccessNotification(`Credits updated for ${username}`);
             loadAdminDashboard(); // Refresh
         } else {
-            alert('Failed to update credits');
+            showErrorNotification('Failed to update credits');
         }
     } catch (error) {
-        alert('Error updating credits: ' + error.message);
+        showErrorNotification('Error updating credits: ' + error.message);
     }
-};
+}
+
+function showSuccessNotification(message) {
+    showNotification(message, 'success');
+}
+
+function showErrorNotification(message) {
+    showNotification(message, 'error');
+}
+
+function showNotification(message, type) {
+    // Remove existing notifications
+    const existing = document.querySelectorAll('.notification');
+    existing.forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 ${type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
+}
 
 window.adjustQuota = async function(userId, username, currentQuota) {
     const quota = prompt(`Adjust storage quota for ${username}.\nCurrent: ${formatBytes(currentQuota)}\nEnter new quota in bytes:`, currentQuota);
