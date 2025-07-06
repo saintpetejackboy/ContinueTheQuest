@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Moderation | Continue The Quest</title>
+    <link rel="stylesheet" href="../output.css">
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
+</head>
+<body class="bg-background text-foreground">
+    <div class="min-h-screen flex">
+        <!-- Sidebar -->
+        <div class="w-64 bg-card/50 border-r border-border p-6">
+            <div class="text-center mb-8">
+                <div class="text-3xl mb-2">🛡️</div>
+                <h1 class="text-xl font-bold">Content Moderation</h1>
+            </div>
+            
+            <nav class="space-y-2">
+                <a href="#" class="flex items-center space-x-2 p-2 rounded hover:bg-accent" data-tab="flagged">
+                    <span>🚩</span>
+                    <span>Flagged Content</span>
+                </a>
+                <a href="#" class="flex items-center space-x-2 p-2 rounded hover:bg-accent" data-tab="reports">
+                    <span>📋</span>
+                    <span>User Reports</span>
+                </a>
+                <a href="#" class="flex items-center space-x-2 p-2 rounded hover:bg-accent" data-tab="recent">
+                    <span>🕒</span>
+                    <span>Recent Activity</span>
+                </a>
+                <a href="#" class="flex items-center space-x-2 p-2 rounded hover:bg-accent" data-tab="banned">
+                    <span>🔒</span>
+                    <span>Banned Users</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-8">
+            <!-- Header -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold mb-2">Content Moderation Dashboard</h2>
+                <p class="text-muted-foreground">Review and moderate community content</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-card p-6 rounded-lg border border-border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-muted-foreground">Pending Reviews</p>
+                            <p class="text-2xl font-bold" id="pending-count">0</p>
+                        </div>
+                        <div class="text-2xl">⏳</div>
+                    </div>
+                </div>
+                <div class="bg-card p-6 rounded-lg border border-border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-muted-foreground">Flagged Content</p>
+                            <p class="text-2xl font-bold" id="flagged-count">0</p>
+                        </div>
+                        <div class="text-2xl">🚩</div>
+                    </div>
+                </div>
+                <div class="bg-card p-6 rounded-lg border border-border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-muted-foreground">Active Reports</p>
+                            <p class="text-2xl font-bold" id="reports-count">0</p>
+                        </div>
+                        <div class="text-2xl">📋</div>
+                    </div>
+                </div>
+                <div class="bg-card p-6 rounded-lg border border-border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-muted-foreground">Banned Users</p>
+                            <p class="text-2xl font-bold" id="banned-count">0</p>
+                        </div>
+                        <div class="text-2xl">🔒</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Sections -->
+            <div class="tab-content">
+                <!-- Flagged Content -->
+                <div id="flagged" class="tab-pane">
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <h3 class="text-lg font-semibold mb-4">🚩 Flagged Content</h3>
+                        <div id="flagged-content" class="space-y-4">
+                            <div class="text-center py-8 text-muted-foreground">
+                                <div class="text-4xl mb-2">🎉</div>
+                                <p>No flagged content to review!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Reports -->
+                <div id="reports" class="tab-pane hidden">
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <h3 class="text-lg font-semibold mb-4">📋 User Reports</h3>
+                        <div id="reports-content" class="space-y-4">
+                            <div class="text-center py-8 text-muted-foreground">
+                                <div class="text-4xl mb-2">✅</div>
+                                <p>No active reports to review!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div id="recent" class="tab-pane hidden">
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <h3 class="text-lg font-semibold mb-4">🕒 Recent Activity</h3>
+                        <div id="recent-content" class="space-y-4">
+                            <div class="text-center py-8 text-muted-foreground">
+                                <div class="text-4xl mb-2">⏳</div>
+                                <p>Loading recent activity...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Banned Users -->
+                <div id="banned" class="tab-pane hidden">
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <h3 class="text-lg font-semibold mb-4">🔒 Banned Users</h3>
+                        <div id="banned-content" class="space-y-4">
+                            <div class="text-center py-8 text-muted-foreground">
+                                <div class="text-4xl mb-2">🎉</div>
+                                <p>No banned users!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin-moderation.js"></script>
+</body>
+</html>
