@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Analytics | Continue The Quest</title>
+    <link rel="stylesheet" href="../output.css">
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
+</head>
+<body class="bg-background text-foreground">
+    <div class="min-h-screen p-8">
+        <!-- Header -->
+        <div class="mb-8 text-center">
+            <div class="text-4xl mb-2">📊</div>
+            <h1 class="text-3xl font-bold">User Analytics Dashboard</h1>
+            <p class="text-muted-foreground">Track engagement metrics and user behavior</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-muted-foreground">Total Users</p>
+                        <p class="text-2xl font-bold" id="total-users">0</p>
+                    </div>
+                    <div class="text-2xl">👥</div>
+                </div>
+            </div>
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-muted-foreground">Active Users (30d)</p>
+                        <p class="text-2xl font-bold" id="active-users">0</p>
+                    </div>
+                    <div class="text-2xl">🔥</div>
+                </div>
+            </div>
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-muted-foreground">Total Content</p>
+                        <p class="text-2xl font-bold" id="total-content">0</p>
+                    </div>
+                    <div class="text-2xl">📝</div>
+                </div>
+            </div>
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-muted-foreground">Engagement Rate</p>
+                        <p class="text-2xl font-bold" id="engagement-rate">0%</p>
+                    </div>
+                    <div class="text-2xl">📈</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- User Growth Chart -->
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h3 class="text-lg font-semibold mb-4">📈 User Growth (Last 30 Days)</h3>
+                <div class="h-64" id="user-growth-chart">
+                    <div class="flex items-center justify-center h-full text-muted-foreground">
+                        <div class="text-center">
+                            <div class="text-3xl mb-2">📊</div>
+                            <p>User registration trends</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Activity Chart -->
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h3 class="text-lg font-semibold mb-4">📝 Content Activity</h3>
+                <div class="h-64" id="content-activity-chart">
+                    <div class="flex items-center justify-center h-full text-muted-foreground">
+                        <div class="text-center">
+                            <div class="text-3xl mb-2">📊</div>
+                            <p>Content creation patterns</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Analytics -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Top Content Creators -->
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h3 class="text-lg font-semibold mb-4">🏆 Top Content Creators</h3>
+                <div id="top-creators" class="space-y-3">
+                    <div class="text-center py-8 text-muted-foreground">
+                        <div class="text-2xl mb-2">⏳</div>
+                        <p>Loading creators...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Most Popular Content -->
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h3 class="text-lg font-semibold mb-4">⭐ Most Popular Content</h3>
+                <div id="popular-content" class="space-y-3">
+                    <div class="text-center py-8 text-muted-foreground">
+                        <div class="text-2xl mb-2">⏳</div>
+                        <p>Loading content...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h3 class="text-lg font-semibold mb-4">🕒 Recent Activity</h3>
+                <div id="recent-activity" class="space-y-3">
+                    <div class="text-center py-8 text-muted-foreground">
+                        <div class="text-2xl mb-2">⏳</div>
+                        <p>Loading activity...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Engagement Metrics -->
+        <div class="mt-8 bg-card p-6 rounded-lg border border-border">
+            <h3 class="text-lg font-semibold mb-4">📊 Engagement Metrics</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="text-3xl mb-2">💬</div>
+                    <p class="text-sm text-muted-foreground">Comments</p>
+                    <p class="text-xl font-bold" id="total-comments">0</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl mb-2">🎬</div>
+                    <p class="text-sm text-muted-foreground">Media Items</p>
+                    <p class="text-xl font-bold" id="total-media">0</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl mb-2">🏷️</div>
+                    <p class="text-sm text-muted-foreground">Tags Created</p>
+                    <p class="text-xl font-bold" id="total-tags">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Retention -->
+        <div class="mt-8 bg-card p-6 rounded-lg border border-border">
+            <h3 class="text-lg font-semibold mb-4">🔄 User Retention</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm text-muted-foreground mb-2">New Users (7 days)</p>
+                    <div class="flex items-center space-x-2">
+                        <div class="text-2xl font-bold" id="new-users-7d">0</div>
+                        <div class="text-sm text-green-600" id="new-users-trend">+0%</div>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm text-muted-foreground mb-2">Returning Users (30 days)</p>
+                    <div class="flex items-center space-x-2">
+                        <div class="text-2xl font-bold" id="returning-users">0</div>
+                        <div class="text-sm text-green-600" id="returning-trend">+0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin-analytics.js"></script>
+</body>
+</html>
