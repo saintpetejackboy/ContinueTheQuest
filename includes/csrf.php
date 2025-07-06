@@ -36,6 +36,10 @@ function requireCSRFToken() {
     }
     
     if (!$token || !verifyCSRFToken($token)) {
+        // Log CSRF violation
+        require_once __DIR__ . '/security_logger.php';
+        logSecurityEvent('CSRF_VIOLATION', ['endpoint' => $_SERVER['REQUEST_URI'] ?? 'unknown'], null, 'CRITICAL');
+        
         http_response_code(403);
         echo json_encode(['error' => 'CSRF token validation failed']);
         exit;

@@ -81,6 +81,14 @@ function applyRateLimit($maxRequests = 60, $timeWindow = 60, $identifier = null)
     $rateLimit = new RateLimit();
     
     if (!$rateLimit->isAllowed($identifier, $maxRequests, $timeWindow)) {
+        // Log rate limit violation
+        require_once __DIR__ . '/security_logger.php';
+        logSecurityEvent('RATE_LIMIT_EXCEEDED', [
+            'endpoint' => $_SERVER['REQUEST_URI'] ?? 'unknown',
+            'limit' => $maxRequests,
+            'window' => $timeWindow
+        ], null, 'WARNING');
+        
         http_response_code(429);
         header('Content-Type: application/json');
         echo json_encode([
