@@ -100,7 +100,12 @@ async function loadAdminDashboard() {
                 
                 <!-- User Management Section -->
                 <div class="bg-card p-6 rounded-lg shadow-md border border-border mb-8">
-                    <h3 class="text-xl font-semibold mb-4 text-primary">👥 User Management</h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold text-primary">👥 User Management</h3>
+                        <a href="?page=admin-users" class="btn-primary btn-sm">
+                            🔧 Advanced User Management
+                        </a>
+                    </div>
                     <div class="space-y-4 max-h-96 overflow-y-auto">
                         ${users.length > 0 ? users.map(user => `
                             <div class="p-4 bg-muted rounded-lg border border-border">
@@ -160,7 +165,12 @@ async function loadAdminDashboard() {
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     
                     <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h3 class="text-xl font-semibold mb-4 text-primary">🤖 AI Models (${stats.ai_models.length})</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold text-primary">🤖 AI Models (${stats.ai_models.length})</h3>
+                            <a href="?page=admin-models" class="btn-primary btn-sm">
+                                ⚙️ Manage Models
+                            </a>
+                        </div>
                         <div class="space-y-3 max-h-80 overflow-y-auto">
                             ${stats.ai_models.map(model => `
                                 <div class="p-3 bg-muted rounded-lg">

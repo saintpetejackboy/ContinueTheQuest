@@ -360,16 +360,16 @@ function escapeHTML(str) {
             
             // Navigation buttons
             const prevBtn = this.container.querySelector('#prev-segment-btn');
-            const nextBtn = modal.querySelector('#next-segment-btn');
+            const nextBtn = this.container.querySelector('#next-segment-btn');
             if (prevBtn) prevBtn.addEventListener('click', () => this.navigateSegment(-1));
             if (nextBtn) nextBtn.addEventListener('click', () => this.navigateSegment(1));
 
             // Download button
-            const downloadBtn = modal.querySelector('#download-story-btn');
+            const downloadBtn = this.container.querySelector('#download-story-btn');
             if (downloadBtn) downloadBtn.addEventListener('click', () => this.downloadBranch());
 
             // Fullscreen button
-            const fullscreenBtn = modal.querySelector('#fullscreen-btn');
+            const fullscreenBtn = this.container.querySelector('#fullscreen-btn');
             if (fullscreenBtn) fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
             
             // Edit and delete buttons

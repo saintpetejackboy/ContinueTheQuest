@@ -67,10 +67,13 @@ try {
             $used = is_dir($userDir) ? getDirSize($userDir) : 0;
             $quotaVal = (int)$u['quota'];
             $percent = $quotaVal > 0 ? round(($used / $quotaVal) * 100, 1) : 0;
-            $u['space_used'] = $used;
+            $u['storage_used'] = $used; // Frontend expects 'storage_used'
+            $u['storage_quota'] = $quotaVal; // Frontend expects 'storage_quota'
+            $u['space_used'] = $used; // Keep for backward compatibility
             $u['space_used_formatted'] = formatFileSize($used);
             $u['quota_formatted'] = formatFileSize($quotaVal);
             $u['percent'] = $percent;
+            $u['last_active'] = $u['last_active_at']; // Frontend expects 'last_active'
             $u['avatar_url'] = $u['avatar']
                 ? "/uploads/users/{$u['id']}/avatars/{$u['avatar']}"
                 : null;
@@ -107,6 +110,11 @@ try {
             $quota = intval($data['quota'] ?? 0);
             $stmt = $db->prepare("UPDATE Users SET quota = ? WHERE id = ?");
             $stmt->execute([$quota, $targetId]);
+        }
+        if (isset($data['action']) && $data['action'] === 'toggle_admin') {
+            $makeAdmin = isset($data['make_admin']) ? intval($data['make_admin']) : 0;
+            $stmt = $db->prepare("UPDATE Users SET is_admin = ? WHERE id = ?");
+            $stmt->execute([$makeAdmin, $targetId]);
         }
         echo json_encode(['success' => true]);
         exit;

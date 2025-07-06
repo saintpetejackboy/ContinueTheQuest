@@ -230,8 +230,9 @@ function escapeHTML(str) {
             }
             html += `</div>`;
             
-            // Add Segment form (hidden by default, right under button)
-            html += `<div id="add-segment-form" class="mt-4 border rounded-lg p-6 space-y-4 hidden bg-card">`;
+            // Add Segment form (hidden by default, right under button) - only for logged in users
+            if (this.userLoggedIn) {
+                html += `<div id="add-segment-form" class="mt-4 border rounded-lg p-6 space-y-4 hidden bg-card">`;
             html += `<h2 class="text-xl font-semibold">Add Story Segment</h2>`;
             html += `<p class="text-sm text-muted-foreground">Provide a title, description, order, and upload your text or generate automatically. AI-created segments WILL be tagged as "AI-Assisted".</p>`;
             html += `<div>
@@ -269,20 +270,25 @@ function escapeHTML(str) {
                     <div id="image-preview" class="mb-2"></div>
                 </div>`;
             
-            html += `</div>`;
             
-            html += `<div id="story-upload-zone" class="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary">
-                <div class="space-y-2">
-                    <svg class="mx-auto h-12 w-12 text-muted-foreground" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <div class="text-sm text-muted-foreground">
-                        <label for="story-file" class="font-medium text-primary hover:text-primary/80 cursor-pointer">Click to upload text</label> or drag and drop
+            // Story upload section
+            html += `<div>
+                    <label class="block text-sm font-medium text-muted-foreground mb-2">Upload Story File</label>
+                    <div id="story-upload-zone" class="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary">
+                        <div class="space-y-2">
+                            <svg class="mx-auto h-12 w-12 text-muted-foreground" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <div class="text-sm text-muted-foreground">
+                                <label for="story-file" class="font-medium text-primary hover:text-primary/80 cursor-pointer">Click to upload text</label> or drag and drop
+                            </div>
+                            <p class="text-xs text-muted-foreground">Supported file types: .txt, .md (Markdown); max size 500 KB.</p>
+                        </div>
+                        <input type="file" id="story-file" accept=".txt,.md" class="hidden">
                     </div>
-                    <p class="text-xs text-muted-foreground">Supported file types: .txt, .md (Markdown); max size 500 KB.</p>
-                </div>
-                <input type="file" id="story-file" accept=".txt,.md" class="hidden">
-            </div>`;
+                    <div id="story-previews" class="mt-2"></div>
+                </div>`;
+            
             // Tags section
             html += `<div>
                     <label class="block text-sm font-medium text-muted-foreground mb-2">Tags (Optional)</label>
@@ -297,15 +303,16 @@ function escapeHTML(str) {
                     </div>
                 </div>`;
             
-            html += `<div id="story-previews" class="mt-2"></div>`;
-            
             // Action buttons
             html += `<div class="flex gap-3 pt-4 border-t border-border">`;
             html += `<button id="submit-segment-btn" class="btn-primary flex-1">📝 Submit Segment</button>`;
             html += `<button id="generate-story-btn" class="btn-secondary flex-1">🤖 Generate with AI</button>`;
             html += `<button id="cancel-segment-btn" class="btn-ghost">✕ Cancel</button>`;
             html += `</div>`;
+            
+            // Close the add-segment-form div
             html += `</div>`;
+            } // End if (this.userLoggedIn) for add-segment-form
             
             // Segments section (moved here to be right under the Add button)
             if (this.segments && this.segments.length > 0) {
