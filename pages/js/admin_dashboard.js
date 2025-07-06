@@ -1,18 +1,6 @@
 console.log('STARTING ADMIN DASHBOARD - DIRECT APPROACH');
 
-// Security: HTML escaping function to prevent XSS
-function escapeHTML(str) {
-    if (typeof str !== 'string') return str;
-    return str.replace(/[&<>"']/g, function(match) {
-        return {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;'
-        }[match];
-    });
-}
+// escapeHTML function is now provided by utils.js
 
 // Direct execution - no classes, no router dependencies
 async function loadAdminDashboard() {

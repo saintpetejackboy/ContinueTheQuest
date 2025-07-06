@@ -197,13 +197,6 @@ class AnalyticsDashboard {
         `;
     }
 
-    escapeHtml(text) {
-        if (typeof text !== 'string') return text;
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     formatDate(dateString) {
         const date = new Date(dateString);
         const now = new Date();

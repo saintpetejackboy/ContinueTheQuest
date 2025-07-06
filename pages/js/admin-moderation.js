@@ -332,13 +332,6 @@ class ModerationDashboard {
     }
 
     // Utility methods
-    escapeHtml(text) {
-        if (typeof text !== 'string') return text;
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     formatDate(dateString) {
         return new Date(dateString).toLocaleDateString() + ' ' + new Date(dateString).toLocaleTimeString();
     }
