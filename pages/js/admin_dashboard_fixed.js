@@ -95,15 +95,15 @@ async function loadAdminDashboard() {
                                 <div class="flex justify-between items-start mb-3">
                                     <div>
                                         <h4 class="font-medium text-foreground flex items-center gap-2">
-                                            ${user.username}
+                                            ${user.username || 'Unknown User'}
                                             ${user.is_admin ? '<span class="px-2 py-1 text-xs bg-primary text-primary-foreground rounded">ADMIN</span>' : ''}
                                             ${user.is_banned ? '<span class="px-2 py-1 text-xs bg-red-500 text-white rounded">BANNED</span>' : ''}
                                         </h4>
-                                        <p class="text-sm text-muted-foreground">${user.email}</p>
-                                        <p class="text-xs text-muted-foreground">Joined: ${new Date(user.created_at).toLocaleDateString()}</p>
+                                        <p class="text-sm text-muted-foreground">${user.email || 'No email'}</p>
+                                        <p class="text-xs text-muted-foreground">Joined: ${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}</p>
                                     </div>
                                     <div class="text-right">
-                                        <p class="text-sm font-medium text-primary">${user.credits.toLocaleString()} credits</p>
+                                        <p class="text-sm font-medium text-primary">${(user.credits || 0).toLocaleString()} credits</p>
                                         <p class="text-xs text-muted-foreground">ID: ${user.id}</p>
                                     </div>
                                 </div>
@@ -112,31 +112,31 @@ async function loadAdminDashboard() {
                                 <div class="mb-3">
                                     <div class="flex justify-between text-sm mb-1">
                                         <span class="text-muted-foreground">Storage Used</span>
-                                        <span class="text-foreground">${formatBytes(user.storage_used || 0)} / ${formatBytes(user.quota)}</span>
+                                        <span class="text-foreground">${formatBytes(user.storage_used || 0)} / ${formatBytes(user.quota || 1048576)}</span>
                                     </div>
                                     <div class="w-full bg-border rounded-full h-2">
-                                        <div class="h-2 rounded-full ${(user.storage_used || 0) / user.quota > 0.8 ? 'bg-red-500' : (user.storage_used || 0) / user.quota > 0.6 ? 'bg-yellow-500' : 'bg-green-500'}" 
-                                             style="width: ${Math.min(100, ((user.storage_used || 0) / user.quota) * 100)}%"></div>
+                                        <div class="h-2 rounded-full ${(user.storage_used || 0) / (user.quota || 1048576) > 0.8 ? 'bg-red-500' : (user.storage_used || 0) / (user.quota || 1048576) > 0.6 ? 'bg-yellow-500' : 'bg-green-500'}" 
+                                             style="width: ${Math.min(100, ((user.storage_used || 0) / (user.quota || 1048576)) * 100)}%"></div>
                                     </div>
                                 </div>
                                 
                                 <!-- User Actions -->
                                 <div class="flex flex-wrap gap-2">
-                                    <button onclick="adjustCredits(${user.id}, '${user.username}')" 
+                                    <button onclick="adjustCredits(${user.id}, '${user.username || 'Unknown'}')" 
                                             class="px-3 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/80">
                                         💰 Credits
                                     </button>
-                                    <button onclick="adjustQuota(${user.id}, '${user.username}', ${user.quota})" 
+                                    <button onclick="adjustQuota(${user.id}, '${user.username || 'Unknown'}', ${user.quota || 1048576})" 
                                             class="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded hover:bg-secondary/80">
                                         💾 Storage
                                     </button>
-                                    <button onclick="toggleBan(${user.id}, '${user.username}', ${user.is_banned})" 
+                                    <button onclick="toggleBan(${user.id}, '${user.username || 'Unknown'}', ${user.is_banned || false})" 
                                             class="px-3 py-1 text-xs ${user.is_banned ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'} text-white rounded">
                                         ${user.is_banned ? '✅ Unban' : '🚫 Ban'}
                                     </button>
                                     ${!user.is_admin ? 
-                                        '<button onclick="toggleAdmin(' + user.id + ', \'' + user.username + '\', false)" class="px-3 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600">👑 Make Admin</button>' : 
-                                        (user.id !== 42 ? '<button onclick="toggleAdmin(' + user.id + ', \'' + user.username + '\', true)" class="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600">👤 Remove Admin</button>' : '')
+                                        '<button onclick="toggleAdmin(' + user.id + ', \'' + (user.username || 'Unknown') + '\', false)" class="px-3 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600">👑 Make Admin</button>' : 
+                                        (user.id !== 42 ? '<button onclick="toggleAdmin(' + user.id + ', \'' + (user.username || 'Unknown') + '\', true)" class="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600">👤 Remove Admin</button>' : '')
                                     }
                                 </div>
                             </div>
