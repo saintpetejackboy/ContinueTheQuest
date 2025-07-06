@@ -4,8 +4,12 @@
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../includes/utils.php';
+require_once __DIR__ . '/../../includes/rate_limit.php';
 
 header('Content-Type: application/json');
+
+// Apply rate limiting: 10 segment creations per minute
+applyRateLimit(10, 60);
 
 $user = getCurrentUser();
 if (!$user) {

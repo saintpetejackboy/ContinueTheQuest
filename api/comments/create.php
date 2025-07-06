@@ -3,8 +3,12 @@
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../includes/utils.php';
+require_once __DIR__ . '/../../includes/rate_limit.php';
 
 header('Content-Type: application/json');
+
+// Apply rate limiting: 20 comments per minute
+applyRateLimit(20, 60);
 
 $user = getCurrentUser();
 if (!$user) {
