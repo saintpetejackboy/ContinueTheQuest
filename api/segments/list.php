@@ -28,20 +28,34 @@ $stmt = $db->prepare(
 $stmt->execute([$branchId]);
 $segments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get tags for each segment
-foreach ($segments as &$segment) {
+// Get all tags for all segments in one query (fix N+1 problem)
+if (!empty($segments)) {
+    $segmentIds = array_column($segments, 'id');
+    $placeholders = str_repeat('?,', count($segmentIds) - 1) . '?';
+    
     $tagStmt = $db->prepare(
-        'SELECT t.id, t.name, tl.is_mandatory 
+        "SELECT tl.target_id as segment_id, t.id, t.name, tl.is_mandatory 
          FROM tag_links tl
          JOIN tags t ON t.id = tl.tag_id
-         WHERE tl.target_type = "segment" AND tl.target_id = ?
-         ORDER BY tl.is_mandatory DESC, t.name ASC'
+         WHERE tl.target_type = 'segment' AND tl.target_id IN ($placeholders)
+         ORDER BY tl.target_id, tl.is_mandatory DESC, t.name ASC"
     );
-    $tagStmt->execute([$segment['id']]);
-    $segment['tags'] = $tagStmt->fetchAll(PDO::FETCH_ASSOC);
+    $tagStmt->execute($segmentIds);
+    $allTags = $tagStmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Check if user can edit this segment
-    $segment['can_edit'] = ($user && ($user['id'] === (int)$segment['created_by'] || $user['is_admin']));
+    // Group tags by segment_id
+    $tagsBySegment = [];
+    foreach ($allTags as $tag) {
+        $segmentId = $tag['segment_id'];
+        unset($tag['segment_id']);
+        $tagsBySegment[$segmentId][] = $tag;
+    }
+    
+    // Assign tags to segments and check edit permissions
+    foreach ($segments as &$segment) {
+        $segment['tags'] = $tagsBySegment[$segment['id']] ?? [];
+        $segment['can_edit'] = ($user && ($user['id'] === (int)$segment['created_by'] || $user['is_admin']));
+    }
 }
 
 jsonResponse([

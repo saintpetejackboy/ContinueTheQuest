@@ -37,23 +37,27 @@ try {
         default => 'ORDER BY created_at DESC', // 'new'
     };
 
-    // Fetch comments (include hidden comments for admins)
+    // Fetch comments with user data using JOIN (fix N+1 query problem)
     $currentUser = getCurrentUser();
     $isAdmin     = $currentUser && !empty($currentUser['is_admin']);
 
     if ($isAdmin) {
         $stmt = $db->prepare(
-            "SELECT id, user_id, body, is_anonymous, vote_score, hidden, created_at
-             FROM comments
-             WHERE target_type = ? AND target_id = ?
+            "SELECT c.id, c.user_id, c.body, c.is_anonymous, c.vote_score, c.hidden, c.created_at,
+                    u.username, u.avatar
+             FROM comments c
+             LEFT JOIN users u ON c.user_id = u.id
+             WHERE c.target_type = ? AND c.target_id = ?
              $orderBy"
         );
         $stmt->execute([$targetType, $targetId]);
     } else {
         $stmt = $db->prepare(
-            "SELECT id, user_id, body, is_anonymous, vote_score, created_at
-             FROM comments
-             WHERE target_type = ? AND target_id = ? AND hidden = 0
+            "SELECT c.id, c.user_id, c.body, c.is_anonymous, c.vote_score, c.created_at,
+                    u.username, u.avatar
+             FROM comments c
+             LEFT JOIN users u ON c.user_id = u.id
+             WHERE c.target_type = ? AND c.target_id = ? AND c.hidden = 0
              $orderBy"
         );
         $stmt->execute([$targetType, $targetId]);
@@ -77,16 +81,12 @@ try {
             $comment['hidden'] = (bool)$row['hidden'];
         }
 
-        if (!$comment['is_anonymous']) {
-            $userStmt = $db->prepare('SELECT username, avatar FROM users WHERE id = ?');
-            $userStmt->execute([$row['user_id']]);
-            $u = $userStmt->fetch(PDO::FETCH_ASSOC);
-            if ($u) {
-                $comment['username']   = $u['username'];
-                $comment['avatar_url'] = $u['avatar']
-                    ? "/uploads/users/{$row['user_id']}/avatars/{$u['avatar']}"
-                    : null;
-            }
+        // User data is now included in the main query (no N+1 problem)
+        if (!$comment['is_anonymous'] && $row['username']) {
+            $comment['username']   = $row['username'];
+            $comment['avatar_url'] = $row['avatar']
+                ? "/uploads/users/{$row['user_id']}/avatars/{$row['avatar']}"
+                : null;
         }
 
         $comments[] = $comment;
