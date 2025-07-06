@@ -80,8 +80,8 @@ try {
     $storageStmt->execute([$user['id']]);
     $quota = $storageStmt->fetchColumn();
     
-    // Calculate current usage
-    $userDir = "/var/www/ctq/uploads/users/{$user['id']}";
+    // Calculate current usage (using safe path handling)
+    $userDir = getSafeUserDir($user['id']);
     $currentUsage = 0;
     if (is_dir($userDir)) {
         $currentUsage = calculateDirectorySize($userDir);
@@ -93,9 +93,9 @@ try {
         exit;
     }
     
-    // Create user images directory if it doesn't exist
-    $userDir = "/var/www/ctq/uploads/users/{$user['id']}";
-    $imagesDir = "$userDir/images";
+    // Create user images directory if it doesn't exist (using safe path handling)
+    $userDir = getSafeUserDir($user['id']);
+    $imagesDir = getSafeUserDir($user['id'], 'images');
     
     if (!is_dir($userDir)) {
         mkdir($userDir, 0755, true);

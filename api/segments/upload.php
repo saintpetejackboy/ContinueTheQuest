@@ -49,7 +49,16 @@ $file = $_FILES['file'];
 $allowedTypes = ['text/plain', 'text/markdown'];
 $maxSize = 500 * 1024; // 500KB
 
-if (!in_array($file['type'], $allowedTypes)) {
+// Use server-side MIME type detection instead of trusting client
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+$detectedType = finfo_file($finfo, $file['tmp_name']);
+finfo_close($finfo);
+
+// Also check file extension for additional security
+$allowedExtensions = ['txt', 'md'];
+$fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+if (!in_array($detectedType, $allowedTypes) || !in_array($fileExtension, $allowedExtensions)) {
     jsonResponse(['success' => false, 'error' => 'Invalid file type. Only .txt and .md files are allowed'], 400);
 }
 

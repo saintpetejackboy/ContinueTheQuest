@@ -9,7 +9,7 @@ if (!$user) {
     jsonResponse(['success' => false, 'error' => 'Not authenticated'], 401);
 }
 
-$userDir = "/var/www/ctq/uploads/users/" . $user['id'];
+$userDir = getSafeUserDir($user['id']);
 $usedBytes = 0;
 
 // Calculate used storage by recursively scanning user directory

@@ -246,3 +246,85 @@ function convertToWebp($sourcePath, $destinationDir, $originalFileName) {
         return false;
     }
 }
+
+/**
+ * Safe path handling functions to prevent path traversal attacks
+ */
+
+/**
+ * Get safe user upload directory path
+ * Prevents path traversal by validating user ID and creating safe paths
+ */
+function getSafeUserDir($userId, $subdirectory = '') {
+    // Validate user ID is numeric and positive
+    if (!is_numeric($userId) || $userId <= 0) {
+        throw new InvalidArgumentException('Invalid user ID');
+    }
+    
+    // Base upload directory (should be configurable)
+    $baseDir = getenv('UPLOAD_DIR') ?: '/var/www/ctq/uploads/users';
+    
+    // Ensure base directory ends with slash
+    $baseDir = rtrim($baseDir, '/');
+    
+    // Construct safe path
+    $userDir = $baseDir . '/' . intval($userId);
+    
+    // Add subdirectory if specified
+    if (!empty($subdirectory)) {
+        // Sanitize subdirectory name to prevent traversal
+        $subdirectory = basename($subdirectory);
+        $userDir .= '/' . $subdirectory;
+    }
+    
+    return $userDir;
+}
+
+/**
+ * Safely create directory with proper permissions
+ */
+function createSafeDirectory($path) {
+    if (!is_dir($path)) {
+        if (!mkdir($path, 0755, true)) {
+            throw new RuntimeException('Failed to create directory: ' . $path);
+        }
+    }
+    return true;
+}
+
+/**
+ * Get environment variable with fallback
+ */
+function getConfigValue($key, $default = null) {
+    $value = getenv($key);
+    return $value !== false ? $value : $default;
+}
+
+/**
+ * Get user quota from database
+ */
+function getUserQuota($userId) {
+    $db = getDB();
+    $stmt = $db->prepare('SELECT quota FROM users WHERE id = ?');
+    $stmt->execute([$userId]);
+    $quota = $stmt->fetchColumn();
+    
+    // Return quota or default value if not set
+    return $quota !== false ? (int)$quota : (100 * 1024 * 1024); // Default 100MB
+}
+
+/**
+ * Get current disk usage for user
+ */
+function getUserDiskUsage($userId) {
+    try {
+        $userDir = getSafeUserDir($userId);
+        if (is_dir($userDir)) {
+            return calculateDirectorySize($userDir);
+        }
+        return 0;
+    } catch (Exception $e) {
+        error_log("Error calculating disk usage for user $userId: " . $e->getMessage());
+        return 0;
+    }
+}

@@ -1,1081 +1,633 @@
-console.log('=== ADMIN DASHBOARD JS FILE LOADING ===');
+console.log('STARTING ADMIN DASHBOARD - DIRECT APPROACH');
 
-(function() {
-    console.log('=== INSIDE IIFE ===');
+// Security: HTML escaping function to prevent XSS
+function escapeHTML(str) {
+    if (typeof str !== 'string') return str;
+    return str.replace(/[&<>"']/g, function(match) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[match];
+    });
+}
+
+// Direct execution - no classes, no router dependencies
+async function loadAdminDashboard() {
+    console.log('Loading admin dashboard...');
     
-    function escapeHTML(str) {
-        if (typeof str !== 'string') return '';
-        return str.replace(/[&<>"']/g, ch => ({
-            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-        }[ch]));
+    // Get elements
+    const loading = document.getElementById('loading-indicator');
+    const content = document.getElementById('dashboard-content');
+    
+    if (!loading || !content) {
+        console.error('Required elements not found');
+        return;
     }
-
-    function ensureImagePath(path) {
-        if (!path) return '';
-        return path.startsWith('images/') ? path : 'images/' + path;
-    }
-
-    class AdminDashboard {
-        constructor() {
-            console.log('=== ADMIN DASHBOARD CONSTRUCTOR START ===');
-            this.container = document.getElementById('admin-dashboard-container');
-            this.loadingIndicator = document.getElementById('loading-indicator');
-            this.dashboardContent = document.getElementById('dashboard-content');
-
-            console.log('Elements found:', {
-                container: !!this.container,
-                loadingIndicator: !!this.loadingIndicator,
-                dashboardContent: !!this.dashboardContent
-            });
-
-            if (!this.container) {
-                console.error('AdminDashboard: Container not found.');
-                return;
-            }
+    
+    try {
+        // Fetch data
+        console.log('Fetching stats...');
+        const response = await fetch('/api/admin/stats.php');
+        const stats = await response.json();
+        console.log('Stats loaded:', Object.keys(stats));
+        
+        // Hide loading
+        loading.style.display = 'none';
+        
+        // Show content with force
+        content.className = '';
+        content.style.cssText = 'display: block !important; visibility: visible !important;';
+        
+        // Fetch users for management
+        console.log('Fetching users...');
+        const usersRes = await fetch('/api/admin/users.php');
+        let users = [];
+        if (usersRes.ok) {
+            const usersData = await usersRes.json();
+            console.log('Raw users data:', usersData);
+            console.log('Users data type:', typeof usersData);
             
-            // Initial state: show loading, hide content
-            if (this.loadingIndicator) this.loadingIndicator.classList.remove('hidden');
-            if (this.dashboardContent) this.dashboardContent.classList.add('hidden');
-
-            console.log('Starting initialization...');
-            this.init();
-        }
-
-        async init() {
-            console.log('AdminDashboard: Initializing...');
-            console.log('AdminDashboard: Container element:', this.container);
-            console.log('AdminDashboard: Loading indicator element:', this.loadingIndicator);
-            console.log('AdminDashboard: Dashboard content element:', this.dashboardContent);
-            
-            try {
-                await this.loadStats();
-                if (this.stats) {
-                    console.log('AdminDashboard: Stats loaded successfully, rendering dashboard...');
-                    this.renderDashboard();
-                    this.bindEvents();
-                    this.showSuccess();
-                    console.log('AdminDashboard: Initialization complete.');
-                } else {
-                    console.error('AdminDashboard: Stats is null/undefined after loadStats()');
-                    this.showError('Failed to load dashboard data - stats object is null');
-                }
-            } catch (error) {
-                console.error('AdminDashboard: Error during initialization:', error);
-                this.showError('Dashboard initialization failed: ' + error.message);
+            // Handle different response formats
+            if (Array.isArray(usersData)) {
+                users = usersData;
+            } else if (usersData && usersData.users && Array.isArray(usersData.users)) {
+                users = usersData.users;
+            } else if (usersData && typeof usersData === 'object') {
+                // If it's an object, convert to array
+                users = Object.values(usersData);
             }
         }
-
-        async loadStats() {
-            console.log('=== LOADSTATS START ===');
-            
-            try {
-                const res = await fetch('/api/admin/stats.php');
-                console.log('FETCH SUCCESS - Status:', res.status);
+        
+        console.log('Users loaded:', users.length, users);
+        
+        // Create dashboard HTML using Tailwind classes
+        content.innerHTML = `
+            <div class="w-full max-w-7xl mx-auto py-8 px-4">
+                <h1 class="text-3xl font-bold mb-6 text-primary">📊 Admin Dashboard</h1>
                 
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}`);
-                }
-                
-                this.stats = await res.json();
-                console.log('JSON PARSED - Keys:', Object.keys(this.stats));
-                
-            } catch (error) {
-                console.error('FETCH ERROR:', error.message);
-                this.stats = null;
-                this.showError('API Error: ' + error.message);
-            }
-        }
-
-        renderDashboard() {
-            console.log('AdminDashboard: Attempting to render dashboard...');
-            console.log('AdminDashboard: Stats object:', this.stats);
-            console.log('AdminDashboard: Stats object type:', typeof this.stats);
-            
-            if (!this.stats) {
-                console.warn('AdminDashboard: No stats available to render.');
-                this.showError('No stats data available to render');
-                return;
-            }
-            
-            console.log('AdminDashboard: Stats validation - checking required properties...');
-            console.log('AdminDashboard: Has users?', !!this.stats.users);
-            console.log('AdminDashboard: Has system?', !!this.stats.system);
-            console.log('AdminDashboard: Has media?', !!this.stats.media);
-            console.log('AdminDashboard: Has branches?', !!this.stats.branches);
-            console.log('AdminDashboard: Has segments?', !!this.stats.segments);
-            console.log('AdminDashboard: Has comments?', !!this.stats.comments);
-            console.log('AdminDashboard: Has votes?', !!this.stats.votes);
-            console.log('AdminDashboard: Has tags?', !!this.stats.tags);
-            console.log('AdminDashboard: Has storage?', !!this.stats.storage);
-
-            let html = `
-                <h1 class="text-3xl font-bold mb-6">Admin Dashboard</h1>
-
-                <!-- System Overview -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h2 class="text-lg font-semibold mb-2">System Uptime</h2>
-                        <p class="text-2xl font-bold text-primary">${this.stats.system.uptime || 'N/A'}</p>
+                <!-- Overview Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-gradient-to-br from-card to-card/50 p-6 rounded-lg shadow-md border border-border hover:shadow-lg transition-all duration-200">
+                        <div class="flex items-center mb-3">
+                            <div class="text-2xl mr-3">🖥️</div>
+                            <h3 class="text-lg font-semibold text-primary">System Info</h3>
+                        </div>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>⏱️</span> Uptime: <span class="text-foreground font-medium">${escapeHTML(stats.system.uptime)}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>📁</span> Files: <span class="text-foreground font-medium">${escapeHTML(stats.system.total_files_in_uploads)}</span></p>
                     </div>
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h2 class="text-lg font-semibold mb-2">Total Files (Uploads)</h2>
-                        <p class="text-2xl font-bold text-primary">${this.stats.system.total_files_in_uploads}</p>
+                    
+                    <div class="bg-gradient-to-br from-card to-card/50 p-6 rounded-lg shadow-md border border-border hover:shadow-lg transition-all duration-200">
+                        <div class="flex items-center mb-3">
+                            <div class="text-2xl mr-3">👥</div>
+                            <h3 class="text-lg font-semibold text-primary">Users</h3>
+                        </div>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>👤</span> Total: <span class="text-foreground font-medium">${stats.users.total}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>🛡️</span> Admins: <span class="text-foreground font-medium">${stats.users.admins}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>💰</span> Credits: <span class="text-foreground font-medium">${stats.users.total_credits.toLocaleString()}</span></p>
                     </div>
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h2 class="text-lg font-semibold mb-2">Total Users</h2>
-                        <p class="text-2xl font-bold text-primary">${this.stats.users.total}</p>
+                    
+                    <div class="bg-gradient-to-br from-card to-card/50 p-6 rounded-lg shadow-md border border-border hover:shadow-lg transition-all duration-200">
+                        <div class="flex items-center mb-3">
+                            <div class="text-2xl mr-3">📚</div>
+                            <h3 class="text-lg font-semibold text-primary">Content</h3>
+                        </div>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>🎬</span> Media: <span class="text-foreground font-medium">${stats.media.total}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>🌳</span> Branches: <span class="text-foreground font-medium">${stats.branches.total}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>📝</span> Segments: <span class="text-foreground font-medium">${stats.segments.total}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>💬</span> Comments: <span class="text-foreground font-medium">${stats.comments.total}</span></p>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-card to-card/50 p-6 rounded-lg shadow-md border border-border hover:shadow-lg transition-all duration-200">
+                        <div class="flex items-center mb-3">
+                            <div class="text-2xl mr-3">📊</div>
+                            <h3 class="text-lg font-semibold text-primary">Engagement</h3>
+                        </div>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>🗳️</span> Total Votes: <span class="text-foreground font-medium">${stats.votes.total}</span></p>
+                        <p class="text-muted-foreground flex items-center gap-2"><span>👍</span> Upvotes: <span class="text-green-500 font-medium">${stats.votes.upvotes}</span></p>
+                        <p class="text-muted-foreground">Downvotes: <span class="text-red-500 font-medium">${stats.votes.downvotes}</span></p>
+                        <p class="text-muted-foreground">Tags: <span class="text-foreground font-medium">${stats.tags.total}</span></p>
                     </div>
                 </div>
-
-                <!-- User Statistics -->
+                
+                <!-- User Management Section -->
                 <div class="bg-card p-6 rounded-lg shadow-md border border-border mb-8">
-                    <h2 class="text-xl font-semibold mb-4">User Statistics</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div>
-                            <p class="text-muted-foreground">Admins:</p>
-                            <p class="text-2xl font-bold">${this.stats.users.admins}</p>
-                        </div>
-                        <div>
-                            <p class="text-muted-foreground">Banned:</p>
-                            <p class="text-2xl font-bold">${this.stats.users.banned}</p>
-                        </div>
-                        <div>
-                            <p class="text-muted-foreground">Total Credits:</p>
-                            <p class="text-2xl font-bold">${this.stats.users.total_credits}</p>
-                        </div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold text-primary">👥 User Management</h3>
+                        <a href="?page=admin-users" class="btn-primary btn-sm">
+                            🔧 Advanced User Management
+                        </a>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">User Growth (Monthly)</h3>
-                    <canvas id="userGrowthChart"></canvas>
-                </div>
-
-                <!-- Content Statistics -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h2 class="text-xl font-semibold mb-4">Media Statistics</h2>
-                        <p class="text-muted-foreground">Total Media:</p>
-                        <p class="text-2xl font-bold mb-4">${this.stats.media.total}</p>
-                        <p class="text-muted-foreground">Avg. Vote Score:</p>
-                        <p class="text-2xl font-bold mb-4">${this.stats.media.avg_vote_score}</p>
-                        <h3 class="text-lg font-semibold mb-2">Media Growth (Monthly)</h3>
-                        <canvas id="mediaGrowthChart"></canvas>
-                    </div>
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h2 class="text-xl font-semibold mb-4">Branch Statistics</h2>
-                        <p class="text-muted-foreground">Total Branches:</p>
-                        <p class="text-2xl font-bold mb-4">${this.stats.branches.total}</p>
-                        <p class="text-muted-foreground">Avg. Vote Score:</p>
-                        <p class="text-2xl font-bold mb-4">${this.stats.branches.avg_vote_score}</p>
-                        <h3 class="text-lg font-semibold mb-2">Branches by Type</h3>
-                        <canvas id="branchesByTypeChart"></canvas>
-                        <h3 class="text-lg font-semibold mb-2 mt-4">Branch Growth (Monthly)</h3>
-                        <canvas id="branchGrowthChart"></canvas>
-                    </div>
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h2 class="text-xl font-semibold mb-4">Segment Statistics</h2>
-                        <p class="text-muted-foreground">Total Segments:</p>
-                        <p class="text-2xl font-bold mb-4">${this.stats.segments.total}</p>
-                        <p class="text-muted-foreground">Avg. Vote Score:</p>
-                        <p class="text-2xl font-bold mb-4">${this.stats.segments.avg_vote_score}</p>
-                        <h3 class="text-lg font-semibold mb-2">Segment Growth (Monthly)</h3>
-                        <canvas id="segmentGrowthChart"></canvas>
-                    </div>
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h2 class="text-xl font-semibold mb-4">Comment Statistics</h2>
-                        <p class="text-muted-foreground">Total Comments:</p>
-                        <p class="text-2xl font-bold mb-4">${this.stats.comments.total}</p>
-                        <p class="text-muted-foreground">Hidden Comments:</p>
-                        <p class="text-2xl font-bold mb-4">${this.stats.comments.hidden}</p>
-                        <p class="text-muted-foreground">Avg. Vote Score:</p>
-                        <p class="text-2xl font-bold mb-4">${this.stats.comments.avg_vote_score}</p>
-                        <h3 class="text-lg font-semibold mb-2">Comments by Target Type</h3>
-                        <canvas id="commentsByTargetTypeChart"></canvas>
-                        <h3 class="text-lg font-semibold mb-2 mt-4">Comment Growth (Monthly)</h3>
-                        <canvas id="commentGrowthChart"></canvas>
+                    <div class="space-y-4 max-h-96 overflow-y-auto">
+                        ${users.length > 0 ? users.map(user => `
+                            <div class="p-4 bg-muted rounded-lg border border-border">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h4 class="font-medium text-foreground flex items-center gap-2">
+                                            ${user.username || 'Unknown User'}
+                                            ${user.is_admin ? '<span class="px-2 py-1 text-xs bg-primary text-primary-foreground rounded">ADMIN</span>' : ''}
+                                            ${user.is_banned ? '<span class="px-2 py-1 text-xs bg-red-500 text-white rounded">BANNED</span>' : ''}
+                                        </h4>
+                                        <p class="text-sm text-muted-foreground">${user.email || 'No email'}</p>
+                                        <p class="text-xs text-muted-foreground">Joined: ${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-primary">${(user.credits || 0).toLocaleString()} credits</p>
+                                        <p class="text-xs text-muted-foreground">ID: ${user.id}</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Storage Usage Bar -->
+                                <div class="mb-3">
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-muted-foreground">Storage Used</span>
+                                        <span class="text-foreground">${formatBytes(user.space_used || 0)} / ${formatBytes(user.quota || 1048576)}</span>
+                                    </div>
+                                    <div class="w-full bg-border rounded-full h-3 shadow-inner">
+                                        <div class="h-3 rounded-full transition-all duration-300 ${(user.space_used || 0) / (user.quota || 1048576) > 0.8 ? 'bg-gradient-to-r from-red-500 to-red-600 shadow-red-500/50' : (user.space_used || 0) / (user.quota || 1048576) > 0.6 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 shadow-yellow-500/50' : 'bg-gradient-to-r from-green-500 to-green-600 shadow-green-500/50'}" 
+                                             style="width: ${Math.min(100, ((user.space_used || 0) / (user.quota || 1048576)) * 100)}%; box-shadow: 0 0 8px ${(user.space_used || 0) / (user.quota || 1048576) > 0.8 ? 'rgba(239, 68, 68, 0.6)' : (user.space_used || 0) / (user.quota || 1048576) > 0.6 ? 'rgba(245, 158, 11, 0.6)' : 'rgba(16, 185, 129, 0.6)'}"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- User Actions -->
+                                <div class="flex flex-wrap gap-2">
+                                    <button onclick="adjustCredits(${user.id}, '${user.username || 'Unknown'}')" 
+                                            class="px-3 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/80">
+                                        💰 Credits
+                                    </button>
+                                    <button onclick="adjustQuota(${user.id}, '${user.username || 'Unknown'}', ${user.quota || 1048576})" 
+                                            class="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded hover:bg-secondary/80">
+                                        💾 Storage
+                                    </button>
+                                    <button onclick="toggleBan(${user.id}, '${user.username || 'Unknown'}', ${user.is_banned || false})" 
+                                            class="px-3 py-1 text-xs ${user.is_banned ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'} text-white rounded">
+                                        ${user.is_banned ? '✅ Unban' : '🚫 Ban'}
+                                    </button>
+                                    ${!user.is_admin ? 
+                                        '<button onclick="toggleAdmin(' + user.id + ', \'' + (user.username || 'Unknown') + '\', false)" class="px-3 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600">👑 Make Admin</button>' : 
+                                        (user.id !== 42 ? '<button onclick="toggleAdmin(' + user.id + ', \'' + (user.username || 'Unknown') + '\', true)" class="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600">👤 Remove Admin</button>' : '')
+                                    }
+                                </div>
+                            </div>
+                        `).join('') : '<p class="text-muted-foreground">No users found or unable to load users.</p>'}
                     </div>
                 </div>
-
-                <!-- Other Statistics -->
+                
+                <!-- Storage & Tags -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    
                     <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h2 class="text-xl font-semibold mb-4">Vote Statistics</h2>
-                        <p class="text-muted-foreground">Total Votes:</p>
-                        <p class="text-2xl font-bold mb-4">${this.stats.votes.total}</p>
-                        <p class="text-muted-foreground">Upvotes:</p>
-                        <p class="text-2xl font-bold">${this.stats.votes.upvotes}</p>
-                        <p class="text-muted-foreground">Downvotes:</p>
-                        <p class="text-2xl font-bold">${this.stats.votes.downvotes}</p>
-                    </div>
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h2 class="text-xl font-semibold mb-4">Tag Statistics</h2>
-                        <p class="text-muted-foreground">Total Tags:</p>
-                        <p class="text-2xl font-bold mb-4">${this.stats.tags.total}</p>
-                        <p class="text-muted-foreground">Genre Tags:</p>
-                        <p class="text-2xl font-bold mb-4">${this.stats.tags.genres}</p>
-                        <h3 class="text-lg font-semibold mb-2">Top 10 Tags</h3>
-                        <ul>
-                            ${this.stats.tags.top_10.map(tag => `<li>${escapeHTML(tag.name)} (${tag.count})</li>`).join('')}
-                        </ul>
-                    </div>
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h2 class="text-xl font-semibold mb-4">AI Model Information</h2>
-                        <div class="space-y-2">
-                            ${this.stats.ai_models.map(model => `
-                                <div class="border-b border-border pb-2">
-                                    <p class="font-medium">${escapeHTML(model.name)}</p>
-                                    <p class="text-sm text-muted-foreground">${escapeHTML(model.description || 'No description')}</p>
-                                    <p class="text-xs text-muted-foreground">Active: ${model.is_active ? 'Yes' : 'No'}, Cost: ${model.cost_per_use} credits/use</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold text-primary">🤖 AI Models (${stats.ai_models.length})</h3>
+                            <a href="?page=admin-models" class="btn-primary btn-sm">
+                                ⚙️ Manage Models
+                            </a>
+                        </div>
+                        <div class="space-y-3 max-h-80 overflow-y-auto">
+                            ${stats.ai_models.map(model => `
+                                <div class="p-3 bg-muted rounded-lg">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <strong class="text-foreground">${model.name}</strong>
+                                        <span class="text-primary font-medium">${model.cost_per_use} credits</span>
+                                    </div>
+                                    <p class="text-sm text-muted-foreground">${model.description}</p>
+                                    <span class="inline-block mt-1 px-2 py-1 text-xs rounded font-medium ${model.is_active ? 'bg-green-500 text-white dark:bg-green-600 dark:text-white' : 'bg-red-500 text-white dark:bg-red-600 dark:text-white'}">
+                                        ${model.is_active ? 'Active' : 'Inactive'}
+                                    </span>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
-                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-                        <h2 class="text-xl font-semibold mb-4">Submission Statistics</h2>
-                        <p class="text-muted-foreground">Total Submissions:</p>
-                        <p class="text-2xl font-bold mb-4">${this.stats.submissions.total}</p>
-                        <h3 class="text-lg font-semibold mb-2">Submissions by Type</h3>
-                        <ul>
-                            ${this.stats.submissions.by_type.map(sub => `<li>${escapeHTML(sub.type)} (${sub.count})</li>`).join('')}
-                        </ul>
+                </div>
+                
+                <!-- Submissions Section -->
+                <div class="bg-card p-6 rounded-lg shadow-md border border-border mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold text-primary">📧 Form Submissions</h3>
+                        <button onclick="loadSubmissions()" class="px-3 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/80">🔄 Refresh</button>
+                    </div>
+                    <div class="mb-4 flex gap-4">
+                        <input type="text" id="submissions-search" placeholder="Search submissions..." class="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        <select id="submissions-type" class="px-3 py-2 border border-border rounded-md bg-background text-foreground">
+                            <option value="">All Types</option>
+                            <option value="notify">Launch Notifications</option>
+                            <option value="contact">Contact Forms</option>
+                        </select>
+                    </div>
+                    <div id="submissions-list" class="space-y-3 max-h-96 overflow-y-auto">
+                        <p class="text-muted-foreground">Loading submissions...</p>
+                    </div>
+                    <div id="submissions-pagination" class="mt-4 flex justify-between items-center">
+                        <span id="submissions-info" class="text-sm text-muted-foreground"></span>
+                        <div class="flex gap-2">
+                            <button id="submissions-prev" onclick="changeSubmissionsPage(-1)" class="px-3 py-1 text-xs border border-border rounded hover:bg-muted">Previous</button>
+                            <button id="submissions-next" onclick="changeSubmissionsPage(1)" class="px-3 py-1 text-xs border border-border rounded hover:bg-muted">Next</button>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Storage Statistics -->
-                <div class="bg-card p-6 rounded-lg shadow-md border border-border mb-8">
-                    <h2 class="text-xl font-semibold mb-4">Storage Statistics</h2>
-                    <p class="text-muted-foreground">Total Allocated Quota:</p>
-                    <p class="text-2xl font-bold mb-4">${this.formatBytes(this.stats.storage.total_allocated_bytes)}</p>
-                    <p class="text-muted-foreground">Total Used Storage:</p>
-                    <p class="text-2xl font-bold mb-4">${this.formatBytes(this.stats.storage.total_used_bytes)}</p>
-                    <h3 class="text-lg font-semibold mb-2">Storage Breakdown</h3>
-                    <ul>
-                        <li>Avatars: ${this.formatBytes(this.stats.storage.breakdown.avatars)}</li>
-                        <li>Images: ${this.formatBytes(this.stats.storage.breakdown.images)}</li>
-                        <li>Texts: ${this.formatBytes(this.stats.storage.breakdown.texts)}</li>
-                    </ul>
+                
+                <!-- Storage & Tags -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
+                        <h3 class="text-xl font-semibold mb-4 text-primary">💾 Storage Usage</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-muted-foreground">Total Allocated:</span>
+                                <span class="text-foreground font-medium">${formatBytes(stats.storage.total_allocated_bytes)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-muted-foreground">Used:</span>
+                                <span class="text-foreground font-medium">${formatBytes(stats.storage.total_used_bytes)}</span>
+                            </div>
+                            <div class="w-full bg-muted rounded-full h-2">
+                                <div class="bg-primary h-2 rounded-full" style="width: ${Math.min(100, (stats.storage.total_used_bytes / stats.storage.total_allocated_bytes) * 100)}%"></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                <div class="text-muted-foreground">Images: <span class="text-foreground">${formatBytes(stats.storage.breakdown.images)}</span></div>
+                                <div class="text-muted-foreground">Avatars: <span class="text-foreground">${formatBytes(stats.storage.breakdown.avatars)}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-card p-6 rounded-lg shadow-md border border-border">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold text-primary">🏷️ Popular Tags</h3>
+                            <a href="?page=admin-tags" class="btn-primary btn-sm">
+                                🏷️ Manage Tags
+                            </a>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            ${stats.tags.top_10.map(tag => `
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary text-primary-foreground">
+                                    ${tag.name} <span class="ml-1 bg-primary-foreground/20 px-1.5 py-0.5 rounded-full text-xs">${tag.count}</span>
+                                </span>
+                            `).join('')}
+                        </div>
+                        <div class="mt-4 text-sm text-muted-foreground">
+                            <span class="text-foreground font-medium">${stats.tags.genres}</span> genre tags out of <span class="text-foreground font-medium">${stats.tags.total}</span> total
+                        </div>
+                    </div>
                 </div>
-            `;
-
-            console.log('AdminDashboard: Setting dashboard content HTML...');
-            this.dashboardContent.innerHTML = html;
-            console.log('AdminDashboard: HTML content set, now rendering charts...');
-            
-            try {
-                this.renderCharts();
-                console.log('AdminDashboard: Charts rendered successfully');
-            } catch (error) {
-                console.error('AdminDashboard: Error rendering charts:', error);
-                console.error('AdminDashboard: Chart error stack:', error.stack);
-                this.showError('Error rendering charts: ' + error.message);
-            }
-        }
-
-        bindEvents() {
-            // No specific events for now, but this is where they would go.
-        }
-
-        formatBytes(bytes, precision = 2) {
-            const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            </div>
+        `;
+        
+        function formatBytes(bytes) {
+            const units = ['B', 'KB', 'MB', 'GB'];
             let i = 0;
-            
             while (bytes > 1024 && i < units.length - 1) {
                 bytes /= 1024;
                 i++;
             }
-            
-            return `${bytes.toFixed(precision)} ${units[i]}`;
+            return bytes.toFixed(1) + ' ' + units[i];
         }
-
-        showError(message) {
-            console.error('=== SHOWING ERROR ===', message);
-            if (this.loadingIndicator) {
-                this.loadingIndicator.style.display = 'none';
-            }
-            if (this.dashboardContent) {
-                this.dashboardContent.className = '';
-                this.dashboardContent.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: static !important; z-index: 9999 !important;';
-                this.dashboardContent.innerHTML = `<div style="color: red; text-align: center; padding: 40px; font-size: 20px; background: white; border: 3px solid red; position: relative; z-index: 10000;">${message}</div>`;
-            }
-        }
-
-        showSuccess() {
-            console.log('=== SHOWING SUCCESS ===');
-            if (this.loadingIndicator) {
-                this.loadingIndicator.style.display = 'none';
-            }
-            if (this.dashboardContent) {
-                this.dashboardContent.className = '';
-                this.dashboardContent.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: static !important; z-index: 9999 !important;';
-                this.dashboardContent.classList.remove('hidden');
-            }
-        }
-
-        renderCharts() {
-            console.log('AdminDashboard: Starting chart rendering...');
-            console.log('AdminDashboard: Chart.js available?', typeof Chart !== 'undefined');
-            
-            if (typeof Chart === 'undefined') {
-                console.error('AdminDashboard: Chart.js is not loaded!');
-                this.showError('Chart.js library is not loaded');
-                return;
-            }
-            
-            // Set up Chart.js defaults for a futuristic theme
-            Chart.defaults.font.family = 'system-ui, -apple-system, sans-serif';
-            Chart.defaults.color = '#e4e4e7'; // zinc-200
-            Chart.defaults.borderColor = '#3f3f46'; // zinc-700
-            Chart.defaults.backgroundColor = 'rgba(139, 92, 246, 0.1)'; // violet-500 with opacity
-
-            // Create gradients for charts
-            const createGradient = (ctx, color1, color2) => {
-                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, color1);
-                gradient.addColorStop(1, color2);
-                return gradient;
-            };
-
-            // Color palette for futuristic theme
-            const colors = {
-                primary: '#8b5cf6', // violet-500
-                secondary: '#06b6d4', // cyan-500
-                accent: '#f59e0b', // amber-500
-                success: '#10b981', // emerald-500
-                warning: '#f59e0b', // amber-500
-                danger: '#ef4444', // red-500
-                info: '#3b82f6', // blue-500
-                purple: '#a855f7', // purple-500
-                pink: '#ec4899', // pink-500
-                indigo: '#6366f1', // indigo-500
-            };
-
-            // 1. User Growth Chart
-            console.log('AdminDashboard: Rendering user growth chart...');
-            this.renderUserGrowthChart(colors, createGradient);
-
-            // 2. Media Growth Chart
-            console.log('AdminDashboard: Rendering media growth chart...');
-            this.renderMediaGrowthChart(colors, createGradient);
-
-            // 3. Branch Growth Chart
-            console.log('AdminDashboard: Rendering branch growth chart...');
-            this.renderBranchGrowthChart(colors, createGradient);
-
-            // 4. Segment Growth Chart
-            console.log('AdminDashboard: Rendering segment growth chart...');
-            this.renderSegmentGrowthChart(colors, createGradient);
-
-            // 5. Comment Growth Chart
-            console.log('AdminDashboard: Rendering comment growth chart...');
-            this.renderCommentGrowthChart(colors, createGradient);
-
-            // 6. Branches by Type Chart
-            console.log('AdminDashboard: Rendering branches by type chart...');
-            this.renderBranchesByTypeChart(colors);
-
-            // 7. Comments by Target Type Chart
-            console.log('AdminDashboard: Rendering comments by target type chart...');
-            this.renderCommentsByTargetTypeChart(colors);
-
-            // 8. Votes Distribution Chart
-            console.log('AdminDashboard: Rendering votes chart...');
-            this.renderVotesChart(colors);
-
-            // 9. Storage Usage Chart
-            console.log('AdminDashboard: Rendering storage chart...');
-            this.renderStorageChart(colors);
-
-            // 10. Combined Content Overview Chart
-            console.log('AdminDashboard: Rendering content overview chart...');
-            this.renderContentOverviewChart(colors);
-        }
-
-        renderUserGrowthChart(colors, createGradient) {
-            console.log('AdminDashboard: renderUserGrowthChart called');
-            const canvas = document.getElementById('userGrowthChart');
-            console.log('AdminDashboard: userGrowthChart canvas element:', canvas);
-            
-            if (!canvas) {
-                console.warn('AdminDashboard: userGrowthChart canvas not found');
-                return;
-            }
-            
-            const ctx = canvas.getContext('2d');
-            console.log('AdminDashboard: userGrowthChart context:', ctx);
-            
-            if (!this.stats.users || !this.stats.users.growth) {
-                console.warn('AdminDashboard: No user growth data available');
-                return;
-            }
-            
-            console.log('AdminDashboard: User growth data:', this.stats.users.growth);
-
-            const labels = this.stats.users.growth.map(item => item.month);
-            const data = this.stats.users.growth.map(item => item.count);
-            
-            console.log('AdminDashboard: User growth labels:', labels);
-            console.log('AdminDashboard: User growth data:', data);
-
-            try {
-                const chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'New Users',
-                        data: data,
-                        borderColor: colors.primary,
-                        backgroundColor: createGradient(ctx, 'rgba(139, 92, 246, 0.3)', 'rgba(139, 92, 246, 0.05)'),
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: colors.primary,
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
-                        pointHoverRadius: 8,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(63, 63, 70, 0.3)',
-                            },
-                            ticks: {
-                                color: '#a1a1aa',
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(63, 63, 70, 0.3)',
-                            },
-                            ticks: {
-                                color: '#a1a1aa',
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderColor: colors.primary,
-                            borderWidth: 1,
-                        }
-                    },
-                    animation: {
-                        duration: 2000,
-                        easing: 'easeInOutQuart'
-                    }
-                }
-                });
-                console.log('AdminDashboard: User growth chart created successfully:', chart);
-            } catch (error) {
-                console.error('AdminDashboard: Error creating user growth chart:', error);
-                console.error('AdminDashboard: User growth chart error stack:', error.stack);
-            }
-        }
-
-        renderMediaGrowthChart(colors, createGradient) {
-            const ctx = document.getElementById('mediaGrowthChart')?.getContext('2d');
-            if (!ctx || !this.stats.media.growth) return;
-
-            const labels = this.stats.media.growth.map(item => item.month);
-            const data = this.stats.media.growth.map(item => item.count);
-
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'New Media',
-                        data: data,
-                        backgroundColor: createGradient(ctx, colors.secondary, 'rgba(6, 182, 212, 0.3)'),
-                        borderColor: colors.secondary,
-                        borderWidth: 1,
-                        borderRadius: 4,
-                        borderSkipped: false,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(63, 63, 70, 0.3)',
-                            },
-                            ticks: {
-                                color: '#a1a1aa',
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: '#a1a1aa',
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderColor: colors.secondary,
-                            borderWidth: 1,
-                        }
-                    },
-                    animation: {
-                        duration: 1500,
-                        easing: 'easeOutBounce'
-                    }
-                }
-            });
-        }
-
-        renderBranchGrowthChart(colors, createGradient) {
-            const ctx = document.getElementById('branchGrowthChart')?.getContext('2d');
-            if (!ctx || !this.stats.branches.growth) return;
-
-            const labels = this.stats.branches.growth.map(item => item.month);
-            const data = this.stats.branches.growth.map(item => item.count);
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'New Branches',
-                        data: data,
-                        borderColor: colors.success,
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: colors.success,
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(63, 63, 70, 0.3)',
-                            },
-                            ticks: {
-                                color: '#a1a1aa',
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(63, 63, 70, 0.3)',
-                            },
-                            ticks: {
-                                color: '#a1a1aa',
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderColor: colors.success,
-                            borderWidth: 1,
-                        }
-                    },
-                    animation: {
-                        duration: 2000,
-                        easing: 'easeInOutQuart'
-                    }
-                }
-            });
-        }
-
-        renderSegmentGrowthChart(colors, createGradient) {
-            const ctx = document.getElementById('segmentGrowthChart')?.getContext('2d');
-            if (!ctx || !this.stats.segments.growth) return;
-
-            const labels = this.stats.segments.growth.map(item => item.month);
-            const data = this.stats.segments.growth.map(item => item.count);
-
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'New Segments',
-                        data: data,
-                        backgroundColor: createGradient(ctx, colors.warning, 'rgba(245, 158, 11, 0.3)'),
-                        borderColor: colors.warning,
-                        borderWidth: 1,
-                        borderRadius: 4,
-                        borderSkipped: false,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(63, 63, 70, 0.3)',
-                            },
-                            ticks: {
-                                color: '#a1a1aa',
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: '#a1a1aa',
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderColor: colors.warning,
-                            borderWidth: 1,
-                        }
-                    },
-                    animation: {
-                        duration: 1500,
-                        easing: 'easeOutBounce'
-                    }
-                }
-            });
-        }
-
-        renderCommentGrowthChart(colors, createGradient) {
-            const ctx = document.getElementById('commentGrowthChart')?.getContext('2d');
-            if (!ctx || !this.stats.comments.growth) return;
-
-            const labels = this.stats.comments.growth.map(item => item.month);
-            const data = this.stats.comments.growth.map(item => item.count);
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'New Comments',
-                        data: data,
-                        borderColor: colors.info,
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: colors.info,
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(63, 63, 70, 0.3)',
-                            },
-                            ticks: {
-                                color: '#a1a1aa',
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(63, 63, 70, 0.3)',
-                            },
-                            ticks: {
-                                color: '#a1a1aa',
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderColor: colors.info,
-                            borderWidth: 1,
-                        }
-                    },
-                    animation: {
-                        duration: 2000,
-                        easing: 'easeInOutQuart'
-                    }
-                }
-            });
-        }
-
-        renderBranchesByTypeChart(colors) {
-            const ctx = document.getElementById('branchesByTypeChart')?.getContext('2d');
-            if (!ctx || !this.stats.branches.by_type) return;
-
-            const labels = this.stats.branches.by_type.map(item => item.branch_type);
-            const data = this.stats.branches.by_type.map(item => item.count);
-            const backgroundColors = [colors.primary, colors.secondary, colors.accent, colors.success, colors.warning, colors.danger, colors.info, colors.purple, colors.pink, colors.indigo];
-
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: backgroundColors.slice(0, labels.length),
-                        borderColor: '#ffffff',
-                        borderWidth: 2,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#e4e4e7',
-                                usePointStyle: true,
-                                padding: 20,
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderColor: colors.primary,
-                            borderWidth: 1,
-                        }
-                    },
-                    animation: {
-                        duration: 2000,
-                        easing: 'easeInOutQuart'
-                    }
-                }
-            });
-        }
-
-        renderCommentsByTargetTypeChart(colors) {
-            const ctx = document.getElementById('commentsByTargetTypeChart')?.getContext('2d');
-            if (!ctx || !this.stats.comments.by_target_type) return;
-
-            const labels = this.stats.comments.by_target_type.map(item => item.target_type);
-            const data = this.stats.comments.by_target_type.map(item => item.count);
-            const backgroundColors = [colors.info, colors.secondary, colors.accent, colors.success, colors.warning, colors.danger, colors.primary, colors.purple, colors.pink, colors.indigo];
-
-            new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: backgroundColors.slice(0, labels.length),
-                        borderColor: '#ffffff',
-                        borderWidth: 2,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#e4e4e7',
-                                usePointStyle: true,
-                                padding: 20,
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderColor: colors.info,
-                            borderWidth: 1,
-                        }
-                    },
-                    animation: {
-                        duration: 2000,
-                        easing: 'easeInOutQuart'
-                    }
-                }
-            });
-        }
-
-        renderVotesChart(colors) {
-            // Add a new votes chart to the HTML first
-            const votesSection = document.querySelector('.bg-card p:contains("Downvotes")');
-            if (votesSection) {
-                const chartContainer = document.createElement('div');
-                chartContainer.innerHTML = '<h3 class="text-lg font-semibold mb-2 mt-4">Vote Distribution</h3><canvas id="votesChart"></canvas>';
-                votesSection.parentElement.appendChild(chartContainer);
-            }
-
-            const ctx = document.getElementById('votesChart')?.getContext('2d');
-            if (!ctx) return;
-
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Upvotes', 'Downvotes'],
-                    datasets: [{
-                        data: [this.stats.votes.upvotes, this.stats.votes.downvotes],
-                        backgroundColor: [colors.success, colors.danger],
-                        borderColor: '#ffffff',
-                        borderWidth: 2,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#e4e4e7',
-                                usePointStyle: true,
-                                padding: 20,
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderColor: colors.success,
-                            borderWidth: 1,
-                        }
-                    },
-                    animation: {
-                        duration: 2000,
-                        easing: 'easeInOutQuart'
-                    }
-                }
-            });
-        }
-
-        renderStorageChart(colors) {
-            // Add a new storage chart to the HTML first
-            const storageSection = document.querySelector('h3:contains("Storage Breakdown")');
-            if (storageSection) {
-                const chartContainer = document.createElement('div');
-                chartContainer.innerHTML = '<h3 class="text-lg font-semibold mb-2 mt-4">Storage Usage</h3><canvas id="storageChart"></canvas>';
-                storageSection.parentElement.appendChild(chartContainer);
-            }
-
-            const ctx = document.getElementById('storageChart')?.getContext('2d');
-            if (!ctx) return;
-
-            const breakdown = this.stats.storage.breakdown;
-            const labels = Object.keys(breakdown);
-            const data = Object.values(breakdown);
-
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels.map(label => label.charAt(0).toUpperCase() + label.slice(1)),
-                    datasets: [{
-                        label: 'Storage Used (bytes)',
-                        data: data,
-                        backgroundColor: [colors.primary, colors.secondary, colors.accent, colors.success],
-                        borderColor: '#ffffff',
-                        borderWidth: 1,
-                        borderRadius: 4,
-                        borderSkipped: false,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(63, 63, 70, 0.3)',
-                            },
-                            ticks: {
-                                color: '#a1a1aa',
-                                callback: function(value) {
-                                    return this.formatBytes(value);
-                                }.bind(this)
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: '#a1a1aa',
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderColor: colors.primary,
-                            borderWidth: 1,
-                            callbacks: {
-                                label: function(context) {
-                                    return this.formatBytes(context.parsed.y);
-                                }.bind(this)
-                            }
-                        }
-                    },
-                    animation: {
-                        duration: 1500,
-                        easing: 'easeOutBounce'
-                    }
-                }
-            });
-        }
-
-        renderContentOverviewChart(colors) {
-            // Add a new overview chart at the top
-            const overviewSection = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-6.mb-8');
-            if (overviewSection) {
-                const chartContainer = document.createElement('div');
-                chartContainer.className = 'bg-card p-6 rounded-lg shadow-md border border-border col-span-full';
-                chartContainer.innerHTML = '<h2 class="text-xl font-semibold mb-4">Content Overview</h2><canvas id="contentOverviewChart"></canvas>';
-                overviewSection.appendChild(chartContainer);
-            }
-
-            const ctx = document.getElementById('contentOverviewChart')?.getContext('2d');
-            if (!ctx) return;
-
-            new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: ['Users', 'Media', 'Branches', 'Segments', 'Comments', 'Tags'],
-                    datasets: [{
-                        label: 'Content Count',
-                        data: [
-                            this.stats.users.total,
-                            this.stats.media.total,
-                            this.stats.branches.total,
-                            this.stats.segments.total,
-                            this.stats.comments.total,
-                            this.stats.tags.total
-                        ],
-                        borderColor: colors.primary,
-                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                        pointBackgroundColor: colors.primary,
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
-                        pointHoverRadius: 8,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        r: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(63, 63, 70, 0.3)',
-                            },
-                            pointLabels: {
-                                color: '#e4e4e7',
-                            },
-                            ticks: {
-                                color: '#a1a1aa',
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderColor: colors.primary,
-                            borderWidth: 1,
-                        }
-                    },
-                    animation: {
-                        duration: 2500,
-                        easing: 'easeInOutQuart'
-                    }
-                }
-            });
-        }
-
-        cleanup() {
-            console.log('AdminDashboard: Cleaning up...');
-            // Destroy Chart.js instances to prevent memory leaks
-            Chart.helpers.each(Chart.instances, function(instance){
-                instance.destroy();
-            });
-            // Reset visibility for next load
-            if (this.loadingIndicator) this.loadingIndicator.classList.remove('hidden');
-            if (this.dashboardContent) this.dashboardContent.classList.add('hidden');
-        }
+        
+        console.log('Dashboard rendered successfully!');
+        
+        // Load submissions after dashboard is rendered
+        loadSubmissions();
+        
+        // Set up search functionality
+        document.getElementById('submissions-search').addEventListener('input', debounce(loadSubmissions, 300));
+        document.getElementById('submissions-type').addEventListener('change', loadSubmissions);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        content.innerHTML = `<div style="color: red; text-align: center; padding: 40px; background: white; border: 3px solid red;">Error: ${escapeHTML(error.message)}</div>`;
+        content.style.display = 'block';
+        loading.style.display = 'none';
     }
+}
 
-    // Expose AdminDashboard class globally for router to access
-    window.AdminDashboard = AdminDashboard;
+// User management functions
+window.adjustCredits = function(userId, username) {
+    showCreditModal(userId, username);
+};
 
-    // Instantiate AdminDashboard and register with Router
-    // This will run when the script is loaded by the Router's _runScriptsFromLoadedContent
-    if (window.Router) {
-        window.Router.pageManagers.admin = {
-            cleanup: () => {
-                if (window.adminDashboardInstance && typeof window.adminDashboardInstance.cleanup === 'function') {
-                    window.adminDashboardInstance.cleanup();
-                }
-                window.adminDashboardInstance = null; // Dereference
-                // Reset visibility for next load
-                const loadingIndicator = document.getElementById('loading-indicator');
-                const dashboardContent = document.getElementById('dashboard-content');
-                if (loadingIndicator) loadingIndicator.classList.remove('hidden');
-                if (dashboardContent) dashboardContent.classList.add('hidden');
-            }
-        };
-        // The router will call init() on the instance when the page is loaded via navigation
-        // We instantiate here, and the router will manage its lifecycle.
-        window.adminDashboardInstance = new AdminDashboard();
-    } else {
-        // Fallback for direct page load (not via router)
-        document.addEventListener('DOMContentLoaded', () => {
-            window.adminDashboardInstance = new AdminDashboard();
+function showCreditModal(userId, username) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('credit-modal');
+    if (existingModal) existingModal.remove();
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.id = 'credit-modal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-card p-6 rounded-lg shadow-xl border border-border max-w-md w-full mx-4">
+            <h3 class="text-xl font-semibold mb-4 text-foreground">💰 Adjust Credits for ${escapeHTML(username)}</h3>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-muted-foreground mb-2">Amount (positive to add, negative to subtract)</label>
+                <input type="number" id="credit-amount" class="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Enter amount..." autofocus>
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeCreditModal()" class="px-4 py-2 text-sm border border-border rounded-md text-muted-foreground hover:bg-muted">Cancel</button>
+                <button onclick="applyCreditChange(${userId}, '${escapeHTML(username)}')" class="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/80">Update Credits</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Focus on input
+    document.getElementById('credit-amount').focus();
+    
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeCreditModal();
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', handleCreditModalKeydown);
+}
+
+function closeCreditModal() {
+    const modal = document.getElementById('credit-modal');
+    if (modal) {
+        modal.remove();
+        document.removeEventListener('keydown', handleCreditModalKeydown);
+    }
+}
+
+function handleCreditModalKeydown(e) {
+    if (e.key === 'Escape') {
+        closeCreditModal();
+    } else if (e.key === 'Enter') {
+        const userId = document.querySelector('#credit-modal button[onclick*="applyCreditChange"]').onclick.toString().match(/applyCreditChange\((\d+)/)[1];
+        const username = document.querySelector('#credit-modal button[onclick*="applyCreditChange"]').onclick.toString().match(/applyCreditChange\(\d+, '([^']+)'/)[1];
+        applyCreditChange(parseInt(userId), username);
+    }
+}
+
+async function applyCreditChange(userId, username) {
+    const amount = document.getElementById('credit-amount').value;
+    if (!amount || amount === '') {
+        document.getElementById('credit-amount').focus();
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/admin/users.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'adjust_credits', user_id: userId, amount: parseInt(amount) })
         });
+        
+        if (response.ok) {
+            closeCreditModal();
+            showSuccessNotification(`Credits updated for ${username}`);
+            loadAdminDashboard(); // Refresh
+        } else {
+            showErrorNotification('Failed to update credits');
+        }
+    } catch (error) {
+        showErrorNotification('Error updating credits: ' + error.message);
     }
-})();
+}
+
+function showSuccessNotification(message) {
+    showNotification(message, 'success');
+}
+
+function showErrorNotification(message) {
+    showNotification(message, 'error');
+}
+
+function showNotification(message, type) {
+    // Remove existing notifications
+    const existing = document.querySelectorAll('.notification');
+    existing.forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 ${type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
+}
+
+window.adjustQuota = async function(userId, username, currentQuota) {
+    const quota = prompt(`Adjust storage quota for ${username}.\nCurrent: ${formatBytes(currentQuota)}\nEnter new quota in bytes:`, currentQuota);
+    if (quota === null || quota === '') return;
+    
+    try {
+        const response = await fetch('/api/admin/users.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'adjust_quota', user_id: userId, quota: parseInt(quota) })
+        });
+        
+        if (response.ok) {
+            alert(`Storage quota updated for ${username}`);
+            loadAdminDashboard(); // Refresh
+        } else {
+            alert('Failed to update quota');
+        }
+    } catch (error) {
+        alert('Error updating quota: ' + error.message);
+    }
+};
+
+window.toggleBan = async function(userId, username, currentlyBanned) {
+    const action = currentlyBanned ? 'unban' : 'ban';
+    if (!confirm(`Are you sure you want to ${action} ${username}?`)) return;
+    
+    try {
+        const response = await fetch('/api/admin/users.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'toggle_ban', user_id: userId })
+        });
+        
+        if (response.ok) {
+            alert(`User ${username} has been ${action}ned`);
+            loadAdminDashboard(); // Refresh
+        } else {
+            alert(`Failed to ${action} user`);
+        }
+    } catch (error) {
+        alert(`Error ${action}ning user: ` + error.message);
+    }
+};
+
+// Submissions management - use conditional initialization to prevent redeclaration errors
+if (typeof window.submissionsCurrentPage === 'undefined') {
+    window.submissionsCurrentPage = 1;
+}
+if (typeof window.submissionsData === 'undefined') {
+    window.submissionsData = null;
+}
+
+window.loadSubmissions = async function() {
+    const search = document.getElementById('submissions-search')?.value || '';
+    const type = document.getElementById('submissions-type')?.value || '';
+    
+    try {
+        const params = new URLSearchParams({
+            page: window.submissionsCurrentPage,
+            limit: 20,
+            q: search,
+            type: type
+        });
+        
+        const response = await fetch(`/api/admin/submissions.php?${params}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        window.submissionsData = await response.json();
+        renderSubmissions();
+        
+    } catch (error) {
+        console.error('Error loading submissions:', error);
+        const listElement = document.getElementById('submissions-list');
+        if (listElement) {
+            listElement.innerHTML = '<p class="text-red-500">Error loading submissions: ' + escapeHTML(error.message) + '</p>';
+        }
+    }
+};
+
+function renderSubmissions() {
+    const listElement = document.getElementById('submissions-list');
+    const infoElement = document.getElementById('submissions-info');
+    const prevButton = document.getElementById('submissions-prev');
+    const nextButton = document.getElementById('submissions-next');
+    
+    if (!window.submissionsData || !listElement) return;
+    
+    if (window.submissionsData.submissions.length === 0) {
+        listElement.innerHTML = '<p class="text-muted-foreground">No submissions found.</p>';
+        if (infoElement) infoElement.textContent = 'No submissions';
+        return;
+    }
+    
+    listElement.innerHTML = window.submissionsData.submissions.map(submission => `
+        <div class="p-4 bg-muted rounded-lg border border-border">
+            <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-1 text-xs rounded font-medium ${submission.type === 'notify' ? 'bg-blue-500 text-white' : 'bg-green-500 text-white'}">
+                        ${submission.type === 'notify' ? '🔔 Launch Notification' : '📧 Contact Form'}
+                    </span>
+                    <span class="text-sm text-muted-foreground">${submission.created_at_formatted}</span>
+                </div>
+                <button onclick="deleteSubmission(${submission.id})" class="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600">🗑️ Delete</button>
+            </div>
+            
+            <div class="space-y-1">
+                ${submission.name ? `<p class="text-sm"><span class="text-muted-foreground">Name:</span> <span class="text-foreground">${escapeHTML(submission.name)}</span></p>` : ''}
+                <p class="text-sm"><span class="text-muted-foreground">Email:</span> <span class="text-foreground">${escapeHTML(submission.email)}</span></p>
+                ${submission.subject ? `<p class="text-sm"><span class="text-muted-foreground">Subject:</span> <span class="text-foreground">${escapeHTML(submission.subject)}</span></p>` : ''}
+                ${submission.message ? `<p class="text-sm"><span class="text-muted-foreground">Message:</span> <span class="text-foreground">${escapeHTML(submission.message)}</span></p>` : ''}
+            </div>
+        </div>
+    `).join('');
+    
+    // Update pagination info
+    if (infoElement) {
+        const start = (window.submissionsCurrentPage - 1) * window.submissionsData.limit + 1;
+        const end = Math.min(window.submissionsCurrentPage * window.submissionsData.limit, window.submissionsData.total);
+        infoElement.textContent = `Showing ${start}-${end} of ${window.submissionsData.total} submissions`;
+    }
+    
+    // Update pagination buttons
+    if (prevButton) {
+        prevButton.disabled = window.submissionsCurrentPage <= 1;
+        prevButton.style.opacity = window.submissionsCurrentPage <= 1 ? '0.5' : '1';
+    }
+    if (nextButton) {
+        const hasNext = window.submissionsCurrentPage * window.submissionsData.limit < window.submissionsData.total;
+        nextButton.disabled = !hasNext;
+        nextButton.style.opacity = hasNext ? '1' : '0.5';
+    }
+}
+
+window.changeSubmissionsPage = function(direction) {
+    const newPage = window.submissionsCurrentPage + direction;
+    if (newPage >= 1 && (newPage - 1) * 20 < window.submissionsData.total) {
+        window.submissionsCurrentPage = newPage;
+        loadSubmissions();
+    }
+};
+
+window.deleteSubmission = async function(submissionId) {
+    if (!confirm('Are you sure you want to delete this submission?')) return;
+    
+    try {
+        const response = await fetch('/api/admin/submissions.php', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: submissionId })
+        });
+        
+        if (response.ok) {
+            showSuccessNotification('Submission deleted successfully');
+            loadSubmissions(); // Refresh
+        } else {
+            showErrorNotification('Failed to delete submission');
+        }
+    } catch (error) {
+        showErrorNotification('Error deleting submission: ' + error.message);
+    }
+};
+
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+window.toggleAdmin = async function(userId, username, currentlyAdmin) {
+    const action = currentlyAdmin ? 'remove admin privileges from' : 'grant admin privileges to';
+    if (!confirm(`Are you sure you want to ${action} ${username}?`)) return;
+    
+    try {
+        const response = await fetch('/api/admin/users.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'toggle_admin', user_id: userId })
+        });
+        
+        if (response.ok) {
+            alert(`Admin privileges updated for ${username}`);
+            loadAdminDashboard(); // Refresh
+        } else {
+            alert('Failed to update admin privileges');
+        }
+    } catch (error) {
+        alert('Error updating admin privileges: ' + error.message);
+    }
+};
+
+function formatBytes(bytes) {
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let i = 0;
+    while (bytes > 1024 && i < units.length - 1) {
+        bytes /= 1024;
+        i++;
+    }
+    return bytes.toFixed(1) + ' ' + units[i];
+}
+
+// Execute immediately when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadAdminDashboard);
+} else {
+    loadAdminDashboard();
+}
+
+// Also try after a short delay in case of router interference
+setTimeout(loadAdminDashboard, 100);
+setTimeout(loadAdminDashboard, 500);
+setTimeout(loadAdminDashboard, 1000);
