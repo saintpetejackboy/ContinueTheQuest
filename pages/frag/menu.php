@@ -43,7 +43,7 @@
                 <a href="?page=profile" class="text-sm font-medium hover:text-primary transition-colors">
                     <?php echo htmlspecialchars($currentUser['username']);   ?>
                 </a>
-                <a href="?page=help" class="text-sm font-medium hover:text-primary transition-colors">Help</a>
+                <a href="?page=help" class="text-sm font-medium hover:text-primary transition-colors">❓</a>
                 <a href="/api/auth/logout.php" class="text-sm text-muted-foreground hover:text-foreground transition-colors">Logout</a>
 				
 				

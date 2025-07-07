@@ -66,6 +66,13 @@ const Router = {
 
             // Handle special case for the 'admin' page (e.g., if its path is different)
             if (page === 'admin') {
+                // Check if user is admin before loading admin page
+                const authCheck = await fetch('/api/admin/auth-check.php');
+                if (!authCheck.ok) {
+                    // User is not admin, redirect to profile
+                    window.location.href = '?page=profile';
+                    return;
+                }
                 res = await fetch(`/pages/admin/index.html`);
                 if (!res.ok) throw new Error(`Admin page not found at /pages/admin/index.html`);
             } else {

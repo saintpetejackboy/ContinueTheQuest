@@ -42,6 +42,7 @@
 - Add admin logs viewing section (framework exists, needs UI polish)
 - Implement automatic backup scheduling
 - Content moderation workflow enhancements
+- **Create dedicated admin pages** for Media, Branches, Segments, and Files management (currently redirect to existing pages)
 
 ## 🛠️ **IMPORTANT WORKFLOW REMINDERS**
 

@@ -179,7 +179,7 @@ async function copyToClipboard(text) {
 /**
  * CSRF Token Management
  */
-let csrfToken = null;
+let csrfToken = window.csrfToken || null;
 
 /**
  * Get CSRF token from server

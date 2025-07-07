@@ -115,6 +115,58 @@ async function loadAdminDashboard() {
                     </div>
                 </div>
                 
+                <!-- Content Management Section -->
+                <div class="bg-card p-6 rounded-lg shadow-md border border-border mb-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold text-primary">📚 Content Management</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <a href="?page=admin-moderation" class="bg-card p-4 rounded-lg border border-border hover:shadow-md transition-all duration-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <span class="text-2xl mr-2">🎬</span>
+                                    <h4 class="font-semibold text-foreground">Media</h4>
+                                </div>
+                                <span class="text-sm px-2 py-1 bg-primary text-primary-foreground rounded">${stats.media.total}</span>
+                            </div>
+                            <p class="text-sm text-muted-foreground">Manage all media entries</p>
+                        </a>
+                        
+                        <a href="?page=admin-moderation" class="bg-card p-4 rounded-lg border border-border hover:shadow-md transition-all duration-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <span class="text-2xl mr-2">🌳</span>
+                                    <h4 class="font-semibold text-foreground">Branches</h4>
+                                </div>
+                                <span class="text-sm px-2 py-1 bg-primary text-primary-foreground rounded">${stats.branches.total}</span>
+                            </div>
+                            <p class="text-sm text-muted-foreground">Manage story branches</p>
+                        </a>
+                        
+                        <a href="?page=admin-moderation" class="bg-card p-4 rounded-lg border border-border hover:shadow-md transition-all duration-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <span class="text-2xl mr-2">📝</span>
+                                    <h4 class="font-semibold text-foreground">Segments</h4>
+                                </div>
+                                <span class="text-sm px-2 py-1 bg-primary text-primary-foreground rounded">${stats.segments.total}</span>
+                            </div>
+                            <p class="text-sm text-muted-foreground">Manage story segments</p>
+                        </a>
+                        
+                        <a href="?page=admin-backup" class="bg-card p-4 rounded-lg border border-border hover:shadow-md transition-all duration-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <span class="text-2xl mr-2">📁</span>
+                                    <h4 class="font-semibold text-foreground">Files</h4>
+                                </div>
+                                <span class="text-sm px-2 py-1 bg-primary text-primary-foreground rounded">${stats.system.total_files_in_uploads}</span>
+                            </div>
+                            <p class="text-sm text-muted-foreground">Manage uploaded files</p>
+                        </a>
+                    </div>
+                </div>
+                
                 <!-- User Management Section -->
                 <div class="bg-card p-6 rounded-lg shadow-md border border-border mb-8">
                     <div class="flex justify-between items-center mb-4">

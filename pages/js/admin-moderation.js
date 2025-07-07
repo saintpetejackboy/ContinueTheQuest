@@ -1,4 +1,7 @@
 // Admin Moderation Dashboard
+if (typeof ModerationDashboard !== 'undefined') {
+    console.log('ModerationDashboard already defined, skipping redefinition');
+} else {
 class ModerationDashboard {
     constructor() {
         this.currentTab = 'flagged';
@@ -339,5 +342,9 @@ class ModerationDashboard {
 
 // Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.moderation = new ModerationDashboard();
+    if (typeof ModerationDashboard !== 'undefined' && !window.moderation) {
+        window.moderation = new ModerationDashboard();
+    }
 });
+
+} // End of conditional block
